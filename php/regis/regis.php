@@ -1,7 +1,6 @@
 <?php
 	include_once "regis_utils.php";
-	
-	$type = "";
+        include_once "../utils/site_utils.php";
 ?>
 <html>
 	<head>
@@ -12,7 +11,15 @@
 				<?php
 					if(isset($_POST['submit']))
 					{
-						registerUser($type);
+                                            if($_COOKIE['type'] == "student")
+                                            {
+						registerUser($_COOKIE['type']);
+                                                unset($_COOKIE['type']);
+                                                setcookie('type', null, -1, '/');
+                                            }else
+                                            {
+                                                //TODO: ask admin
+                                            }
 					}
 					if(isset($_POST['submitSelect']))
 					{

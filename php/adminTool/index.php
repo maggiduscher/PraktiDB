@@ -1,6 +1,7 @@
 <?php
 	include_once "../utils/site_utils.php";
-	include_once "admin_utils";
+	include_once "admin_utils.php";
+        IsLoggedIn();
 ?>
 <html>
 	<head>

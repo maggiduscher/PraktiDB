@@ -1,36 +1,33 @@
 <?php
-	include_once "../utils/site_utils.php";
-	include_once "../utils/database.php";
-	$connection = databaseConnect();
-	$sqlcommand = "SELECT * FROM tbunternehmen";
-	
-	
-	
+    include_once "../utils/site_utils.php";
+    include_once "../utils/database.php";
+    IsLoggedIn();
+    $connection = databaseConnect();
+    $sqlcommand = "SELECT * FROM tbunternehmen";
 ?>
 <html>
-	<head>
-		<title></title>
-	</head>
-	<body>
-	<h1>Admin Kontrollraum</h1>
-		<div id="content">
-			<div id="company_list">
-			<?php
-			
-			$sqlresult = $connection->query($sqlcommand);
-			if($sqlresult === false)
-			{
-				echo "Es ist ein Fehler bei der Datenbankanfrage aufgetreten! Versuchen Sie es später erneut oder informieren Sie einen Admin oder Developer.";
-			}else
-			{
-				$sqlresult = $sqlresult->fetch_array();
-				foreach ($sqlresult as $wag)
-				{
-					echo "<div id='entry'><div id='entry_name'>".$wag['vaName']."</div></div>";
-				}
-			}
-			?>
-			</div>
-		</div>
-	</body>
+    <head>
+            <title></title>
+    </head>
+    <body>
+    <h1>Admin Kontrollraum</h1>
+        <div id="content">
+            <div id="company_list">
+            <?php
+                $sqlresult = $connection->query($sqlcommand);
+                if($sqlresult === false)
+                {
+                    echo "Es ist ein Fehler bei der Datenbankanfrage aufgetreten! Versuchen Sie es spï¿½ter erneut oder informieren Sie einen Admin oder Developer.";
+                }else
+                {
+                    $sqlresult = $sqlresult->fetch_array();
+                    foreach ($sqlresult as $wag)
+                    {
+                        echo "<div id='entry'><div id='entry_name'>".$wag['vaName']."</div></div>";
+                    }
+                }
+            ?>
+            </div>
+        </div>
+    </body>
 </html>
