@@ -1,7 +1,9 @@
 <?php
+	include_once "login_utils.php";
+
 	if(isset($_POST['submit']))
 	{
-		checkLogin($_POST['username'],$_POST['password'])
+		checkLogin($_POST['username'],$_POST['password']);
 	}
 ?>
 <html>
