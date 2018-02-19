@@ -34,8 +34,8 @@
             ."<label for='str'>Stra&szlig;e: </label>"
             ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
             ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
-            ."<label for='branche'>Geburtsjahr: </label>"
-            ."<input type='text' name='geburtsjahr' id='geburtsjahr' placeholder='Geburtsjahr'/><br/>"
+            ."<label for='branche'>Geburtstag: </label>"
+            ."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
             ."<label for='klasse'>Klasse: </label>"
             ."<input type='text' name='klasse' id='klasse' placeholder='Klasse'/><br/>"
             ."<label for='username'>Username: </label>"
@@ -62,8 +62,8 @@
             ."<label for='str'>Stra&szlig;e: </label>"
             ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
             ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
-            ."<label for='branche'>Geburtsjahr: </label>"
-            ."<input type='text' name='geburtsjahr' id='geburtsjahr' placeholder='Geburtsjahr'/><br/>"
+            ."<label for='branche'>Geburtstag: </label>"
+            ."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
             ."<label for='username'>Username: </label>"
             ."<input type='text' name='username' id='username' placeholder='Username'/><br/>"
             ."<label for='email'>Email:</label>"
@@ -113,7 +113,7 @@
                 {
                     die('Ungültige Anfrage: ' . $connection->error);
                 }
-                $sqlcommand2 = "INSERT INTO tbUser(vaUsername,vaUserRole,vaEmail,vaVorname,vaNachname,vaAdresse,vaPLZ,vaKlasse,dGeburtsjahr,vaPasswort) VALUES ('".$_POST['username']."', 'student', '".$_POST['email']."', '".$_POST['vorname']."', '".$_POST['nachname']."', '".$adress."', '".$_POST['plz']."', '".$_POST['klasse']."', STR_TO_DATE('".$_POST['geburtsjahr']."','%Y'), '".hash("sha256",$_POST['password'])."');";
+                $sqlcommand2 = "INSERT INTO tbUser(vaUsername,vaUserRole,vaEmail,vaVorname,vaNachname,vaAdresse,vaPLZ,vaKlasse,dGeburtsjahr,vaPasswort) VALUES ('".$_POST['username']."', 'student', '".$_POST['email']."', '".$_POST['vorname']."', '".$_POST['nachname']."', '".$adress."', '".$_POST['plz']."', '".$_POST['klasse']."', STR_TO_DATE('".$_POST['geburtstag']."','%d.%m.%Y'), '".hash("sha256",$_POST['password'])."');";
                 $sqlresult2 = $connection->query($sqlcommand2);
                 if (!$sqlresult2) 
                 {
