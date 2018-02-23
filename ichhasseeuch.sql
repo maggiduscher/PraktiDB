@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 20. Feb 2018 um 08:11
+-- Erstellungszeit: 23. Feb 2018 um 09:13
 -- Server-Version: 10.1.21-MariaDB
 -- PHP-Version: 5.6.30
 
@@ -28,7 +28,7 @@ DELIMITER $$
 --
 DROP PROCEDURE IF EXISTS `AddAngebot`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `AddAngebot` (IN `UnternehmensID` BIGINT, IN `Anfangsdatum` DATE, IN `Enddatum` DATE, IN `Angebotsart` VARCHAR(50), IN `Gesucht` INT)  BEGIN
-INSERT INTO tbangebote(biUnternehmensID,dAnfangsdatum, dEnddatum,vaAngebotsart,iGesuchte_Bewerber) VALUES(UnternehmensID,Anfangsdatum,Enddatum,Angebotsart,Gesucht);
+INSERT INTO tbangebote(biUnternehmensID,dAnfangsdatum, dEnddatum,vaAngebots_Art,iGesuchte_Bewerber,iAnzahl_Bewerber,iAngenommene_Bewerber) VALUES(UnternehmensID,Anfangsdatum,Enddatum,Angebotsart,Gesucht,0,0);
 END$$
 
 DROP PROCEDURE IF EXISTS `AddBewerbung`$$
@@ -60,10 +60,12 @@ END$$
 DROP PROCEDURE IF EXISTS `CheckUser`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `CheckUser` (IN `Username` VARCHAR(50), IN `Passwort` VARCHAR(50))  BEGIN
    
-   SELECT vaUserRole,biUserID FROM tbuser
-   WHERE (vaUsername = Username or 
-          vaEMail = Username)
-          AND vaPasswort = Passwort;
+   SELECT u.vaUserRole,u.biUserID,o.vaStadt FROM tbuser u JOIN
+   tbort o
+   ON(u.vaPLZ = o.vaPLZ)
+   WHERE (u.vaUsername = Username or 
+          u.vaEMail = Username)
+          AND u.vaPasswort = Passwort;
 
 END$$
 
@@ -93,7 +95,7 @@ END$$
 DROP PROCEDURE IF EXISTS `GetAngebote`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAngebote` (IN `Name` VARCHAR(50))  BEGIN
 SELECT * FROM tbangebote
-WHERE biUnternmensID = (SELECT biUnternmensID WHERE vaName = Name);
+WHERE biUnternehmensID = (SELECT biUnternehmensID FROM tbunternehmen WHERE vaName = Name);
 END$$
 
 DROP PROCEDURE IF EXISTS `GetAngeboteArt`$$
@@ -109,23 +111,23 @@ WHERE vaKlasse = Klasse;
 END$$
 
 DROP PROCEDURE IF EXISTS `GetUnternehmen`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `GetUnternehmen` (IN `Name` VARCHAR(50))  BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetUnternehmen` (IN `ID` BIGINT(50))  BEGIN
 SELECT u.*,o.vaStadt FROM tbunternehmen u JOIN tbort o
 ON(u.vaPLZ = o.vaPLZ)
-WHERE vaName = Name;
+WHERE biUnternehmensID = ID;
 END$$
 
 DROP PROCEDURE IF EXISTS `GetUser`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `GetUser` (IN `Username` VARCHAR(50))  BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetUser` (IN `UserID` BIGINT(50))  BEGIN
 SELECT u.*, o.vaStadt FROM tbuser u JOIN tbort o
 ON(u.vaPLZ = o.vaPLZ)
-WHERE vaUsername = Username;
+WHERE biUserID = UserID;
 END$$
 
 DROP PROCEDURE IF EXISTS `UpdateAngebotsAngenommende`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateAngebotsAngenommende` (IN `AngebotsID` BIGINT, IN `Anzahl` INT)  BEGIN
 UPDATE tbangebote
-SET iAngenommende_Bewerber = Anzahl
+SET iAngenommene_Bewerber = Anzahl
 WHERE biAngebotsID = AngebotsID;
 
 END$$
@@ -138,6 +140,14 @@ WHERE biAngebotsID = AngebotsID;
 
 END$$
 
+DROP PROCEDURE IF EXISTS `UpdateText`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateText` (IN `UserID` BIGINT, IN `Texxt` TEXT)  NO SQL
+BEGIN
+UPDATE tbuser
+SET tText = TexxT
+WHERE biUserID = UserID;
+END$$
+
 DELIMITER ;
 
 -- --------------------------------------------------------
@@ -147,16 +157,26 @@ DELIMITER ;
 --
 
 DROP TABLE IF EXISTS `tbangebote`;
-CREATE TABLE `tbangebote` (
-  `biAngebotesID` bigint(20) NOT NULL,
+CREATE TABLE IF NOT EXISTS `tbangebote` (
+  `biAngebotsID` bigint(20) NOT NULL AUTO_INCREMENT,
   `biUnternehmensID` bigint(20) DEFAULT NULL,
   `vaAngebots_Art` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
   `dAnfangsdatum` date DEFAULT NULL,
   `dEnddatum` date DEFAULT NULL,
   `iGesuchte_Bewerber` int(11) DEFAULT NULL,
   `iAnzahl_Bewerber` int(11) DEFAULT NULL,
-  `iAngenommene_Bewerber` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+  `iAngenommene_Bewerber` int(11) DEFAULT NULL,
+  PRIMARY KEY (`biAngebotsID`),
+  KEY `biUnternehmensID` (`biUnternehmensID`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+
+--
+-- Daten für Tabelle `tbangebote`
+--
+
+INSERT INTO `tbangebote` (`biAngebotsID`, `biUnternehmensID`, `vaAngebots_Art`, `dAnfangsdatum`, `dEnddatum`, `iGesuchte_Bewerber`, `iAnzahl_Bewerber`, `iAngenommene_Bewerber`) VALUES
+(2, 1, 'IT', '2018-02-23', '2018-02-23', 5, 2, 2),
+(3, 1, 'IT', NULL, NULL, 5, NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -165,9 +185,10 @@ CREATE TABLE `tbangebote` (
 --
 
 DROP TABLE IF EXISTS `tbort`;
-CREATE TABLE `tbort` (
+CREATE TABLE IF NOT EXISTS `tbort` (
   `vaPLZ` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
-  `vaStadt` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL
+  `vaStadt` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
+  PRIMARY KEY (`vaPLZ`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
@@ -185,20 +206,22 @@ INSERT INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES
 --
 
 DROP TABLE IF EXISTS `tbunternehmen`;
-CREATE TABLE `tbunternehmen` (
-  `biUnternehmensID` bigint(20) NOT NULL,
+CREATE TABLE IF NOT EXISTS `tbunternehmen` (
+  `biUnternehmensID` bigint(20) NOT NULL AUTO_INCREMENT,
   `vaName` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
   `vaAdresse` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
   `vaPLZ` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
-  `biUserID` bigint(20) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+  PRIMARY KEY (`biUnternehmensID`),
+  KEY `vaPLZ` (`vaPLZ`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
 -- Daten für Tabelle `tbunternehmen`
 --
 
-INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `biUserID`) VALUES
-(1, 'Frings', 'Hier', '0', NULL);
+INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`) VALUES
+(1, 'Frings', 'Hier', '0'),
+(2, 'Name', 'Adresse', '0');
 
 -- --------------------------------------------------------
 
@@ -207,8 +230,8 @@ INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`,
 --
 
 DROP TABLE IF EXISTS `tbuser`;
-CREATE TABLE `tbuser` (
-  `biUserID` bigint(20) NOT NULL,
+CREATE TABLE IF NOT EXISTS `tbuser` (
+  `biUserID` bigint(20) NOT NULL AUTO_INCREMENT,
   `vaUsername` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
   `vaUserRole` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
   `vaEmail` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
@@ -218,15 +241,20 @@ CREATE TABLE `tbuser` (
   `vaPLZ` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
   `vaKlasse` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
   `dGeburtsjahr` date DEFAULT NULL,
-  `vaPasswort` varchar(50) COLLATE utf8_croatian_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+  `vaPasswort` varchar(256) COLLATE utf8_croatian_ci NOT NULL,
+  `tText` text COLLATE utf8_croatian_ci NOT NULL,
+  PRIMARY KEY (`biUserID`),
+  UNIQUE KEY `vaUsername` (`vaUsername`),
+  UNIQUE KEY `vaEmail` (`vaEmail`),
+  KEY `vaPLZ` (`vaPLZ`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
 -- Daten für Tabelle `tbuser`
 --
 
-INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`) VALUES
-(1, 'TIM', 'TIM', 'TIM', 'TIM', 'TIM', 'TIM', '0', 'TIM', '2018-02-02', 'TIM');
+INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES
+(1, 'TIM', 'TIM', 'TIM', 'TIM', 'TIM', 'TIM', '0', 'TIM', '2018-02-02', 'TIM', 'Nestle');
 
 -- --------------------------------------------------------
 
@@ -235,11 +263,20 @@ INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorn
 --
 
 DROP TABLE IF EXISTS `tbuser_bewerbungen`;
-CREATE TABLE `tbuser_bewerbungen` (
-  `biAngebotesID` bigint(20) DEFAULT NULL,
+CREATE TABLE IF NOT EXISTS `tbuser_bewerbungen` (
+  `biAngebotsID` bigint(20) DEFAULT NULL,
   `biUserID` bigint(20) DEFAULT NULL,
-  `dBewerbung` date NOT NULL
+  `dBewerbung` date NOT NULL,
+  KEY `biAngebotesID` (`biAngebotsID`),
+  KEY `biUserID` (`biUserID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+
+--
+-- Daten für Tabelle `tbuser_bewerbungen`
+--
+
+INSERT INTO `tbuser_bewerbungen` (`biAngebotsID`, `biUserID`, `dBewerbung`) VALUES
+(2, 1, '2018-02-23');
 
 -- --------------------------------------------------------
 
@@ -248,80 +285,22 @@ CREATE TABLE `tbuser_bewerbungen` (
 --
 
 DROP TABLE IF EXISTS `tbuser_bewertung`;
-CREATE TABLE `tbuser_bewertung` (
+CREATE TABLE IF NOT EXISTS `tbuser_bewertung` (
   `biUnternehmensID` bigint(20) DEFAULT NULL,
   `biUserID` bigint(20) DEFAULT NULL,
   `iPunkte` int(11) NOT NULL,
-  `vaText` varchar(50) COLLATE utf8_croatian_ci NOT NULL
+  `vaText` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
+  KEY `biAngebotesID` (`biUnternehmensID`),
+  KEY `biUserID` (`biUserID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
--- Indizes der exportierten Tabellen
+-- Daten für Tabelle `tbuser_bewertung`
 --
 
---
--- Indizes für die Tabelle `tbangebote`
---
-ALTER TABLE `tbangebote`
-  ADD PRIMARY KEY (`biAngebotesID`),
-  ADD KEY `biUnternehmensID` (`biUnternehmensID`);
+INSERT INTO `tbuser_bewertung` (`biUnternehmensID`, `biUserID`, `iPunkte`, `vaText`) VALUES
+(2, 1, 8, 'Ich liebe es');
 
---
--- Indizes für die Tabelle `tbort`
---
-ALTER TABLE `tbort`
-  ADD PRIMARY KEY (`vaPLZ`);
-
---
--- Indizes für die Tabelle `tbunternehmen`
---
-ALTER TABLE `tbunternehmen`
-  ADD PRIMARY KEY (`biUnternehmensID`),
-  ADD KEY `biUserID` (`biUserID`),
-  ADD KEY `vaPLZ` (`vaPLZ`);
-
---
--- Indizes für die Tabelle `tbuser`
---
-ALTER TABLE `tbuser`
-  ADD PRIMARY KEY (`biUserID`),
-  ADD UNIQUE KEY `vaUsername` (`vaUsername`),
-  ADD UNIQUE KEY `vaEmail` (`vaEmail`),
-  ADD KEY `vaPLZ` (`vaPLZ`);
-
---
--- Indizes für die Tabelle `tbuser_bewerbungen`
---
-ALTER TABLE `tbuser_bewerbungen`
-  ADD KEY `biAngebotesID` (`biAngebotesID`),
-  ADD KEY `biUserID` (`biUserID`);
-
---
--- Indizes für die Tabelle `tbuser_bewertung`
---
-ALTER TABLE `tbuser_bewertung`
-  ADD KEY `biAngebotesID` (`biUnternehmensID`),
-  ADD KEY `biUserID` (`biUserID`);
-
---
--- AUTO_INCREMENT für exportierte Tabellen
---
-
---
--- AUTO_INCREMENT für Tabelle `tbangebote`
---
-ALTER TABLE `tbangebote`
-  MODIFY `biAngebotesID` bigint(20) NOT NULL AUTO_INCREMENT;
---
--- AUTO_INCREMENT für Tabelle `tbunternehmen`
---
-ALTER TABLE `tbunternehmen`
-  MODIFY `biUnternehmensID` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
---
--- AUTO_INCREMENT für Tabelle `tbuser`
---
-ALTER TABLE `tbuser`
-  MODIFY `biUserID` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 --
 -- Constraints der exportierten Tabellen
 --
@@ -336,7 +315,6 @@ ALTER TABLE `tbangebote`
 -- Constraints der Tabelle `tbunternehmen`
 --
 ALTER TABLE `tbunternehmen`
-  ADD CONSTRAINT `tbunternehmen_ibfk_1` FOREIGN KEY (`biUserID`) REFERENCES `tbuser` (`biUserID`),
   ADD CONSTRAINT `tbunternehmen_ibfk_2` FOREIGN KEY (`vaPLZ`) REFERENCES `tbort` (`vaPLZ`);
 
 --
@@ -349,14 +327,14 @@ ALTER TABLE `tbuser`
 -- Constraints der Tabelle `tbuser_bewerbungen`
 --
 ALTER TABLE `tbuser_bewerbungen`
-  ADD CONSTRAINT `tbuser_bewerbungen_ibfk_1` FOREIGN KEY (`biAngebotesID`) REFERENCES `tbangebote` (`biAngebotesID`),
+  ADD CONSTRAINT `tbuser_bewerbungen_ibfk_1` FOREIGN KEY (`biAngebotsID`) REFERENCES `tbangebote` (`biAngebotsID`),
   ADD CONSTRAINT `tbuser_bewerbungen_ibfk_2` FOREIGN KEY (`biUserID`) REFERENCES `tbuser` (`biUserID`);
 
 --
 -- Constraints der Tabelle `tbuser_bewertung`
 --
 ALTER TABLE `tbuser_bewertung`
-  ADD CONSTRAINT `tbuser_bewertung_ibfk_1` FOREIGN KEY (`biUnternehmensID`) REFERENCES `tbangebote` (`biAngebotesID`),
+  ADD CONSTRAINT `tbuser_bewertung_ibfk_1` FOREIGN KEY (`biUnternehmensID`) REFERENCES `tbangebote` (`biAngebotsID`),
   ADD CONSTRAINT `tbuser_bewertung_ibfk_2` FOREIGN KEY (`biUserID`) REFERENCES `tbuser` (`biUserID`);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
