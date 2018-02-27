@@ -34,8 +34,8 @@
             ."<label for='str'>Stra&szlig;e: </label>"
             ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
             ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
-            ."<label for='branche'>Geburtsjahr: </label>"
-            ."<input type='text' name='geburtsjahr' id='geburtsjahr' placeholder='Geburtsjahr'/><br/>"
+            ."<label for='branche'>Geburtstag: </label>"
+            ."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
             ."<label for='klasse'>Klasse: </label>"
             ."<input type='text' name='klasse' id='klasse' placeholder='Klasse'/><br/>"
             ."<label for='username'>Username: </label>"
@@ -62,8 +62,8 @@
             ."<label for='str'>Stra&szlig;e: </label>"
             ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
             ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
-            ."<label for='branche'>Geburtsjahr: </label>"
-            ."<input type='text' name='geburtsjahr' id='geburtsjahr' placeholder='Geburtsjahr'/><br/>"
+            ."<label for='branche'>Geburtstag: </label>"
+            ."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
             ."<label for='username'>Username: </label>"
             ."<input type='text' name='username' id='username' placeholder='Username'/><br/>"
             ."<label for='email'>Email:</label>"
@@ -81,46 +81,41 @@
             ."Ich bin ein/e... <br/>"
             ."<label for='user'>...Schüler/in</label>"
             ."<input type='radio' name='type' id='user' value='student'/><br/>"
-            ."<label for='user'> ...Firma (benötigt Bestätigung von einem Lehrer oder einem Admin) </label>"
+            ."<label for='user'> ...Firma (ben&ouml;tigt Best&auml;tigung von einem Lehrer oder einem Admin) </label>"
             ."<input type='radio' name='type' id='user' value='company'/><br/>"
-            ."<label for='user'>...Lehrer/in (benötigt Bestätigung von einem Admin) </label>"
+            ."<label for='user'>...Lehrer/in (ben&ouml;tigt Best&auml;tigung von einem Admin) </label>"
             ."<input type='radio' name='type' id='user' value='teacher'/><br/>"
-            ."<input id='submitSelect' name='submitSelect' type='submit' value='Auswählen'/>"
+            ."<input id='submitSelect' name='submitSelect' type='submit' value='Ausw&auml;hlen'/>"
             ."</form>";
 	}
 	
 	function registerUser($type)
 	{
-            $connection = databaseConnect();
-
             if($type == "student")
             {
                 $adress = $_POST['str'].' '.$_POST['strNr'];
-                $sqlcommand3 = "SELECT vaPLZ FROM tbOrt WHERE vaPLZ = '".$_POST['plz']."';";
-                $sqlresult3 = $connection->query($sqlcommand3);
-                if($sqlresult3 !== false)
+                $sqlresult = databaseQuery("GetStadt('".$_POST['plz']."');");
+                if($sqlresult !== false)
                 {
-                    if($sqlresult3->num_rows == 0)
+                    if($sqlresult->num_rows == 0)
                     {
-                        $sqlcommand1 = "INSERT INTO tbOrt(vaPLZ,vaStadt) VALUES ('".$_POST['plz']."','".$_POST['ort']."');";
-                        $sqlresult1 = $connection->query($sqlcommand1);
-                        if (!$sqlresult1) 
+                        $sqlresult2 = databaseQuery("CALL AddOrt('".$_POST['plz']."','".$_POST['ort']."');");
+                        if (!$sqlresult2) 
                         {
-                            die('Ungültige Anfrage: ' . $connection->error);
+                            CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
                         }
                     }
                 }else
                 {
-                    die('Ungültige Anfrage: ' . $connection->error);
+                   CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
                 }
-                $sqlcommand2 = "INSERT INTO tbUser(vaUsername,vaUserRole,vaEmail,vaVorname,vaNachname,vaAdresse,vaPLZ,vaKlasse,dGeburtsjahr,vaPasswort) VALUES ('".$_POST['username']."', 'student', '".$_POST['email']."', '".$_POST['vorname']."', '".$_POST['nachname']."', '".$adress."', '".$_POST['plz']."', '".$_POST['klasse']."', STR_TO_DATE('".$_POST['geburtsjahr']."','%Y'), '".hash("sha256",$_POST['password'])."');";
-                $sqlresult2 = $connection->query($sqlcommand2);
-                if (!$sqlresult2) 
+                $sqlresult3 = databaseQuery("CALL AddUser(STR_TO_DATE('".$_POST['geburtstag']."','%d.%m.%Y'), '".$adress."', '".$_POST['email']."','".$_POST['klasse']."','".$_POST['nachname']."', '".hash("sha256",$_POST['password'])."', '".$_POST['plz']."','".$_POST['username']."', 'student','".$_POST['vorname']."');");
+                if (!$sqlresult3) 
                 {
-                    die('Ungültige Anfrage: ' . $connection->error);
+                    CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
                 }else
                 {
-                        echo "Erfolg!";
+                    CreateWarning("Erfolg!");
                 }
             }else if($type == "company")
             {
@@ -129,33 +124,28 @@
             }else if($type == "teacher")
             {
                 $adress = $_POST['str'].' '.$_POST['strNr'];
-                $sqlcommand3 = "SELECT * FROM tbOrt WHERE vaPLZ = '".$_POST['plz']."';";
-                $sqlresult3 = $connection->query($sqlcommand3);
-                if($sqlresult3 !== false)
+                $sqlresult = databaseQuery("SELECT * FROM tbOrt WHERE vaPLZ = '".$_POST['plz']."';");               
+                if($sqlresult !== false)
                 {
-                    if($sqlresult3->num_rows == 0)
+                    if($sqlresult->num_rows == 0)
                     {
-                        $sqlcommand1 = "INSERT INTO tbOrt(vaPLZ,vaStadt) VALUES ('".$_POST['plz']."','".$_POST['ort']."');";
-                        $sqlresult1 = $connection->query($sqlcommand1);
-                        var_dump($sqlresult1);
-                        if (!$sqlresult1) 
+                        $sqlresult2 = databaseQuery("INSERT INTO tbOrt(vaPLZ,vaStadt) VALUES ('".$_POST['plz']."','".$_POST['ort']."');");
+                        if (!$sqlresult2) 
                         {
-                            die('Ungültige Anfrage: ' . $connection->error);
+                            CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
                         }
                     }
                 }else
                 {
-                    die('Ungültige Anfrage: ' . $connection->error);
+                    CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
                 }
-                $sqlcommand2 = "INSERT INTO tbUser(vaUsername,vaUserRole,vaEmail,vaVorname,vaNachname,vaAdresse,vaPLZ,vaKlasse,dGeburtsjahr,vaPasswort) VALUES ('".$_POST['username']."', 'teacher', '".$_POST['email']."', '".$_POST['vorname']."', '".$_POST['nachname']."', '".$adress."', '".$_POST['plz']."', null , STR_TO_DATE('".$_POST['geburtsjahr']."','%Y'), '".hash("sha256",$_POST['password'])."');";
-                $sqlresult2 = $connection->query($sqlcommand2);
-                var_dump($sqlresult2);
-                if (!$sqlresult2) 
+                $sqlresult3 = databaseQuery("INSERT INTO tbUser(vaUsername,vaUserRole,vaEmail,vaVorname,vaNachname,vaAdresse,vaPLZ,vaKlasse,dGeburtsjahr,vaPasswort) VALUES ('".$_POST['username']."', 'teacher', '".$_POST['email']."', '".$_POST['vorname']."', '".$_POST['nachname']."', '".$adress."', '".$_POST['plz']."', null , STR_TO_DATE('".$_POST['geburtsjahr']."','%Y'), '".hash("sha256",$_POST['password'])."');");
+                if (!$sqlresult3) 
                 {
-                    die('Ungültige Anfrage: ' . $connection->error);
+                    CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
                 }else
                 {
-                        echo "Erfolg!";
+                    CreateWarning("Erfolg!");
                 }
             }
 	}

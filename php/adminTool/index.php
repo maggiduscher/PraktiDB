@@ -5,14 +5,22 @@
 ?>
 <html>
 	<head>
-		<title></title>
+		<?php
+			CreateHead("AdminTools - Index");
+		?>
 	</head>
 	<body>
+		<?php
+			CreateNav();
+		?>
 	<h1>Admin Kontrollraum</h1>
 		<div id="content">
 			<a href="userList.php">Benutzer Verwaltung</a>
 			<a href="companyList.php">Firmen Verwaltung</a>
 			<a href="offerList.php">Angebot Verwaltung</a>
 		</div>
+		<?php
+			CreateFooter();
+		?>
 	</body>
 </html>

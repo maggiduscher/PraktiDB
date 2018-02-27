@@ -10,4 +10,18 @@
 
             }else return $db;
     }
+    
+    function databaseQuery($query)
+    {
+        $connection = databaseConnect();
+        $sqlcommand = $query;
+        $sqlresult = $connection->query($sqlcommand);
+        if($sqlresult === false || $sqlresult->num_rows == 0)
+        {
+            CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
+        }else
+        {
+            return $sqlresult;
+        }
+    }
 ?>

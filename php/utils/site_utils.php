@@ -22,21 +22,30 @@
 
     }
 
-    function IsLoggedIn()
+    function IsLoggedIn($path = "")
     {
         session_start();
         if(!isset($_COOKIE["PHPSESSID"])){
 
-            Header("Location: ../login/login.php?nosession");
+            Header("Location: ".$path."../login/index.php?nosession");
 
         }
         if(!isset($_SESSION['id']))
         {
-            Header("Location: ../login/login.php?nologin");
+            Header("Location: ".$path."../login/index.php?nologin");
         }
 
     }
-	
+    
+    function CreateError($msg)
+    {
+        echo "<div id='error_box'>".$msg."</div>";
+    }
+    
+    function CreateWarning($msg)
+    {
+        echo "<div id='warning_box'>.$msg.</div>";
+    }
 	
 
 ?>

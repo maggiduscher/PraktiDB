@@ -1,3 +1,3 @@
 <?php
-    header("location: php/login/login.php");
+    header("location: php/login/");
 ?>
