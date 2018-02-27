@@ -15,8 +15,4 @@
         $output = $sqlresult->fetch_array();
         return $output;
     }
-    
-    
-    
-    
 ?>

@@ -1,0 +1,67 @@
+*{
+	
+	font-family: Lato, Comic Sans MS;
+	
+}
+
+body{
+	
+	width: 890px;
+	margin: 60px auto 0px auto;
+	
+}
+
+#main{
+	
+	background-color: #F7F7F7;
+	border-radius: 0px 0px 7px 7px;
+	padding: 45px;
+	
+}
+
+#nav{
+	
+	display: flex;
+	width: 890px;
+	background-color: #EFEFEF;
+	margin: 0 auto;
+	padding: 17px 0 17px 0;
+	justify-content: space-around;
+	border-radius: 7px 7px 0px 0px;
+}
+
+
+#nav-item{
+
+	
+}
+
+#nav-item a{
+	
+	text-decoration: none;
+	color:#000;
+	padding: 17px 45px 17px 45px;
+	
+}
+
+#nav #nav-item:first-child a{
+	
+	border-radius: 7px 0px 0px 0px;
+}
+
+#nav #nav-item:last-child a{
+	
+	border-radius: 0px 7px 0px 0px;
+}
+
+#nav-item a:hover{
+	
+	background-color: #DFDFDF;
+	
+}
+
+#nav-item a:active{
+	
+	background-color: #CFCFCF;
+	
+}

@@ -1,0 +1,25 @@
+profile{
+	
+	display: table;
+	
+}
+
+profile_pic{
+	
+	position:relative;
+	right: -69%;
+	top: 100%;
+	
+}
+
+profile_row{
+	
+	display: table-row;
+	
+}
+
+profile_data{
+	
+	display: table-cell;
+	
+}
