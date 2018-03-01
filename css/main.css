@@ -13,9 +13,10 @@ body{
 
 #main{
 	
-	background-color: #F7F7F7;
-	border-radius: 0px 0px 7px 7px;
-	padding: 45px;
+	background-color: #F5F5F5;
+	border-bottom-left-radius:7px;
+	border-bottom-right-radius:7px;
+	padding: 45px 70px 70px 70px;
 	
 }
 
@@ -64,4 +65,32 @@ body{
 	
 	background-color: #CFCFCF;
 	
+}
+
+#warning_box{
+	
+	border-style: solid;
+	border-width: 3px;
+	border-color: #FFD800;
+	border-radius: 4px;
+	background-color: #FFEAAF;
+	width: 175px;
+	text-align: center;
+	margin: auto;
+	padding: 7px;
+
+}
+
+#error_box{
+	
+	border-style: solid;
+	border-width: 3px;
+	border-color: #FF0000;
+	border-radius: 4px;
+	background-color: #FFA1A1;
+	width: 175px;
+	text-align: center;
+	margin: auto;
+	padding: 7px;
+
 }

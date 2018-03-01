@@ -10,19 +10,20 @@
 ?>
 <html>
     <?php            
-        CreateHead("Login");
+        	echo "</head>";
+			CreateHead("Login"); 
+			echo "</head>";
     ?>
     <body>
         <?php
-            CreateNav();
             if(isset($_GET['nosession']))
             {
-                CreateError("Es gab einen Fehler mit deiner Session. Bitte logge dich erneut ein.");
+                echo "<div id='error_box'>Es gab einen Fehler mit deiner Session. Bitte logge dich erneut ein.</div>";
             }
 
             if(isset($_GET['nologin']))
             {
-               CreateWarning("Bitte logge dich ein.");
+                echo "<div id='warning_box'>Bitte logge dich ein.</div>";
             }
             if(isset($_POST['submit']))
             {
@@ -34,16 +35,24 @@
                 header("Location: ../overview/");
             }
         ?>
-        <div id="content">
+        <div id="main">
             <h1>Login</h1>
             <h2>Bitte logge dich mit deinem PraktiDB Konto ein!</h2>
             <div id="login_form">
                 <form method="POST" action=<?php echo $_SERVER['PHP_SELF'];?>>
-                    <label>Benutzername: </label>
-                    <input id="username" placeholder="Benutzername / Email" name="username" type="text"/><br/>
-                    <label>Passwort: </label>
-                    <input id="password" placeholder="Passwort" name="password" type="password"/><br/>
-                    <input id="submit" name="submit" type="submit" value="Log mich hart rein!"/>
+                    <div id="Benutzername">
+						<label>Benutzername: </label>
+						<input id="username" placeholder="Benutzername / Email" name="username" type="text"/><br/>
+                    </div>
+					<div id="Passwort">
+						<label>Passwort: </label>
+						<input id="password" placeholder="Passwort" name="password" type="password"/><br/>
+					</div>
+
+					<div id="submit">
+						<label> </label>
+						<input id="submit" name="submit" type="submit" value="Log mich hart rein!"/>
+					</div>
                 </form>
             </div>
             <br/>
