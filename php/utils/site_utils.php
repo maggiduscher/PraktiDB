@@ -42,8 +42,6 @@
         if($_SESSION['role']!=$role)
         {
             CreateError("Du nix Zugriff opfa!");
-            var_dump($_SESSION['id']);
-            var_dump($_SESSION['role']);
             die();
         }
     }

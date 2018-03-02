@@ -8,7 +8,7 @@
         if($username != "" && $password != "")
         {
             $sqlresult = databaseQuery("CALL CheckUser('".$username."','".hash("sha256",$password)."')");
-            if($sqlresult == null)
+            if($sqlresult == null || $sqlresult->num_rows == 0)
             {
                 CreateError("Dein Benutzername/Email oder Passwort ist flasch. Bitte versuche es erneut.");
             }else

@@ -15,9 +15,7 @@
     {
         $connection = databaseConnect();
         $sqlresult = $connection->query($query);
-        var_dump($query);
         echo "<br/>";
-        var_dump($sqlresult);
         echo "<br/>";
         if($sqlresult === false)
         {

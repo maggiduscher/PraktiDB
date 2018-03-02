@@ -4,13 +4,17 @@
 	
 	function generateFormCompany()
 	{
+            $sqlresult = databaseQuery("CALL GetAllOrt()");
+            $places = $sqlresult->fetch_array();
             echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>"
             ."<label for='Name'>Name: </label>"
             ."<input type='text' name='name' id='name' placeholder='Name'/><br/>"
-            ."<label for='vorname'>Ort: </label>"
-            ."<input type='text' name='ort' id='ort' placeholder='Ort'/><br/>"
-            ."<label for='plz'>PLZ: </label>"
-            ."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
+            ."<select name='ort' id='ort'>";
+            foreach ($places as $place) 
+            {   
+               echo "<option value='".$place[0]."'>".$place[0]." ".$place[1]."</option>";
+            }
+            echo "</select><br/>"
             ."<label for='str'>Stra&szlig;e: </label>"
             ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
             ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
@@ -22,15 +26,22 @@
 	}
 	function generateFormStudent()
 	{
+            $sqlresult = databaseQuery("CALL GetAllOrt()");
+            var_dump($sqlresult);
+            $places = $sqlresult->fetch_all();
+            var_dump($places);
             echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"
             ."<label for='vorname'>Vorname: </label>"
             ."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
             ."<label for='nachname'>Nachname: </label>"
             ."<input type='text' name='nachname' id='nachname' placeholder='Nachname'/><br/>"
             ."<label for='ort'>Ort: </label>"
-            ."<input type='text' name='ort' id='ort' placeholder='Ort'/><br/>"
-            ."<label for='plz'>PLZ: </label>"
-            ."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
+            ."<select name='ort' id='ort'>";
+            foreach ($places as $place) 
+            {   
+               echo "<option value='".$place[0]."'>".$place[0]." ".$place[1]."</option>";
+            }
+            echo "</select><br/>"
             ."<label for='str'>Stra&szlig;e: </label>"
             ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
             ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
@@ -50,15 +61,19 @@
 	}
 	function generateFormTeacher()
 	{
+            $sqlresult = databaseQuery("CALL GetAllOrt()");
+            $places = $sqlresult->fetch_array();
             echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"
             ."<label for='vorname'>Vorname: </label>"
             ."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
             ."<label for='nachname'>Nachname: </label>"
             ."<input type='text' name='nachname' id='nachname' placeholder='Nachname'/><br/>"
-            ."<label for='ort'>Ort: </label>"
-            ."<input type='text' name='ort' id='ort' placeholder='Ort'/><br/>"
-            ."<label for='plz'>PLZ: </label>"
-            ."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
+            ."<select name='ort' id='ort'>";
+            foreach ($places as $place) 
+            {   
+               echo "<option value='".$place[0]."'>".$place[0]." ".$place[1]."</option>";
+            }
+            echo "</select><br/>"
             ."<label for='str'>Stra&szlig;e: </label>"
             ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
             ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
@@ -93,41 +108,20 @@
 	{
             if($type == "student")
             {
-                $adress = $_POST['str'].' '.$_POST['strNr'];
-                $sqlresult = databaseQuery("CALL GetStadt('".$_POST['plz']."');",true);
-                if($sqlresult == null)
-                {
-                    $sqlresult2 = databaseQuery("CALL AddOrt('".$_POST['plz']."','".$_POST['ort']."');");
-                }
-                $sqlresult3 = databaseQuery("CALL AddUser(STR_TO_DATE('".$_POST['geburtstag']."','%d.%m.%Y'), '".$adress."', '".$_POST['email']."','".$_POST['klasse']."','".$_POST['nachname']."', '".hash("sha256",$_POST['password'])."', '".$_POST['plz']."','".$_POST['username']."', 'student','".$_POST['vorname']."');");
-                if ($sqlresult3 != null) 
+                $adress = $_POST['str'].' '.$_POST['strNr'];               
+                $sqlresult = databaseQuery("CALL AddUser(STR_TO_DATE('".$_POST['geburtstag']."','%d.%m.%Y'), '".$adress."', '".$_POST['email']."','".$_POST['klasse']."','".$_POST['nachname']."', '".hash("sha256",$_POST['password'])."', '".$_POST['ort']."','".$_POST['username']."', 'student','".$_POST['vorname']."');");
+                if ($sqlresult != null) 
                 {
                     CreateWarning("Erfolg!");
                 }
             }else if($type == "company")
             {
-                    $sqlcommand = "SELECT biUserId FROM tbUser WHERE vaUsername = ".$username." AND vaPassword = ".hash("sha256",$password).";";
-                    $sqlresult = $connection->query($sqlcommand);;
+                    
             }else if($type == "teacher")
             {
-                $adress = $_POST['str'].' '.$_POST['strNr'];
-                $sqlresult = databaseQuery("SELECT * FROM tbOrt WHERE vaPLZ = '".$_POST['plz']."';");               
-                if($sqlresult !== false)
-                {
-                    if($sqlresult->num_rows == 0)
-                    {
-                        $sqlresult2 = databaseQuery("INSERT INTO tbOrt(vaPLZ,vaStadt) VALUES ('".$_POST['plz']."','".$_POST['ort']."');");
-                        if (!$sqlresult2) 
-                        {
-                            CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
-                        }
-                    }
-                }else
-                {
-                    CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
-                }
-                $sqlresult3 = databaseQuery("INSERT INTO tbUser(vaUsername,vaUserRole,vaEmail,vaVorname,vaNachname,vaAdresse,vaPLZ,vaKlasse,dGeburtsjahr,vaPasswort) VALUES ('".$_POST['username']."', 'teacher', '".$_POST['email']."', '".$_POST['vorname']."', '".$_POST['nachname']."', '".$adress."', '".$_POST['plz']."', null , STR_TO_DATE('".$_POST['geburtsjahr']."','%Y'), '".hash("sha256",$_POST['password'])."');");
-                if ($sqlresult3 !== null) 
+                $adress = $_POST['str'].' '.$_POST['strNr'];              
+                $sqlresult = databaseQuery("INSERT INTO tbUser(vaUsername,vaUserRole,vaEmail,vaVorname,vaNachname,vaAdresse,vaPLZ,vaKlasse,dGeburtsjahr,vaPasswort) VALUES ('".$_POST['username']."', 'teacher', '".$_POST['email']."', '".$_POST['vorname']."', '".$_POST['nachname']."', '".$adress."', '".$_POST['ort']."', null , STR_TO_DATE('".$_POST['geburtsjahr']."','%Y'), '".hash("sha256",$_POST['password'])."');");
+                if ($sqlresult != null) 
                 {
                     CreateWarning("Erfolg!");
                 }
