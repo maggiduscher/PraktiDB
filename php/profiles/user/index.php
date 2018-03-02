@@ -2,16 +2,19 @@
 	include_once "../profile_utils.php";
 	include_once "../../utils/site_utils.php";
 	IsLoggedIn("../");
-        if(isset($_GET['id']))
-        {
-            $userdata = array();
-            $userdata = GetUserData($_GET['id']);
-        }
+        $userdata = array();
+        $userdata = GetUserData($_GET['id']);
+        //$userort = GetUserOrt($userdata['vaPLZ']);
 	
 ?>
 <html>
     <?php            
-        CreateHead("Profil von ".$userdata['vaUsername']);
+        echo "</head>";
+		CreateHead("Profil von ".$userdata['vaUsername']."");
+		echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/profile.css\" />";
+		echo "</head>";
+		
+		
     ?>
     <body>
         <?php
@@ -36,7 +39,6 @@
                 }
                 echo "</div>";
             }
-            
         ?>
         <?php
                 CreateFooter();

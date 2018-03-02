@@ -1,25 +1,38 @@
-profile{
+#profile{
 	
 	display: table;
 	
 }
 
-profile_pic{
+#profile_pic{
 	
-	position:relative;
-	right: -69%;
-	top: 100%;
+	position:absolute;
+	right: 32.5%;
+	top: 29%;
 	
 }
 
-profile_row{
+#profile_pic img{
+	
+	width: 100px;
+	height: 137px;
+	
+}
+
+#profile_row{
 	
 	display: table-row;
 	
 }
 
-profile_data{
+#profile_data{
 	
 	display: table-cell;
+	padding: 7px 7px 7px 0px;
+}
+
+#profile_row #profile_data:nth-child(2){
+	
+	padding: 17px 0px 17px 17px;
 	
 }
