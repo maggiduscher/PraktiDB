@@ -4,9 +4,7 @@
         
 	session_start();
         logout();
-        
 
-	
 ?>
 <html>
     <?php            

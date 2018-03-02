@@ -11,14 +11,19 @@
             }else return $db;
     }
     
-    function databaseQuery($query)
+    function databaseQuery($query, $mute = false)
     {
         $connection = databaseConnect();
-        $sqlcommand = $query;
-        $sqlresult = $connection->query($sqlcommand);
-        if($sqlresult === false || $sqlresult->num_rows == 0)
+        $sqlresult = $connection->query($query);
+        var_dump($query);
+        echo "<br/>";
+        var_dump($sqlresult);
+        echo "<br/>";
+        if($sqlresult === false)
         {
-            CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
+            if(!$mute) { CreateError("Fehlerhafte SQL Anfrage: ".$connection->error."."); }
+            
+            return null;
         }else
         {
             return $sqlresult;

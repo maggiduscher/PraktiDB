@@ -29,9 +29,14 @@
                 . "E-Mail: ".$userdata['vaEmail']."<br/>"
                 . "Klasse: ".$userdata['vaKlasse']."<br/>"
                 .$userdata['vaUserRole']
-                . "</div>"
                 . "</div>";
+                if($_GET['id'] == $_SESSION['id'])
+                {
+                    echo "<input type='submit' name='edit' value='Bearbeiten!'/>";
+                }
+                echo "</div>";
             }
+            
         ?>
         <?php
                 CreateFooter();

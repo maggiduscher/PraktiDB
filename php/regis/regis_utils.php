@@ -94,26 +94,13 @@
             if($type == "student")
             {
                 $adress = $_POST['str'].' '.$_POST['strNr'];
-                $sqlresult = databaseQuery("GetStadt('".$_POST['plz']."');");
-                if($sqlresult !== false)
+                $sqlresult = databaseQuery("CALL GetStadt('".$_POST['plz']."');",true);
+                if($sqlresult == null)
                 {
-                    if($sqlresult->num_rows == 0)
-                    {
-                        $sqlresult2 = databaseQuery("CALL AddOrt('".$_POST['plz']."','".$_POST['ort']."');");
-                        if (!$sqlresult2) 
-                        {
-                            CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
-                        }
-                    }
-                }else
-                {
-                   CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
+                    $sqlresult2 = databaseQuery("CALL AddOrt('".$_POST['plz']."','".$_POST['ort']."');");
                 }
                 $sqlresult3 = databaseQuery("CALL AddUser(STR_TO_DATE('".$_POST['geburtstag']."','%d.%m.%Y'), '".$adress."', '".$_POST['email']."','".$_POST['klasse']."','".$_POST['nachname']."', '".hash("sha256",$_POST['password'])."', '".$_POST['plz']."','".$_POST['username']."', 'student','".$_POST['vorname']."');");
-                if (!$sqlresult3) 
-                {
-                    CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
-                }else
+                if ($sqlresult3 != null) 
                 {
                     CreateWarning("Erfolg!");
                 }
@@ -140,10 +127,7 @@
                     CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
                 }
                 $sqlresult3 = databaseQuery("INSERT INTO tbUser(vaUsername,vaUserRole,vaEmail,vaVorname,vaNachname,vaAdresse,vaPLZ,vaKlasse,dGeburtsjahr,vaPasswort) VALUES ('".$_POST['username']."', 'teacher', '".$_POST['email']."', '".$_POST['vorname']."', '".$_POST['nachname']."', '".$adress."', '".$_POST['plz']."', null , STR_TO_DATE('".$_POST['geburtsjahr']."','%Y'), '".hash("sha256",$_POST['password'])."');");
-                if (!$sqlresult3) 
-                {
-                    CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
-                }else
+                if ($sqlresult3 !== null) 
                 {
                     CreateWarning("Erfolg!");
                 }

@@ -37,6 +37,17 @@
 
     }
     
+    function IsRole($role)
+    {
+        if($_SESSION['role']!=$role)
+        {
+            CreateError("Du nix Zugriff opfa!");
+            var_dump($_SESSION['id']);
+            var_dump($_SESSION['role']);
+            die();
+        }
+    }
+    
     function CreateError($msg)
     {
         echo "<div id='error_box'>".$msg."</div>";
@@ -44,6 +55,6 @@
     
     function CreateWarning($msg)
     {
-        echo "<div id='warning_box'>.$msg.</div>";
+        echo "<div id='warning_box'>".$msg."</div>";
     }
 ?>
