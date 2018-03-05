@@ -8,14 +8,16 @@
         if($username != "" && $password != "")
         {
             $sqlresult = databaseQuery("CALL CheckUser('".$username."','".hash("sha256",$password)."')");
-            if($sqlresult == null)
+            if($sqlresult == null || $sqlresult->num_rows == 0)
             {
                 CreateError("Dein Benutzername/Email oder Passwort ist falsch. Bitte versuche es erneut.");
             }else
             {
                 logout();
                 session_start();
-                $_SESSION['id']=$sqlresult->fetch_array()['biUserID'];
+                $output = $sqlresult->fetch_array();
+                $_SESSION['id']=$output['biUserID'];
+                $_SESSION['role']=$output['vaUserRole'];
             }
         }
     }
@@ -27,4 +29,3 @@
         $_SESSION['id'] = null;
     }
 ?>
-

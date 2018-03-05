@@ -17,10 +17,10 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Datenbank: `prakdb`
+-- Datenbank: `praktidb`
 --
-CREATE DATABASE IF NOT EXISTS `prakdb` DEFAULT CHARACTER SET utf8 COLLATE utf8_croatian_ci;
-USE `prakdb`;
+CREATE DATABASE IF NOT EXISTS `praktidb` DEFAULT CHARACTER SET utf8 COLLATE utf8_croatian_ci;
+USE `praktidb`;
 
 DELIMITER $$
 --
