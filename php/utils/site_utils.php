@@ -2,15 +2,22 @@
 
     function CreateHead($name)
     {
-        echo "\t<head>\n";
-        echo "\t\t<title> PraktiDB - ".$name." </title>\n";
-        echo "\t\t<link rel=\"stylesheet\" href=\"CSSPath\">\n";
-        echo "\t</head>\n";
+        echo "<title> PraktiDB - ".$name." </title>";
+        echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/main.css\" />";
+		echo "<link href=\"https://fonts.googleapis.com/css?family=Lato\" rel=\"stylesheet\" />"; 
+		if(strpos($name, "Profil") === false)echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/".$name.".css\" />"; 
     }
 
     function CreateNav()
     {
 
+		echo "<div id=\"nav\">"
+				."<div id=\"nav-item\"> <a href=\"#\">Starseite </a> </div>"
+				."<div id=\"nav-item\"> <a href=\"#\">Placeholder1 </a> </div>"
+				."<div id=\"nav-item\"> <a href=\"#\">Placeholder2 </a> </div>"
+				."<div id=\"nav-item\"> <a href=\"#\">Placeholder3 </a> </div>"
+				."<div id=\"nav-item\"> <a href=\"#\">Placeholder4 </a> </div>"
+			."</div>\n";
 
 
     }
