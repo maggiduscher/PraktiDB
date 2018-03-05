@@ -45,7 +45,7 @@
 				. "<div id='profile_row'>"
 					. "<div id='profile_data'> &Uuml;ber mich: </div><div id='profile_data'>".strtoupper($userdata['tText'])."</div> <br/>"
 				. "</div>"
-			. "</div>"
+			. "</div>";
             }
         ?>
         <?php
