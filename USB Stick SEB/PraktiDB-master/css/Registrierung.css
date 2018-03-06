@@ -1,0 +1,32 @@
+#main{
+	
+	border-top-left-radius: 7px;
+	border-top-right-radius: 7px;
+	text-align: left;
+	
+}
+
+
+#main input{
+	
+	margin: 12px 7px 7px 7px;
+	
+}
+
+form{
+	
+	display: table;
+	
+}
+
+form div{
+	
+	display: table-row;
+	
+}
+
+for div input, form div label{
+	
+	display: table-cell;
+	
+}
