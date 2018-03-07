@@ -1,42 +1,79 @@
 <?php
     include_once "../utils/site_utils.php";
+    include_once "admin_utils.php";
     include_once "../utils/database.php";
     IsLoggedIn();
-    $connection = databaseConnect();
-    $sqlcommand = "CALL GetAllUser();";
+    IsRole("admin");
+    if(isset($_POST['submitAdd']))
+    {
+        $sqlresult = databaseQuery("CALL AddAngebot(".$_POST['company'].", STR_TO_DATE('".$_POST['start']."','%d.%m.%Y'), STR_TO_DATE('".$_POST['end']."','%d.%m.%Y'),'".$_POST['type']."',".$_POST['anz'].");");
+        if($sqlresult != null)
+        {
+            header("location: ../adminTool/offerList.php?succ");
+        }else
+        {
+            header("location: ../adminTool/offerList.php?fail");
+        }  
+    }else if(isset($_POST['submitEdit1']))
+    {
+        $sqlresult = databaseQuery("CALL UpdataAngebotsAngenommene(".$_POST['offerID'].", ".$_POST['anz'].");");
+        if($sqlresult != null)
+        {
+            header("location: ../adminTool/offerList.php?succ");
+        }else
+        {
+            header("location: ../adminTool/offerList.php?fail");
+        }  
+    }else if(isset($_POST['submitEdit2']))
+    {
+        $sqlresult = databaseQuery("CALL UpdateAngebotsBewerber(".$_POST['offerID'].", ".$_POST['anz'].");");
+        if($sqlresult != null)
+        {
+            header("location: ../adminTool/offerList.php?succ");
+        }else
+        {
+            header("location: ../adminTool/offerList.php?fail");
+        }  
+    }else
+    if(isset($_GET['delete']))
+    {
+        $sqlresult = databaseQuery("CALL DeleteAngebot(".$_GET['delete'].");");
+        if($sqlresult != null)
+        {
+            header("location: ../adminTool/offerList.php?succ");
+        }else
+        {
+            header("location: ../adminTool/offerList.php?fail");
+        }        
+    }else 
 ?>
 <html>
     <head>
         <?php
-			CreateHead("AdminTools - Benutzer Liste");
-		?>
+            CreateHead("AdminTools - Angebot Liste");
+        ?>
     </head>
     <body>
-		<?php
-			CreateNav();
-		?>
-    <h1>Admin Kontrollraum</h1>
+        <?php
+                CreateNav();
+        ?>
+        <h1>Admin Kontrollraum</h1>
         <div id="content">
-            <div id="user_list">
-                <?php
-                    $sqlresult = $connection->query($sqlcommand);
-                    if($sqlresult === false)
-                    {
-                        CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
-                    }else
-                    {
-                        foreach ($sqlresult as $wag)
-                        {
-                            echo "<div id='entry'><div id='entry_name'>".$wag['vaUsername']."</div>"
-                                    . "<div id='entry_delete'><a href='userEdit?delete=".$wag['biUserID']."'><img alt='delete'/></a></div>"
-                                    . "<div id='entry_edit'><a href='userEdit?edit=".$wag['biUserID']."'><img alt='edit'/></a></div></div>";
-                        }
-                    }
-                ?>
-            </div>
+            <?php
+                if(isset($_GET['new']))
+                {
+                    generateAddFormOffer();
+                }else if(isset($_GET['edit1']))
+                {
+                    generateEdit1FormOffer();
+                }else if(isset($_GET['edit2']))
+                {
+                    generateEdit2FormOffer();
+                }
+            ?>
         </div>
-		<?php
-			CreateFooter();
-		?>
+        <?php
+                CreateFooter();
+        ?>
     </body>
 </html>
