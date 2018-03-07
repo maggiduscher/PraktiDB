@@ -54,7 +54,7 @@
 				."</div>"
 				."<div id='ort'>"
 					."<label for='ort'>Ort: </label>"
-                                        ."<select name='ort' id='ort'>";
+					."<select name='ort' id='ort'>";
 					foreach ($places as $place) 
 					{   
 						echo "<option value='".$place[0]."'>".$place[0]." ".$place[1]."</option>";

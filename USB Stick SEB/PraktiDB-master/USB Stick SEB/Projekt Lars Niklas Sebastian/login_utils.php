@@ -7,7 +7,11 @@
         $password = trim($password);
         if($username != "" && $password != "")
         {
-            $sqlresult = databaseQuery("CALL CheckUser('".$username."','".hash("sha256",$password)."')");
+			$Data = array();
+			$Data[]+ = $username;
+			$Data[]+ = hash("sha256",$password);
+			
+            $sqlresult = databaseStoredProcedure('CallCheckUser(?,?)',$Data);
             if($sqlresult == null || $sqlresult->num_rows == 0)
             {
                 CreateError("Dein Benutzername/Email oder Passwort ist falsch. Bitte versuche es erneut.");
