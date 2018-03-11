@@ -1,5 +1,5 @@
 <?php
-
+//Echt
 	include_once "../utils/database.php";
 	
 	function generateFormCompany()
@@ -164,10 +164,23 @@
 	
 	function registerUser($type)
 	{
+		$adress = $_POST['str'].' '.$_POST['strNr'];  
+        $Data = array();
             if($type == "student")
             {
-                $adress = $_POST['str'].' '.$_POST['strNr'];               
-                $sqlresult = databaseQuery("CALL AddUser(STR_TO_DATE('".$_POST['geburtstag']."','%d.%m.%Y'), '".$adress."', '".$_POST['email']."','".$_POST['klasse']."','".$_POST['nachname']."', '".hash("sha256",$_POST['password'])."', '".$_POST['ort']."','".$_POST['username']."', 'student','".$_POST['vorname']."');");
+                
+                $Data[] = "STR_TO_DATE('".$_POST['geburtsjahr']."','%d.%m.%Y'')";
+				$Data[] = $adress;
+				$Data[] = $_POST['email'];
+				$Data[] = $_POST['klasse'];
+				$Data[] = $_POST['nachname'];
+				$Data[] = hash("sha256",$_POST['password']);
+				$Data[] = $_POST['ort'];
+				$Data[] = $_POST['username'];
+				$Data[] = 'student';
+				$Data[] = $_POST['vorname'];
+				                				
+                $sqlresult = databasePreparedStatement("CALL AddUser(?,?,?,?,?,?,?,?,?,?);",$Data);
                 if ($sqlresult != null) 
                 {
                     CreateWarning("Erfolg!");
@@ -177,8 +190,18 @@
                     
             }else if($type == "teacher")
             {
-                $adress = $_POST['str'].' '.$_POST['strNr'];              
-                $sqlresult = databaseQuery("INSERT INTO tbUser(vaUsername,vaUserRole,vaEmail,vaVorname,vaNachname,vaAdresse,vaPLZ,vaKlasse,dGeburtsjahr,vaPasswort) VALUES ('".$_POST['username']."', 'teacher', '".$_POST['email']."', '".$_POST['vorname']."', '".$_POST['nachname']."', '".$adress."', '".$_POST['ort']."', null , STR_TO_DATE('".$_POST['geburtsjahr']."','%Y'), '".hash("sha256",$_POST['password'])."');");
+                $Data[] = "STR_TO_DATE('".$_POST['geburtsjahr']."','%d.%m.%Y'')";
+				$Data[] = $adress;
+				$Data[] = $_POST['email'];
+				//$Data[] = $_POST['klasse'];
+				$Data[] = $_POST['nachname'];
+				$Data[] = hash("sha256",$_POST['password']);
+				$Data[] = $_POST['ort'];
+				$Data[] = $_POST['username'];
+				$Data[] = 'teacher';
+				$Data[] = $_POST['vorname'];
+				                				
+                $sqlresult = databasePreparedStatement("CALL AddUser(?,?,?,?,?,?,?,?,?);",$Data);
                 if ($sqlresult != null) 
                 {
                     CreateWarning("Erfolg!");
