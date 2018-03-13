@@ -59,12 +59,29 @@
 			mysqli_stmt_bind_param($stmt,"sss",$Data[0],$Data[1],$Data[2]);
 			break;
 			
+			case 4:
+			mysqli_stmt_bind_param($stmt,"ssss",$Data[0],$Data[1],$Data[2],$Data[3]);
+			break;
+			
+			case 5:
+			mysqli_stmt_bind_param($stmt,"sssss",$Data[0],$Data[1],$Data[2],$Data[3],$Data[4]);
+			break;
+			
+			case 8:
+			mysqli_stmt_bind_param($stmt,"ssssssss",$Data[0],$Data[1],$Data[2],$Data[3],$Data[4],$Data[5],$Data[6],$Data[7]);
+			break;
+			
+			case 9:
+			mysqli_stmt_bind_param($stmt,"sssssssss",$Data[0],$Data[1],$Data[2],$Data[3],$Data[4],$Data[5],$Data[6],$Data[7],$Data[8]);
+			break;
+			
 			case 10:
 			mysqli_stmt_bind_param($stmt,"ssssssssss",$Data[0],$Data[1],$Data[2],$Data[3],$Data[4],$Data[5],$Data[6],$Data[7],$Data[8],$Data[9]);
 			break;
 			
 		}
 		mysqli_stmt_execute($stmt);		
+		/*
 		$result = mysqli_stmt_get_result($stmt);	
 		if($result === false)
         {
@@ -75,6 +92,7 @@
         {
             return $result;
         }
+		*/
 	  }
 	}
 ?>
