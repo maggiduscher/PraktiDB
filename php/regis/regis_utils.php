@@ -29,6 +29,10 @@
 					."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
 					."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
 				."</div>"
+				."<div id='email'>"
+					."<label for='email'>Email:</label>"
+					."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
+				."</div>"
 				."<div id='branche'>"
 					."<label for='branche'>Branche: </label>"
 					."<input type='text' name='branche' id='branche' placeholder='Branche'/><br/>"
@@ -187,13 +191,24 @@
                 }
             }else if($type == "company")
             {
-                    
+                $Data[] = $_POST['name'];
+				$Data[] = $adress;
+				$Data[] = $_POST['ort'];
+				$Data[] = $_POST['branche'];
+				$Data[] = $_POST['email'];
+				
+				$sqlresult = databasePreparedStatement("CALL AddUnternehmen(?,?,?,?,?);",$Data);
+                if ($sqlresult != null) 
+                {
+                    CreateWarning("Erfolg!");
+                }
+				
             }else if($type == "teacher")
             {
                 $Data[] = "STR_TO_DATE('".$_POST['geburtsjahr']."','%d.%m.%Y'')";
 				$Data[] = $adress;
 				$Data[] = $_POST['email'];
-				//$Data[] = $_POST['klasse'];
+				$Data[] =  Null; //$_POST['klasse'];
 				$Data[] = $_POST['nachname'];
 				$Data[] = hash("sha256",$_POST['password']);
 				$Data[] = $_POST['ort'];
@@ -201,7 +216,7 @@
 				$Data[] = 'teacher';
 				$Data[] = $_POST['vorname'];
 				                				
-                $sqlresult = databasePreparedStatement("CALL AddUser(?,?,?,?,?,?,?,?,?);",$Data);
+                $sqlresult = databasePreparedStatement("CALL AddUser(?,?,?,?,?,?,?,?,?,?);",$Data);
                 if ($sqlresult != null) 
                 {
                     CreateWarning("Erfolg!");
