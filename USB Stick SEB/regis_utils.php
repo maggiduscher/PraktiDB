@@ -1,5 +1,5 @@
 <?php
-//Echt
+
 	include_once "../utils/database.php";
 	
 	function generateFormCompany()
@@ -28,10 +28,6 @@
 					."<label for='str'>Stra&szlig;e: </label>"
 					."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
 					."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
-				."</div>"
-				."<div id='email'>"
-					."<label for='email'>Email:</label>"
-					."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
 				."</div>"
 				."<div id='branche'>"
 					."<label for='branche'>Branche: </label>"
@@ -168,12 +164,11 @@
 	
 	function registerUser($type)
 	{
-		$adress = $_POST['str'].' '.$_POST['strNr'];  
-        $Data = array();
             if($type == "student")
             {
-                
-                $Data[] = "STR_TO_DATE('".$_POST['geburtsjahr']."','%d.%m.%Y'')";
+                $adress = $_POST['str'].' '.$_POST['strNr'];  
+                $Data = array();
+                $Data[] = STR_TO_DATE($_POST['geburtstag'],'%d.%m.%Y');
 				$Data[] = $adress;
 				$Data[] = $_POST['email'];
 				$Data[] = $_POST['klasse'];
@@ -184,39 +179,18 @@
 				$Data[] = 'student';
 				$Data[] = $_POST['vorname'];
 				                				
-                $sqlresult = databasePreparedStatement("CALL AddUser(?,?,?,?,?,?,?,?,?,?);",$Data);
+                $sqlresult = databaseStoredProcedure("CALL AddUser(?,?,?);",$Data);
                 if ($sqlresult != null) 
                 {
                     CreateWarning("Erfolg!");
                 }
             }else if($type == "company")
             {
-                $Data[] = $_POST['name'];
-				$Data[] = $adress;
-				$Data[] = $_POST['ort'];
-				$Data[] = $_POST['branche'];
-				$Data[] = $_POST['email'];
-				
-				$sqlresult = databasePreparedStatement("CALL AddUnternehmen(?,?,?,?,?);",$Data);
-                if ($sqlresult != null) 
-                {
-                    CreateWarning("Erfolg!");
-                }
-				
+                    
             }else if($type == "teacher")
             {
-                $Data[] = "STR_TO_DATE('".$_POST['geburtsjahr']."','%d.%m.%Y'')";
-				$Data[] = $adress;
-				$Data[] = $_POST['email'];
-				$Data[] =  Null; //$_POST['klasse'];
-				$Data[] = $_POST['nachname'];
-				$Data[] = hash("sha256",$_POST['password']);
-				$Data[] = $_POST['ort'];
-				$Data[] = $_POST['username'];
-				$Data[] = 'teacher';
-				$Data[] = $_POST['vorname'];
-				                				
-                $sqlresult = databasePreparedStatement("CALL AddUser(?,?,?,?,?,?,?,?,?,?);",$Data);
+                $adress = $_POST['str'].' '.$_POST['strNr'];              
+                $sqlresult = databaseQuery("INSERT INTO tbUser(vaUsername,vaUserRole,vaEmail,vaVorname,vaNachname,vaAdresse,vaPLZ,vaKlasse,dGeburtsjahr,vaPasswort) VALUES ('".$_POST['username']."', 'teacher', '".$_POST['email']."', '".$_POST['vorname']."', '".$_POST['nachname']."', '".$adress."', '".$_POST['ort']."', null , STR_TO_DATE('".$_POST['geburtsjahr']."','%Y'), '".hash("sha256",$_POST['password'])."');");
                 if ($sqlresult != null) 
                 {
                     CreateWarning("Erfolg!");

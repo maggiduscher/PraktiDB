@@ -1,10 +1,8 @@
-
 <?php
-// Echt
     include_once "../utils/database.php";
 
-	function checkLogin($username,$password)
-    { 
+    function checkLogin($username,$password)
+    {
         $username = trim($username);
         $password = trim($password);
         if($username != "" && $password != "")
@@ -13,7 +11,7 @@
 			$Data[] = $username;
 			$Data[] = hash("sha256",$password);
 			
-            $sqlresult = databasePreparedStatement('Call CheckUser(?,?)',$Data);
+            $sqlresult = databaseStoredProcedure('Call CheckUser(?,?)',$Data);
             if($sqlresult == null || $sqlresult->num_rows == 0)
             {
                 CreateError("Dein Benutzername/Email oder Passwort ist falsch. Bitte versuche es erneut.");
