@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 20. Mrz 2018 um 08:10
+-- Erstellungszeit: 20. Mrz 2018 um 09:23
 -- Server-Version: 10.1.21-MariaDB
 -- PHP-Version: 5.6.30
 
@@ -47,8 +47,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `AddOrt` (IN `PLZ` VARCHAR(50), IN `
  END$$
 
 DROP PROCEDURE IF EXISTS `AddUnternehmen`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `AddUnternehmen` (IN `Name` VARCHAR(50), IN `Adresse` VARCHAR(50), IN `PLZ` VARCHAR(50), IN `Branche` VARCHAR(50))  BEGIN
-INSERT INTO tbunternehmen(vaName,vaAdresse,vaPLZ,vaBranche) VALUES(Name,Adresse,PLZ,Branche);
+CREATE DEFINER=`root`@`localhost` PROCEDURE `AddUnternehmen` (IN `Name` VARCHAR(50), IN `Adresse` VARCHAR(50), IN `PLZ` VARCHAR(50), IN `Branche` VARCHAR(50), IN `Email` VARCHAR(50))  BEGIN
+INSERT INTO tbunternehmen(vaName,vaAdresse,vaPLZ,vaBranche,vaEmail) VALUES(Name,Adresse,PLZ,Branche,Email);
 
 END$$
 
@@ -103,6 +103,19 @@ JOIN tbort o
 ON(u.vaPLZ = o.vaPLZ);
 END$$
 
+DROP PROCEDURE IF EXISTS `GetAllAngeboteArt`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllAngeboteArt` ()  NO SQL
+BEGIN
+SELECT DISTINCT (vaAngebots_Art) FROM tbangebote;
+END$$
+
+DROP PROCEDURE IF EXISTS `GetAllDeactivatedUser`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllDeactivatedUser` ()  NO SQL
+BEGIN
+ SELECT * FROM tbuser
+ WHERE vaUserRole LIKE '%deactivated%';
+END$$
+
 DROP PROCEDURE IF EXISTS `GetAllOrt`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllOrt` ()  NO SQL
 BEGIN
@@ -131,6 +144,14 @@ DROP PROCEDURE IF EXISTS `GetAngeboteArt`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAngeboteArt` (IN `Art` VARCHAR(50))  BEGIN
 SELECT * FROM tbangebote
 WHERE vaAngebots_Art =Art;
+END$$
+
+DROP PROCEDURE IF EXISTS `GetDeactivatedUnternehmen`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetDeactivatedUnternehmen` ()  NO SQL
+BEGIN
+
+ SELECT * FROM tbunternehmen
+ WHERE vaName = '%deactivated%';
 END$$
 
 DROP PROCEDURE IF EXISTS `GetKlasse`$$
@@ -184,6 +205,23 @@ SET vaPasswort = Passwort
 WHERE biUserID = ID;
 END$$
 
+DROP PROCEDURE IF EXISTS `UpdateRoleUser`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateRoleUser` (IN `ID` BIGINT, IN `Role` VARCHAR(50))  NO SQL
+BEGIN
+ 
+ UPDATE tbuser
+ SET vaUserRole = Role
+ WHERE biUserID = ID;
+
+END$$
+
+DROP PROCEDURE IF EXISTS `UpdateStatusUnternehmen`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateStatusUnternehmen` (IN `ID` BIGINT, IN `Name` VARCHAR(50))  NO SQL
+BEGIN
+ UPDATE tbunternehmen
+ SET vaName = Name;
+END$$
+
 DROP PROCEDURE IF EXISTS `UpdateText`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateText` (IN `UserID` BIGINT, IN `Texxt` TEXT)  NO SQL
 BEGIN
@@ -221,8 +259,6 @@ DELIMITER ;
 --
 -- Tabellenstruktur für Tabelle `tbangebote`
 --
--- Erstellt am: 15. Mrz 2018 um 11:24
---
 
 DROP TABLE IF EXISTS `tbangebote`;
 CREATE TABLE IF NOT EXISTS `tbangebote` (
@@ -239,10 +275,6 @@ CREATE TABLE IF NOT EXISTS `tbangebote` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
--- RELATIONEN DER TABELLE `tbangebote`:
---
-
---
 -- Daten für Tabelle `tbangebote`
 --
 
@@ -253,8 +285,6 @@ INSERT INTO `tbangebote` (`biAngebotsID`, `biUnternehmensID`, `vaAngebots_Art`, 
 --
 -- Tabellenstruktur für Tabelle `tbort`
 --
--- Erstellt am: 11. Mrz 2018 um 11:02
---
 
 DROP TABLE IF EXISTS `tbort`;
 CREATE TABLE IF NOT EXISTS `tbort` (
@@ -262,10 +292,6 @@ CREATE TABLE IF NOT EXISTS `tbort` (
   `vaStadt` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
   PRIMARY KEY (`vaPLZ`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
-
---
--- RELATIONEN DER TABELLE `tbort`:
---
 
 --
 -- Daten für Tabelle `tbort`
@@ -4764,8 +4790,6 @@ INSERT INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65556', ' Limburg');
 --
 -- Tabellenstruktur für Tabelle `tbunternehmen`
 --
--- Erstellt am: 11. Mrz 2018 um 11:02
---
 
 DROP TABLE IF EXISTS `tbunternehmen`;
 CREATE TABLE IF NOT EXISTS `tbunternehmen` (
@@ -4778,24 +4802,19 @@ CREATE TABLE IF NOT EXISTS `tbunternehmen` (
   `vaBranche` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
   PRIMARY KEY (`biUnternehmensID`),
   KEY `vaPLZ` (`vaPLZ`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
-
---
--- RELATIONEN DER TABELLE `tbunternehmen`:
---
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
 -- Daten für Tabelle `tbunternehmen`
 --
 
-INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`) VALUES(1, 'EP', 'Die Strasssss', '0', '', NULL, 'ET');
+INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`) VALUES(1, 'EP', 'Die Strasssss', '01067', '', NULL, 'ET');
+INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`) VALUES(2, 'deactivated Frings', 'Frings Frings', '01067', 'Frings@Frings', NULL, 'IT');
 
 -- --------------------------------------------------------
 
 --
 -- Tabellenstruktur für Tabelle `tbuser`
---
--- Erstellt am: 11. Mrz 2018 um 11:02
 --
 
 DROP TABLE IF EXISTS `tbuser`;
@@ -4816,11 +4835,7 @@ CREATE TABLE IF NOT EXISTS `tbuser` (
   UNIQUE KEY `vaUsername` (`vaUsername`),
   UNIQUE KEY `vaEmail` (`vaEmail`),
   KEY `vaPLZ` (`vaPLZ`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
-
---
--- RELATIONEN DER TABELLE `tbuser`:
---
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
 -- Daten für Tabelle `tbuser`
@@ -4832,13 +4847,13 @@ INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorn
 INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(5, 'dd', 'student', 'sebastian.hauscheid@arcor.de', 'Sebastian', 'Hauscheid', 'Karnaper StraÃŸe, 6 6', '0', 'ALLE', '0000-00-00', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', '');
 INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(6, 'Deine', 'student', 'Deine@Deine', 'Deine', 'Mutter', 'ist ein', '0', 'Sonic', '0000-00-00', '230df56de4e0e1e57cf207848f995a4c3e1e17823aece47ec004daa565148ba3', '');
 INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(7, 'maggiduscher', 'student', 'maggiduscher@maggiduscher.com', 'maggiduscher', 'maggiduscher', 'maggiduscher 12', '0', 'ITA51', '0000-00-00', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', '');
+INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(8, 'Test', 'teacher', 'Test@Test', 'Test', 'Test', 'Test Test', '01067', NULL, '0000-00-00', '532eaabd9574880dbf76b9b8cc00832c20a6ec113d682299550d7a6e0f345e25', '');
+INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(9, 'TRUMP', 'deactivated teacher', 'TRUMP@TRUMP', 'TRUMP', 'TRUMP', 'TRUMP TRUMP', '0', NULL, '0000-00-00', '51d7eaf972a1bba4407c9a1546dcdf7c75a675bf84aafc2c5fdd541f9b617ecd', '');
 
 -- --------------------------------------------------------
 
 --
 -- Tabellenstruktur für Tabelle `tbuser_bewerbungen`
---
--- Erstellt am: 11. Mrz 2018 um 11:02
 --
 
 DROP TABLE IF EXISTS `tbuser_bewerbungen`;
@@ -4851,10 +4866,6 @@ CREATE TABLE IF NOT EXISTS `tbuser_bewerbungen` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
--- RELATIONEN DER TABELLE `tbuser_bewerbungen`:
---
-
---
 -- Daten für Tabelle `tbuser_bewerbungen`
 --
 
@@ -4864,8 +4875,6 @@ INSERT INTO `tbuser_bewerbungen` (`biAngebotsID`, `biUserID`, `dBewerbung`) VALU
 
 --
 -- Tabellenstruktur für Tabelle `tbuser_bewertung`
---
--- Erstellt am: 11. Mrz 2018 um 11:02
 --
 
 DROP TABLE IF EXISTS `tbuser_bewertung`;
@@ -4877,10 +4886,6 @@ CREATE TABLE IF NOT EXISTS `tbuser_bewertung` (
   KEY `biAngebotesID` (`biUnternehmensID`),
   KEY `biUserID` (`biUserID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
-
---
--- RELATIONEN DER TABELLE `tbuser_bewertung`:
---
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
