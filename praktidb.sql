@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 20. Mrz 2018 um 09:23
+-- Erstellungszeit: 23. Mrz 2018 um 23:22
 -- Server-Version: 10.1.21-MariaDB
 -- PHP-Version: 5.6.30
 
@@ -109,6 +109,13 @@ BEGIN
 SELECT DISTINCT (vaAngebots_Art) FROM tbangebote;
 END$$
 
+DROP PROCEDURE IF EXISTS `GetAllDeactivatedUnternehmen`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllDeactivatedUnternehmen` ()  NO SQL
+BEGIN
+ SELECT * FROM tbunternehmen
+ WHERE vaName LIKE '%deactivated%';
+END$$
+
 DROP PROCEDURE IF EXISTS `GetAllDeactivatedUser`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllDeactivatedUser` ()  NO SQL
 BEGIN
@@ -146,18 +153,35 @@ SELECT * FROM tbangebote
 WHERE vaAngebots_Art =Art;
 END$$
 
-DROP PROCEDURE IF EXISTS `GetDeactivatedUnternehmen`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `GetDeactivatedUnternehmen` ()  NO SQL
+DROP PROCEDURE IF EXISTS `GetBewertung`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetBewertung` (IN `UserID` BIGINT, IN `UnternehmensID` INT)  NO SQL
 BEGIN
+ SELECT * FROM tbuser_bewertung
+ WHERE biUserID = UserID
+ AND biUnternehmensID = UnternehmensID;
+END$$
 
- SELECT * FROM tbunternehmen
- WHERE vaName = '%deactivated%';
+DROP PROCEDURE IF EXISTS `GetBewertungUnternehmen`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetBewertungUnternehmen` (IN `ID` BIGINT)  NO SQL
+BEGIN
+ SELECT b.*, u.vaUsername FROM tbuser_bewertung b
+ JOIN tbUser u
+ ON(u.biUserID = b.biUserID)
+ WHERE biUnternehmensID = ID;
 END$$
 
 DROP PROCEDURE IF EXISTS `GetKlasse`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetKlasse` (IN `Klasse` VARCHAR(50))  BEGIN
 SELECT * FROM tbuser
 WHERE vaKlasse = Klasse;
+END$$
+
+DROP PROCEDURE IF EXISTS `GetMittelwertBewertung`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetMittelwertBewertung` (IN `ID` BIGINT)  NO SQL
+BEGIN
+ SELECT AVG(iPunkte) FROM tbuser_bewertung
+ WHERE biUnternehmensID = ID;
+
 END$$
 
 DROP PROCEDURE IF EXISTS `GetStadt`$$
@@ -219,7 +243,8 @@ DROP PROCEDURE IF EXISTS `UpdateStatusUnternehmen`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateStatusUnternehmen` (IN `ID` BIGINT, IN `Name` VARCHAR(50))  NO SQL
 BEGIN
  UPDATE tbunternehmen
- SET vaName = Name;
+ SET vaName = SUBSTRING(vaName,12)
+ WHERE biUnternehmensID = ID;
 END$$
 
 DROP PROCEDURE IF EXISTS `UpdateText`$$
@@ -4802,14 +4827,17 @@ CREATE TABLE IF NOT EXISTS `tbunternehmen` (
   `vaBranche` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
   PRIMARY KEY (`biUnternehmensID`),
   KEY `vaPLZ` (`vaPLZ`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
 -- Daten für Tabelle `tbunternehmen`
 --
 
 INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`) VALUES(1, 'EP', 'Die Strasssss', '01067', '', NULL, 'ET');
-INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`) VALUES(2, 'deactivated Frings', 'Frings Frings', '01067', 'Frings@Frings', NULL, 'IT');
+INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`) VALUES(2, '', 'Frings Frings', '01067', 'Frings@Frings', NULL, 'IT');
+INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`) VALUES(3, ' USA', 'UpdateStatusUnternehmen UpdateStatusUnternehmen', '0', 'UpdateStatusUnternehmen@UpdateStatusUnternehmen', NULL, 'UpdateStatusUnternehmen');
+INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`) VALUES(6, ' Frima', 'Frima Frima', '0', 'Frima@Frima', NULL, 'Frima');
+INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`) VALUES(7, ' Ger', 'Ger v', '0', 'Ger@Ger', NULL, 'Ger');
 
 -- --------------------------------------------------------
 
@@ -4835,7 +4863,7 @@ CREATE TABLE IF NOT EXISTS `tbuser` (
   UNIQUE KEY `vaUsername` (`vaUsername`),
   UNIQUE KEY `vaEmail` (`vaEmail`),
   KEY `vaPLZ` (`vaPLZ`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
 -- Daten für Tabelle `tbuser`
@@ -4848,7 +4876,10 @@ INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorn
 INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(6, 'Deine', 'student', 'Deine@Deine', 'Deine', 'Mutter', 'ist ein', '0', 'Sonic', '0000-00-00', '230df56de4e0e1e57cf207848f995a4c3e1e17823aece47ec004daa565148ba3', '');
 INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(7, 'maggiduscher', 'student', 'maggiduscher@maggiduscher.com', 'maggiduscher', 'maggiduscher', 'maggiduscher 12', '0', 'ITA51', '0000-00-00', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', '');
 INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(8, 'Test', 'teacher', 'Test@Test', 'Test', 'Test', 'Test Test', '01067', NULL, '0000-00-00', '532eaabd9574880dbf76b9b8cc00832c20a6ec113d682299550d7a6e0f345e25', '');
-INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(9, 'TRUMP', 'deactivated teacher', 'TRUMP@TRUMP', 'TRUMP', 'TRUMP', 'TRUMP TRUMP', '0', NULL, '0000-00-00', '51d7eaf972a1bba4407c9a1546dcdf7c75a675bf84aafc2c5fdd541f9b617ecd', '');
+INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(9, 'TRUMP', 'teacher', 'TRUMP@TRUMP', 'TRUMP', 'TRUMP', 'TRUMP TRUMP', '0', NULL, '0000-00-00', '51d7eaf972a1bba4407c9a1546dcdf7c75a675bf84aafc2c5fdd541f9b617ecd', '');
+INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(10, 'Name', 'teacher', 'Name@Name', 'Name', 'Name', 'Name Name', '0', NULL, '0000-00-00', 'dcd1d5223f73b3a965c07e3ff5dbee3eedcfedb806686a05b9b3868a2c3d6d50', '');
+INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(12, '1', 'teacher', '1@1', '1', '1', '1 1', '0', NULL, '0000-00-00', '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b', '');
+INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(15, 'Lehrer', 'teacher', 'Lehrer@Lehrer', 'Lehrer', 'Lehrer', 'Lehrer Lehrer', '0', NULL, '0000-00-00', '2c0004247db2e335c34565cdb82bb431da76b68dc409164c2b0dcbc499052892', '');
 
 -- --------------------------------------------------------
 
@@ -4886,6 +4917,12 @@ CREATE TABLE IF NOT EXISTS `tbuser_bewertung` (
   KEY `biAngebotesID` (`biUnternehmensID`),
   KEY `biUserID` (`biUserID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+
+--
+-- Daten für Tabelle `tbuser_bewertung`
+--
+
+INSERT INTO `tbuser_bewertung` (`biUnternehmensID`, `biUserID`, `iPunkte`, `vaText`) VALUES(1, 1, 10, 'Super duper');
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
