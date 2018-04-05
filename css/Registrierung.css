@@ -7,7 +7,7 @@
 }
 
 
-#main input{
+#main input:not([type="submit"]), #main select{
 	
 	margin: 12px 7px 7px 7px;
 	
@@ -25,8 +25,14 @@ form div{
 	
 }
 
-for div input, form div label{
+form div *{
 	
 	display: table-cell;
+	
+}
+
+form div select {
+	
+	width: 46%;
 	
 }

@@ -1,0 +1,39 @@
+#offers, th, td {
+	
+	padding: 14px;
+	text-align: center;
+	border-bottom: 1px solid #AAA;
+}
+
+tr:nth-child(even):not(:first-child){
+	
+	background-color: #4D4D58;
+	
+}
+
+tr:hover:not(:first-child){
+	
+	background-color: #3F3F4A;
+	
+}
+
+tr:not(:nth-child(1)) td:first-child{
+	
+	text-decoration: none;
+
+	
+}
+
+#offers{
+	
+	border-collapse: collapse;
+	
+}
+
+tr:not(:first-child) td{
+	
+	padding-left: 7px;
+	
+}
+
+

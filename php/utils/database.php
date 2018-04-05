@@ -15,8 +15,6 @@
     {
         $connection = databaseConnect();
         $sqlresult = $connection->query($query);
-        echo "<br/>";
-        echo "<br/>";
         if($sqlresult === false)
         {
             if(!$mute) { CreateError("Fehlerhafte SQL Anfrage: ".$connection->error."."); }

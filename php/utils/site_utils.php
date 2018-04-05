@@ -12,11 +12,11 @@
     {
 
 		echo "<div id=\"nav\">"
-				."<div id=\"nav-item\"> <a href=\"#\">Starseite </a> </div>"
-				."<div id=\"nav-item\"> <a href=\"#\">Placeholder1 </a> </div>"
+				."<div id=\"nav-item\"> <a href=\"/PraktiDB/php/overview/\">Starseite </a> </div>"
+				."<div id=\"nav-item\"> <a href=\"/PraktiDB/php/profiles/user/?id=".$_SESSION['id']."\">Profil </a> </div>"
 				."<div id=\"nav-item\"> <a href=\"#\">Placeholder2 </a> </div>"
 				."<div id=\"nav-item\"> <a href=\"#\">Placeholder3 </a> </div>"
-				."<div id=\"nav-item\"> <a href=\"#\">Placeholder4 </a> </div>"
+				."<div id=\"nav-item\"> <a href=\"/PraktiDB/php/login/\">Logout </a> </div>"
 			."</div>\n";
 
 

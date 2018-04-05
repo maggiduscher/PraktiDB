@@ -49,7 +49,7 @@
 
 					<div id="submit">
 						<label> </label>
-						<input id="submit" name="submit" type="submit" value="Log mich hart rein!"/>
+						<input id="submit" name="submit" type="submit" value="Einloggen"/>
 					</div>
                 </form>
             </div>

@@ -1,10 +1,44 @@
 <?php
 	include_once "../profile_utils.php";
 	include_once "../../utils/site_utils.php";
+	include_once "../../utils/database.php";
 	IsLoggedIn("../");
         $userdata = array();
         $userdata = GetUserData($_GET['id']);
         //$userort = GetUserOrt($userdata['vaPLZ']);
+		
+		if(isset($_POST['submit']) && isset($_POST['profile_info'])){
+		
+			$SQLQuery = "Call UpdateText(".$_GET['id'].", '".$_POST['profile_info']."');";
+			databaseQuery($SQLQuery);
+		
+		}
+		
+		if(isset($_POST['submit']) && isset($_FILES['upload']) && is_uploaded_file($_FILES['upload']['tmp_name'])){
+		
+			if (file_exists("../../../img/".$_SESSION['id'].".png")) {
+					unlink("../../../img/".$_SESSION['id'].".png");
+				}
+				
+			$fileExtension =  strtolower(pathinfo($_FILES["upload"]["name"],PATHINFO_EXTENSION));
+				
+			if( $fileExtension != "jpg" && $fileExtension != "png" && $fileExtension != "jpeg"){
+				
+				CreateWarning("Es dürfen nur Bilder mit einer der folgenden Endungen hochgeladen werden: jpg, jpeg, png");
+				
+			}else{
+				
+				if (file_exists("../../../img/".$_SESSION['id'].".png")) {
+					unlink("../../../img/".$_SESSION['id'].".png");
+				}
+				
+				if(!move_uploaded_file($_FILES["upload"]["tmp_name"], "../../../img/".$_SESSION['id'].".png")) CreateError("Upload fehlgeschlagen");
+				$_GET['uploaded'] = true;
+			} 
+			
+		}else if (isset($_POST['submit']) && isset($_FILES['upload']) && !is_uploaded_file($_FILES['upload']['tmp_name'])){
+			$_GET['uploaded'] = false;
+		}
 	
 ?>
 <html>
@@ -18,14 +52,26 @@
     ?>
     <body>
         <?php
-            CreateNav();
+		CreateNav();
             if(isset($_GET['id']))
             {
              $alter = date_diff(date_create(date("Y-m-d")),date_create($userdata['dGeburtsjahr']));
 			 echo "<div id='main'>"
 			. "<h1>Profil von ".$userdata['vaUsername']."</h1>"
 			. "<div id='profile'>"
-				. "<div id='profile_pic'><img src='/PraktiDB/img/".$userdata['biUserID'].".png' alt='Profilbild'/></div>"
+				."<form method=\"POST\" enctype=\"multipart/form-data\">";				
+				if(isset($_POST['submit']) & !isset($_GET['uploaded'])) {
+					echo "<div id='profile_pic'><img class='edit' src='/PraktiDB/img/";
+					if(file_exists("../../../img/".$userdata['biUserID'].".png"))echo $userdata['biUserID'];
+					else echo "default";
+					echo ".png' alt='Profilbild'/>"
+					. "<input type='file' name='upload' id='upload'/>";
+				}else{ echo "<div id='profile_pic'><img src='/PraktiDB/img/";
+					if(file_exists("../../../img/".$userdata['biUserID'].".png"))echo $userdata['biUserID'];
+					else echo "default";
+					echo ".png' alt='Profilbild'/>";
+				}
+				echo "</div>"
 				. "<div id='profile_row'>"
 					. "<div id='profile_data'> Name: </div><div id='profile_data'>".ucwords($userdata['vaVorname'], "-")." ".ucfirst($userdata['vaNachname'])."<br/>"
 					. $userdata['vaUserRole']."</div>"
@@ -41,10 +87,21 @@
 				. "</div>"
 				. "<div id='profile_row'>"
 					. "<div id='profile_data'> Klasse: </div><div id='profile_data'>".strtoupper($userdata['vaKlasse'])."</div> <br/>"
-				. "</div>"
-				. "<div id='profile_row'>"
-					. "<div id='profile_data'> &Uuml;ber mich: </div><div id='profile_data'>".strtoupper($userdata['tText'])."</div> <br/>"
-				. "</div>"
+				. "</div>";
+				if(isset($_POST['submit']) && !isset($_POST['profile_info'])){
+					echo "<div id='profile_row'>"
+					. "<div id='profile_data' class='text'> &Uuml;ber mich: </div><textarea id='profile_data' name='profile_info'>".$userdata['tText']."</textarea> <br/>"
+				. "</div>";
+					$_GET['edited'] = true;
+				}else{
+					echo "<div id='profile_row'>"
+					. "<div id='profile_data'> &Uuml;ber mich: </div><div id='profile_data'>".$userdata['tText']."</div> <br/>"
+				. "</div>";
+				}
+				echo "<div id='profile_row'>";
+				if($_GET['id'] == $_SESSION['id'])	echo "<div id='profile_data'> </div><div id='profile_data'> <input type='submit' name='submit' value='Ändern' /> </div> <br/>";
+				echo "</div>"
+				. "</form>"
 			. "</div>";
             }
         ?>

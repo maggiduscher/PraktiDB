@@ -1,25 +1,33 @@
 <?php
     include_once "../utils/site_utils.php";
+    include_once "admin_utils.php";
     include_once "../utils/database.php";
     IsLoggedIn();
-    $connection = databaseConnect();
-    $sqlcommand = "CALL GetAllUnternehmen();";
+    IsRole("admin");
 ?>
 <html>
     <head>
-		<?php
-			CreateHead("AdminTools - Unternehmens Liste");
-		?>
+        <?php
+            CreateHead("AdminTools - Unternehmens Liste");
+        ?>
     </head>
     <body>
-		<?php
-			CreateNav();
-		?>
+        <?php
+            if(isset($_GET['fail']))
+            {
+                CreateError("Diese Aktion kann nicht durchgeführt werden! Versuchen Sie es erneut und vergewissern sie sich das Sie die richtigen Daten eingegeben haben! Sollte das Problem weiterhin bestehen wenden Sie sich an einen Admin!");
+            }else if(isset($_GET['succ']))
+            {
+                CreateWarning("Aktion erfolgreich durchgeführt!");
+            }
+            CreateNav();    
+        ?>
     <h1>Admin Kontrollraum</h1>
         <div id="content">
+            <a href="companyEdit.php?new">Neue Frima hinzufügen</a>
             <div id="company_list">
                 <?php
-                    $sqlresult = $connection->query($sqlcommand);
+                    $sqlresult = databaseQuery("CALL GetAllUnternehmen();");
                     if($sqlresult === false)
                     {
                         CreateError("Fehlerhafte SQL Anfrage: ".$connection->error.".");
@@ -28,8 +36,8 @@
                         foreach ($sqlresult as $wag)
                         {
                             echo "<div id='entry'><div id='entry_name'>".$wag['vaName']."</div></div>"
-                                    . "<div id='entry_delete'><a href='userEdit?delete=".$wag['biUnternehmensID']."'><img alt='delete'/></a></div>"
-                                    . "<div id='entry_edit'><a href='userEdit?edit=".$wag['biUnternehmensID']."'><img alt='edit'/></a></div></div>";
+                                    . "<div id='entry_delete'><a href='companyEdit.php?delete=".$wag['biUnternehmensID']."'><img alt='delete'/></a></div>"
+                                    . "<div id='entry_edit'><a href='companyEdit.php?edit=".$wag['biUnternehmensID']."'><img alt='edit'/></a></div></div>";
                         }
                     }
                 ?>

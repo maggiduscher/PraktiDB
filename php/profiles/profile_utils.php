@@ -5,7 +5,6 @@
     function GetUserData($id)
     {
         $sqlresult = databaseQuery("CALL GetUser(".$id.")");
-        $output = $sqlresult->fetch_array();
 		
 		if($sqlresult !== false || $sqlresult->num_rows != 0){
 			
@@ -27,7 +26,6 @@
 				default:
 					break;
 			}
-		
         return $output;
 		}
 	}

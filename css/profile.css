@@ -6,18 +6,26 @@
 
 #profile_pic{
 	
-	position:absolute;
-	right: 32.5%;
-	top: 29%;
+	float: right;
 	
 }
 
-#profile_pic img{
+#profile_pic img {
 	
 	width: 100px;
 	height: 137px;
+    padding-left: 4%;
 	
 }
+
+#profile_pic img.edit {
+	
+	width: 100px;
+	height: 137px;
+    padding-left: 1%;
+	
+}
+
 
 #profile_row{
 	
@@ -31,8 +39,26 @@
 	padding: 7px 7px 7px 0px;
 }
 
+#profile_data.text{
+
+	vertical-align: top;
+
+}
+
 #profile_row #profile_data:nth-child(2){
 	
 	padding: 17px 0px 17px 17px;
+	word-wrap: break-word;
+	word-break: break-all;
+	width: 250px;
+	
+}
+
+textarea{
+	
+	margin-left: 17px;
+	resize: none;
+	width: 250px;
+	height: 150px;
 	
 }

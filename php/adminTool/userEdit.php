@@ -40,7 +40,6 @@
         $sqlresult = databaseQuery("CALL DeleteUser(".$_GET['delete'].");");
         if($sqlresult != null)
         {
-            echo CreateWarning("Benutzer wurde gelöscht");
             header("location: ../adminTool/userList.php?succ");
         }else
         {
