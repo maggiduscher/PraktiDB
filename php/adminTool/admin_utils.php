@@ -23,6 +23,7 @@
         return $output;
     }
     //Offer
+
     function generateAddFormOffer()
     {
         $sqlresult = databaseQuery("CALL GetAllUnternehmen()");
@@ -77,7 +78,7 @@
         ."<select name='ort' id='ort'>";
         foreach ($places as $place) 
         {   
-           echo "<option value='".$place[0]."'";if($companydata['vaPLZ']==$place[0])echo "selected"; echo">".$place[0]." ".$place[1]."</option>";
+           echo "<option value='".$place[0]."'";if($companydata['vaPLZ']==$place[0])echo "selected"; echo">".$place[1]." ".$place[0]."</option>";
         }
         echo "</select><br/>"
         ."<label for='address'>Adresse: </label>"
@@ -103,7 +104,7 @@
         ."<select name='ort' id='ort'>";
         foreach ($places as $place) 
         {   
-           echo "<option value='".$place[0]."'>".$place[0]." ".$place[1]."</option>";
+           echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
         }
         echo "</select><br/>"
         ."<label for='address'>Adresse: </label>"
@@ -130,7 +131,7 @@
         ."<select name='ort' id='ort'>";
         foreach ($places as $place) 
         {   
-           echo "<option value='".$place[0]."'";if($userdata['vaPLZ']==$place[0])echo "selected"; echo">".$place[0]." ".$place[1]."</option>";
+           echo "<option value='".$place[0]."'";if($userdata['vaPLZ']==$place[0])echo "selected"; echo">".$place[1]." ".$place[0]."</option>";
         }
         echo "</select><br/>"
         ."<label for='address'>Adresse: </label>"
@@ -168,7 +169,7 @@
         ."<select name='ort' id='ort'>";
         foreach ($places as $place) 
         {   
-           echo "<option value='".$place[0]."'>".$place[0]." ".$place[1]."</option>";
+           echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
         }
         echo "</select><br/>"
         ."<label for='address'>Adresse: </label>"

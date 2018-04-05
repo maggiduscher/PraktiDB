@@ -39,6 +39,8 @@
 		}else if (isset($_POST['submit']) && isset($_FILES['upload']) && !is_uploaded_file($_FILES['upload']['tmp_name'])){
 			$_GET['uploaded'] = false;
 		}
+		
+        $letzteBewerbung = GetLastApplication($_GET['id']);
 	
 ?>
 <html>
@@ -98,6 +100,12 @@
 					. "<div id='profile_data'> &Uuml;ber mich: </div><div id='profile_data'>".$userdata['tText']."</div> <br/>"
 				. "</div>";
 				}
+				if(isRole("teacher")){ 
+					echo "<div id='profile_row'>"
+						. "<div id='profile_data'> Letzte Bewerbung: </div><div id='profile_data'>".$letzteBewerbung->format('d.m.y')." </div> <br/>"
+					. "</div>";
+				}
+				
 				echo "<div id='profile_row'>";
 				if($_GET['id'] == $_SESSION['id'])	echo "<div id='profile_data'> </div><div id='profile_data'> <input type='submit' name='submit' value='Ändern' /> </div> <br/>";
 				echo "</div>"

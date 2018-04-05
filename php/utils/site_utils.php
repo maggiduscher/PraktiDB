@@ -44,15 +44,36 @@
 
     }
     
-    function IsRole($role)
+    function AllowedRolesOnly($roles)
     {
-        if($_SESSION['role']!=$role)
+        $allowed = false;
+        foreach ($roles as $role)
+        {
+            if($_SESSION['role']==$role)
+            {
+                $allowed = true;
+                break;
+            }
+        }
+        if($allowed === false)
         {
             CreateError("Du nix Zugriff opfa!");
             die();
         }
     }
     
+    function IsRole($role)
+    {
+        if($_SESSION['role']== $role)
+        {
+            return true;
+        }else
+        {
+            return false;
+        }
+    }
+
+
     function CreateError($msg)
     {
         echo "<div id='error_box'>".$msg."</div>";

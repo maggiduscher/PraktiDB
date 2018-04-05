@@ -3,7 +3,8 @@
     include_once "admin_utils.php";
     include_once "../utils/database.php";
     IsLoggedIn();
-    IsRole("admin");
+    AllowedRolesOnly(array("admin"));
+
     if(isset($_POST['submitEdit']))
     {
         $sqlresult = databaseQuery("CALL UpdateUnternehmen(".$_POST['userID'].",'".$_POST['desc']."','".$_POST['address']."','".$_POST['branche']."','".$_POST['email']."','".$_POST['ort']."','".$_POST['name']."');");

@@ -1,0 +1,702 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<modelStoreModel xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/SimpleShapesModel" xmlns:dm9="http://schemas.microsoft.com/dsltools/UseCaseModel"
+  dslVersion="1.0.0.0"
+  Id="8caa0ff5-a529-461b-a4e8-2d9a60b4d194"
+  name="ParkWeb" xmlns="http://schemas.microsoft.com/dsltools/ModelStore">
+  <profileInstances>
+    <packageHasProfileInstances
+      Id="0caec977-1f8c-4ba3-a7db-8cc9ad9cc73b">
+      <profileInstance
+        Id="e34d544e-0fea-4ed6-ac5e-1b74119ac791"
+        name="StandardProfileL2" />
+    </packageHasProfileInstances>
+    <packageHasProfileInstances
+      Id="29349502-908c-4fda-9054-c48619c59ed0">
+      <profileInstance
+        Id="532ea607-fb19-44b8-8502-3351b05452be"
+        name="StandardProfileL3" />
+    </packageHasProfileInstances>
+  </profileInstances>
+  <packagedElements>
+    <packageHasNamedElement>
+      <useCase
+        Id="e18438c9-7e59-4923-8fc7-d443a63c596a"
+        name="UseCase1"
+        isAbstract="false"
+        isLeaf="false" />
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <subsystem
+        Id="6a5b6096-32fb-4096-b655-e68151f89295"
+        name="Website"
+        isAbstract="false"
+        isLeaf="false"
+        isActiveClass="false" />
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <actor
+        Id="0ae06857-5cc4-4b6f-968d-27f640e74ab8"
+        name="Schüler"
+        isAbstract="false"
+        isLeaf="false">
+        <targetEnds>
+          <association
+            Id="5df6d047-5f9f-4f54-8382-9b80a97293f7"
+            isDerived="false"
+            sourceEndRoleName="Schüler"
+            targetEndRoleName="Unternehmen Anschauen"
+            isLeaf="false"
+            isAbstract="false">
+            <useCaseMoniker
+              Id="dc4783f8-b5d3-4a21-9110-96ee52e6a28d"
+              LastKnownName="Unternehmen Anschauen"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="7f70747d-2795-4a39-bd8f-b6b1bd5d9eb2"
+                  name="Schüler"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="6de93753-2874-4635-a0a4-2a21bbd50053"
+                  name="Unternehmen Anschauen"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+          <association
+            Id="2e643a20-0ca3-4bd5-8040-15c055cf7d1e"
+            isDerived="false"
+            sourceEndRoleName="Schüler"
+            targetEndRoleName="Bewertung Schreiben"
+            isLeaf="false"
+            isAbstract="false">
+            <useCaseMoniker
+              Id="115035bb-d219-46f6-b420-c2688699e1ad"
+              LastKnownName="Bewertung Schreiben"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="5c9aeb2f-2b5e-492c-b4eb-ac754250f3f0"
+                  name="Schüler"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="94f9ca43-eb5f-4a5b-8d88-1af145fa0198"
+                  name="Bewertung Schreiben"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+        </targetEnds>
+      </actor>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <actor
+        Id="5577fe20-67d7-4515-87fc-952e80851229"
+        name="Lehrer"
+        isAbstract="false"
+        isLeaf="false">
+        <targetEnds>
+          <association
+            Id="f15c11ef-6419-4fce-8751-516ee18e9734"
+            isDerived="false"
+            sourceEndRoleName="Lehrer"
+            targetEndRoleName="Bewertung Schreiben"
+            isLeaf="false"
+            isAbstract="false">
+            <useCaseMoniker
+              Id="115035bb-d219-46f6-b420-c2688699e1ad"
+              LastKnownName="Bewertung Schreiben"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="301bf40d-fb30-4e39-94a9-cf239d2a6c89"
+                  name="Lehrer"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="bc4c3ed3-d7e3-4206-8406-d996933a0959"
+                  name="Bewertung Schreiben"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+          <association
+            Id="9348e3df-f171-4ed4-998e-59cba389c577"
+            isDerived="false"
+            sourceEndRoleName="Lehrer"
+            targetEndRoleName="Sieht wer sich wo und wann beworben hat"
+            isLeaf="false"
+            isAbstract="false">
+            <useCaseMoniker
+              Id="c831d8a5-4b23-4c42-a39d-af9e316ae55b"
+              LastKnownName="Sieht wer sich wo und wann beworben hat"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="815e84d6-e105-4b37-b2c3-4428abacc189"
+                  name="Lehrer"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="22f111b5-78ec-4cbc-a912-24a0bb1c1b5d"
+                  name="Sieht wer sich wo und wann beworben hat"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+        </targetEnds>
+      </actor>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <actor
+        Id="ceb53c27-fabf-4fd2-bdb9-14d7ea0efc52"
+        name="Unternehmen"
+        isAbstract="false"
+        isLeaf="false">
+        <targetEnds>
+          <association
+            Id="0b1aa8ad-9ce7-4165-9192-378c501a8e55"
+            isDerived="false"
+            sourceEndRoleName="Unternehmen"
+            targetEndRoleName="Anzeigen Erstellen"
+            isLeaf="false"
+            isAbstract="false">
+            <useCaseMoniker
+              Id="cd88b16a-6059-44f8-a653-38182839b1d0"
+              LastKnownName="Anzeigen Erstellen"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="064c4c7a-b300-403e-948d-5afa640a78e0"
+                  name="Unternehmen"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="4a2cb8a9-95a2-46bc-b103-ae57655c9e30"
+                  name="Anzeigen Erstellen"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+        </targetEnds>
+      </actor>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase
+        Id="dc4783f8-b5d3-4a21-9110-96ee52e6a28d"
+        name="Unternehmen Anschauen"
+        isAbstract="false"
+        isLeaf="false">
+        <subjects>
+          <subsystemMoniker
+            Id="6a5b6096-32fb-4096-b655-e68151f89295"
+            LastKnownName="Website"
+            LastKnownLocation="ParkWeb.uml" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase
+        Id="c1672dd0-d408-47bc-af69-9a83ed2c718a"
+        name="Bewerben"
+        isAbstract="false"
+        isLeaf="false">
+        <targetEnds>
+          <association
+            Id="cdfa40ac-c573-4a3e-bdc0-e9ffe1d2c19b"
+            isDerived="false"
+            sourceEndRoleName="Bewerben"
+            targetEndRoleName="Schüler"
+            isLeaf="false"
+            isAbstract="false">
+            <actorMoniker
+              Id="0ae06857-5cc4-4b6f-968d-27f640e74ab8"
+              LastKnownName="Schüler"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="a82a39ed-8a67-40b7-90e0-28b5b4aa453d"
+                  name="Bewerben"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="7b1739b7-6d19-49a0-8262-b95f718c39dc"
+                  name="Schüler"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+          <association
+            Id="5045bdbd-59e2-4be5-b89d-732cc385942d"
+            isDerived="false"
+            sourceEndRoleName="Bewerben"
+            targetEndRoleName="Unternehmen"
+            isLeaf="false"
+            isAbstract="false">
+            <actorMoniker
+              Id="ceb53c27-fabf-4fd2-bdb9-14d7ea0efc52"
+              LastKnownName="Unternehmen"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="f27c5b50-5043-4e33-a27e-2d7dc0b179d6"
+                  name="Bewerben"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="e684a06c-054c-4727-8dc9-77bfdff7bfcc"
+                  name="Unternehmen"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+        </targetEnds>
+        <additions>
+          <include
+            Id="cfbf91cb-5f9b-4faa-af0c-4dfe29d568f8">
+            <useCaseMoniker
+              Id="ea140b04-6ba5-465c-9b0f-a51b149c21bc"
+              LastKnownName="Eintrag in DB"
+              LastKnownLocation="ParkWeb.uml" />
+          </include>
+          <include
+            Id="388449c2-4702-4d62-928f-bae673482194">
+            <useCaseMoniker
+              Id="7d093f48-4037-41a8-802d-1afb611f3a65"
+              LastKnownName="UseCase2"
+              LastKnownLocation="ParkWeb.uml" />
+          </include>
+        </additions>
+        <subjects>
+          <subsystemMoniker
+            Id="6a5b6096-32fb-4096-b655-e68151f89295"
+            LastKnownName="Website"
+            LastKnownLocation="ParkWeb.uml" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase
+        Id="ea140b04-6ba5-465c-9b0f-a51b149c21bc"
+        name="Eintrag in DB"
+        isAbstract="false"
+        isLeaf="false">
+        <subjects>
+          <subsystemMoniker
+            Id="6a5b6096-32fb-4096-b655-e68151f89295"
+            LastKnownName="Website"
+            LastKnownLocation="ParkWeb.uml" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase
+        Id="7d093f48-4037-41a8-802d-1afb611f3a65"
+        name="UseCase2"
+        isAbstract="false"
+        isLeaf="false" />
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase
+        Id="115035bb-d219-46f6-b420-c2688699e1ad"
+        name="Bewertung Schreiben"
+        isAbstract="false"
+        isLeaf="false">
+        <subjects>
+          <subsystemMoniker
+            Id="6a5b6096-32fb-4096-b655-e68151f89295"
+            LastKnownName="Website"
+            LastKnownLocation="ParkWeb.uml" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase
+        Id="cd88b16a-6059-44f8-a653-38182839b1d0"
+        name="Anzeigen Erstellen"
+        isAbstract="false"
+        isLeaf="false">
+        <subjects>
+          <subsystemMoniker
+            Id="6a5b6096-32fb-4096-b655-e68151f89295"
+            LastKnownName="Website"
+            LastKnownLocation="ParkWeb.uml" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase
+        Id="218d9b9e-aeb2-4b1b-9c3c-7714b3d1b654"
+        name="Unternehmen Eintragen"
+        isAbstract="false"
+        isLeaf="false">
+        <targetEnds>
+          <association
+            Id="145f8990-14a3-4e4d-a417-0c6f445e8529"
+            isDerived="false"
+            sourceEndRoleName="Unternehmen Eintragen"
+            targetEndRoleName="Lehrer"
+            isLeaf="false"
+            isAbstract="false">
+            <actorMoniker
+              Id="5577fe20-67d7-4515-87fc-952e80851229"
+              LastKnownName="Lehrer"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="6a806a79-2288-4b8e-8482-5b3d556c6376"
+                  name="Unternehmen Eintragen"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="65e4a648-7f0a-475d-a170-5f2fe4685cde"
+                  name="Lehrer"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+        </targetEnds>
+        <subjects>
+          <subsystemMoniker
+            Id="6a5b6096-32fb-4096-b655-e68151f89295"
+            LastKnownName="Website"
+            LastKnownLocation="ParkWeb.uml" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase
+        Id="165a6b0c-2122-413c-8666-1577ea0be4b3"
+        name="Unternehmen Bearbeiten"
+        isAbstract="false"
+        isLeaf="false">
+        <targetEnds>
+          <association
+            Id="ccdf9011-061d-4ebe-b427-1cd9a878b38f"
+            isDerived="false"
+            sourceEndRoleName="Unternehmen Bearbeiten"
+            targetEndRoleName="Unternehmen"
+            isLeaf="false"
+            isAbstract="false">
+            <actorMoniker
+              Id="ceb53c27-fabf-4fd2-bdb9-14d7ea0efc52"
+              LastKnownName="Unternehmen"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="ea910fb9-b11a-47c6-b231-a020c50ba23f"
+                  name="Unternehmen Bearbeiten"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="64b8ab23-c752-4997-a7ed-87c0a9015d4b"
+                  name="Unternehmen"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+          <association
+            Id="f39c6b56-9354-41a2-9b71-90e0c8b305a2"
+            isDerived="false"
+            sourceEndRoleName="Unternehmen Bearbeiten"
+            targetEndRoleName="Lehrer"
+            isLeaf="false"
+            isAbstract="false">
+            <actorMoniker
+              Id="5577fe20-67d7-4515-87fc-952e80851229"
+              LastKnownName="Lehrer"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="fcfb03c2-05dd-4d7c-adff-1267a865954f"
+                  name="Unternehmen Bearbeiten"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="670e671e-8d0f-42f6-b005-ac423fa7c522"
+                  name="Lehrer"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+        </targetEnds>
+        <subjects>
+          <subsystemMoniker
+            Id="6a5b6096-32fb-4096-b655-e68151f89295"
+            LastKnownName="Website"
+            LastKnownLocation="ParkWeb.uml" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <actor
+        Id="409bc079-b2fc-4446-907b-4fd035338fd0"
+        name="Admin"
+        isAbstract="false"
+        isLeaf="false">
+        <generalsInternal>
+          <generalization
+            Id="a7f62a04-8f56-4523-98ba-d55c3039da16"
+            isSubstitutable="false">
+            <actorMoniker
+              Id="5577fe20-67d7-4515-87fc-952e80851229"
+              LastKnownName="Lehrer"
+              LastKnownLocation="ParkWeb.uml" />
+          </generalization>
+        </generalsInternal>
+        <targetEnds>
+          <association
+            Id="46752915-5530-4aec-8300-efda485abb17"
+            isDerived="false"
+            sourceEndRoleName="Admin"
+            targetEndRoleName="Schüler/Lehere/Unternehmen Freischalten"
+            isLeaf="false"
+            isAbstract="false">
+            <useCaseMoniker
+              Id="9967f6df-6750-4d38-a156-3b18884cf350"
+              LastKnownName="Schüler&amp;Lehere&amp;Unternehmen Freischalten/ Löschen"
+              LastKnownLocation="ParkWeb.uml" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="67aa04f6-48f3-487f-be63-87d89cf3039d"
+                  name="Admin"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd
+                  Id="018e9fc4-4955-4360-ab1d-5e3ffb834199"
+                  name="Schüler/Lehere/Unternehmen Freischalten"
+                  isLeaf="false"
+                  isStatic="false"
+                  isReadOnly="false"
+                  isDerived="false"
+                  isDerivedUnion="false"
+                  aggregation="None"
+                  isComposite="false"
+                  isNavigableOwned="false" />
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+          </association>
+        </targetEnds>
+      </actor>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase
+        Id="9967f6df-6750-4d38-a156-3b18884cf350"
+        name="Schüler&amp;Lehere&amp;Unternehmen Freischalten/ Löschen"
+        isAbstract="false"
+        isLeaf="false">
+        <subjects>
+          <subsystemMoniker
+            Id="6a5b6096-32fb-4096-b655-e68151f89295"
+            LastKnownName="Website"
+            LastKnownLocation="ParkWeb.uml" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase
+        Id="c831d8a5-4b23-4c42-a39d-af9e316ae55b"
+        name="Sieht wer sich wo und wann beworben hat"
+        isAbstract="false"
+        isLeaf="false">
+        <subjects>
+          <subsystemMoniker
+            Id="6a5b6096-32fb-4096-b655-e68151f89295"
+            LastKnownName="Website"
+            LastKnownLocation="ParkWeb.uml" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+  </packagedElements>
+  <primitiveType
+    Id="220a3521-e091-4221-bae9-3ef9018e845c"
+    name="Integer"
+    isAbstract="false"
+    isLeaf="false" />
+  <primitiveType
+    Id="8943dc84-709e-4f62-b15a-a3273aa6f165"
+    name="Boolean"
+    isAbstract="false"
+    isLeaf="false" />
+  <primitiveType
+    Id="59259974-6d55-42c6-b7bd-763d77ac8ef9"
+    name="String"
+    isAbstract="false"
+    isLeaf="false" />
+  <primitiveType
+    Id="3ab42e7d-4969-445a-b209-471f5cb8209c"
+    name="UnlimitedNatural"
+    isAbstract="false"
+    isLeaf="false" />
+</modelStoreModel>

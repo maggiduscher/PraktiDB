@@ -13,14 +13,16 @@
             <?php
                 if(isset($_POST['submit']))
                 {
-                    if($_COOKIE['type'] == "student")
+					echo $_COOKIE['type'];
+                    if($_COOKIE['type'] == "student" || $_COOKIE['type'] == "teacher" || $_COOKIE['type'] == "company")
                     {
+						
                         registerUser($_COOKIE['type']);
                         unset($_COOKIE['type']);
                         setcookie('type', null, -1, '/');
                     }else
                     {
-                        //TODO: ask admin
+                       
                     }
                 }
                 if(isset($_POST['submitSelect']))

@@ -3,7 +3,8 @@
     include_once "admin_utils.php";
     include_once "../utils/database.php";
     IsLoggedIn();
-    IsRole("admin");
+    AllowedRolesOnly(array("admin"));
+
     if(isset($_POST['submitAdd']))
     {
         $sqlresult = databaseQuery("CALL AddAngebot(".$_POST['company'].", STR_TO_DATE('".$_POST['start']."','%d.%m.%Y'), STR_TO_DATE('".$_POST['end']."','%d.%m.%Y'),'".$_POST['type']."',".$_POST['anz'].");");

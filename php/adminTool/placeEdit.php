@@ -3,7 +3,7 @@
     include_once "admin_utils.php";
     include_once "../utils/database.php";
     IsLoggedIn();
-    IsRole("admin");
+    AllowedRolesOnly(array("admin"));
     if(isset ($_POST['submitAdd']))
     {
         $sqlresult = databaseQuery("CALL AddOrt('".$_POST['plz']."', '".$_POST['ort']."');");

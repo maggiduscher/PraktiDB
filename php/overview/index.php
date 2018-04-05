@@ -18,7 +18,9 @@
             }
 		
 	}
-        $sqlresult2 = databaseQuery("SELECT *,AVG(iPunkte) FROM tbangebote "
+	
+        $sqlresult2 = databaseQuery("SELECT *,AVG(IFNULL(iPunkte,0)) FROM tbangebote "
+
                 . "JOIN tbunternehmen USING(biUnternehmensID) "
                 . "JOIN tbort USING(vaPLZ)"
                 . "LEFT OUTER JOIN tbuser_bewertung USING(biUnternehmensID) "
@@ -31,15 +33,15 @@
         {
             $start = new DateTime($value['dAnfangsdatum']);
             $end = new DateTime($value['dEnddatum']);
+            $data[$counter]['id'] = $value['biUnternehmensID'];
             $data[$counter]['name'] = $value['vaName'];
             $data[$counter]['branche'] = $value['vaAngebots_Art'];
             $data[$counter]['zeitraum'] = "Vom ".($start->format("d.m.Y"))." bis ".($end->format("d.m.Y"));
             $data[$counter]['frei'] = ($value['iGesuchte_Bewerber']-$value['iAngenommene_Bewerber']);
-            //$data[$counter]['entfernung'] = (GetDistanceFromGoogleAPI(GetAddressFromUser($_SESSION['id']),$value['vaAdresse']." ".$value['vaPLZ']." ".$value['vaStadt']));
+
+            $data[$counter]['entfernung'] = (GetDistanceFromGoogleAPI(GetAddressFromUser($_SESSION['id']),$value['vaAdresse']." ".$value['vaPLZ']." ".$value['vaStadt']));
             $data[$counter]['punkte'] = $value['iPunkte'];
             $counter = $counter+1;
-            echo "<br/>";
-            echo "<br/>";
             
         }
         if(isset($_POST['ok']))
@@ -66,7 +68,6 @@
             ?>
 
     </head>
-
     <body>
         <script type="text/javascript" src="../../js/filter.js"> </script>
         <?php CreateNav(); ?>
@@ -76,7 +77,7 @@
                 <select id="branche" name="branche">
                     <option value="default" selected>---</option>
                     <?php
-                    $sqlresult1 = databaseQuery("CALL GetAllBranchen()");
+                    $sqlresult1 = databaseQuery("CALL GetAllAngebotsArt()");
                     if($sqlresult1 !== false)
                     {
                         foreach ($sqlresult1 as $value) 
@@ -85,6 +86,7 @@
                         }
                     }
                     ?>
+					
                 </select>
                 <select id="entfernung" name="entfernung">
                         <option value="default" selected>---</option>
@@ -114,16 +116,26 @@
                         $output=preg_replace('/\./','',$output);
                         $output=preg_replace('/m/','',$output);
                         $output=preg_replace('/\s+/','',$output);
+<<<<<<< HEAD
                         echo $output;
                         if((!isset($_POST['ok']))||($_POST['entfernung']=="default")||(isset($_POST['ok'])&&($_POST['entfernung']!="default")&&$output<=$_POST['entfernung']))
                         {
                             echo "<tr><td>".$value['name']."</td><td>".$value['branche']."</td><td>".$value['zeitraum']."</td><td>".$value['frei']."</td><td>".$value['entfernung']."</td><td>".$value['punkte']."</td></tr>";
+=======
+                        if((!isset($_POST['ok']))||($_POST['entfernung']=="default")||(isset($_POST['ok'])&&($_POST['entfernung']!="default")&&$output<=$_POST['entfernung']))
+                        {
+                            echo "<tr><td><a href='../profiles/company/?id=".$value['id']."'>".$value['name']."</a></td><td>".$value['branche']."</td><td>".$value['zeitraum']."</td><td>".$value['frei']."</td><td>".$value['entfernung']."</td><td>".$value['punkte']."</td></tr>";
+>>>>>>> 02f9152cd6e2969b449b6c97c7f4b69443f5329a
                         }
                         
                     }
                 ?>
             </table>
+<<<<<<< HEAD
 		</div>
+=======
+        </div>
+>>>>>>> 02f9152cd6e2969b449b6c97c7f4b69443f5329a
         <script>	
             document.getElementById("branche").style.display = "none";
             document.getElementById("entfernung").style.display = "none";

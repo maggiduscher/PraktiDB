@@ -1,0 +1,37 @@
+#main{
+	
+	border-top-left-radius: 7px;
+	border-top-right-radius: 7px;
+  text-align: center;
+}
+
+form {
+	
+	display: table;
+	margin:auto;
+}
+
+form div{
+	
+	display: table-row;
+	margin: 7px 7px 7px 0px;
+	
+}
+
+form label{
+	
+	display: table-cell;
+	
+}
+
+form input{
+	
+	display: table-cell
+	
+}
+
+form div label{
+
+  padding: 7px 7px 7px 0px;
+
+}
