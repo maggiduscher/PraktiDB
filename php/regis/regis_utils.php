@@ -59,7 +59,7 @@
                                         ."<select name='ort' id='ort'>";
 					foreach ($places as $place) 
 					{   
-						echo "<option value='".$place[0]."'>d".$place[1]." ".$place[0]."</option>";
+						echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
 					}
 					echo "</select><br/>"
 				."</div>"
