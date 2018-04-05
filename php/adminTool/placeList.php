@@ -3,7 +3,7 @@
     include_once "admin_utils.php";
     include_once "../utils/database.php";
     IsLoggedIn();
-    IsRole("admin");
+    AllowedRolesOnly(array("admin"));
 ?>
 <html>
     <head>
@@ -24,7 +24,7 @@
         ?>
         <h1>AdminTools - Ort Liste</h1>
         <div id="content">
-            <a href="placeEdit.php?new">Neuen Ort erstellen</a>
+            <a href="placeEdit.php?new"><img src="../../img/icons/add.png" alt="edit"/>Neuen Ort erstellen</a>
             <div id="user_list">
                 <?php
                     $sqlresult = databaseQuery("CALL GetAllOrt();");
@@ -33,8 +33,8 @@
                         foreach ($sqlresult as $wag)
                         {
                             echo "<div id='entry'><div id='entry_name'>".$wag['vaPLZ']." ".$wag['vaStadt']."</div>"
-                                . "<div id='entry_delete'><a href='placeEdit.php?delete=".$wag['vaPLZ']."'><img alt='delete'/></a></div>"
-                                . "<div id='entry_edit'><a href='placeEdit.php?edit=".$wag['vaPLZ']."'><img alt='edit'/></a></div></div>";
+                                . "<div id='entry_delete'><a href='placeEdit.php?delete=".$wag['vaPLZ']."'><img src='../../img/icons/delete.png' alt='delete'/>löschen</a></div>"
+                                . "<div id='entry_edit'><a href='placeEdit.php?edit=".$wag['vaPLZ']."'><img src='../../img/icons/edit.png' alt='edit'/>beartbeiten</a></div></div>";
                         }
                     }
                 ?>

@@ -19,10 +19,10 @@
             }
 		
 	}
-        $sqlresult2 = databaseQuery("SELECT *,AVG(iPunkte) FROM tbangebote "
+        $sqlresult2 = databaseQuery("SELECT *,AVG(IFNULL(iPunkte,0)) FROM tbangebote "
                 . "JOIN tbunternehmen USING(biUnternehmensID) "
                 . "JOIN tbort USING(vaPLZ)"
-                . "JOIN tbuser_bewertung USING(biUnternehmensID) "
+                . "LEFT OUTER JOIN tbuser_bewertung USING(biUnternehmensID) "
                 . $sqlextention
                 . "GROUP BY biUnternehmensID"
                 . $sqlextention2
@@ -32,6 +32,7 @@
         {
             $start = new DateTime($value['dAnfangsdatum']);
             $end = new DateTime($value['dEnddatum']);
+            $data[$counter]['id'] = $value['biUnternehmensID'];
             $data[$counter]['name'] = $value['vaName'];
             $data[$counter]['branche'] = $value['vaAngebots_Art'];
             $data[$counter]['zeitraum'] = "Vom ".($start->format("d.m.Y"))." bis ".($end->format("d.m.Y"));
@@ -39,10 +40,6 @@
             $data[$counter]['entfernung'] = (GetDistanceFromGoogleAPI(GetAddressFromUser($_SESSION['id']),$value['vaAdresse']." ".$value['vaPLZ']." ".$value['vaStadt']));
             $data[$counter]['punkte'] = $value['iPunkte'];
             $counter = $counter+1;
-            var_dump($data);
-            echo "<br/>";
-            var_dump($counter);
-            echo "<br/>";
             
         }
         if(isset($_POST['ok']))
@@ -80,7 +77,8 @@
                 <select id="branche" name="branche">
                     <option value="default" selected>---</option>
                     <?php
-                    $sqlresult1 = databaseQuery("CALL GetAllBranchen()");
+                    $sqlresult1 = databaseQuery("CALL GetAllAngebotsArt()");
+                    var_dump($sqlresult1);
                     if($sqlresult1 !== false)
                     {
                         foreach ($sqlresult1 as $value) 
@@ -103,7 +101,6 @@
                 </select>
                 <input id="ok" name="ok" type="submit" value="OK" />			
             </form>
-        </div>
             <table id="offers">
                 <tr>
                     <th>Unternehmen</th>
@@ -117,19 +114,18 @@
                     foreach ($data as $value) 
                     {
                         $output = preg_replace('/k/','00', $value['entfernung']);
-                        var_dump($output);
                         $output=preg_replace('/\./','',$output);
                         $output=preg_replace('/m/','',$output);
                         $output=preg_replace('/\s+/','',$output);
-                        echo $output;
                         if((!isset($_POST['ok']))||($_POST['entfernung']=="default")||(isset($_POST['ok'])&&($_POST['entfernung']!="default")&&$output<=$_POST['entfernung']))
                         {
-                            echo "<tr><td>".$value['name']."</td><td>".$value['branche']."</td><td>".$value['zeitraum']."</td><td>".$value['frei']."</td><td>".$value['entfernung']."</td><td>".$value['punkte']."</td></tr>";
+                            echo "<tr><td><a href='../profiles/company/?id=".$value['id']."'>".$value['name']."</a></td><td>".$value['branche']."</td><td>".$value['zeitraum']."</td><td>".$value['frei']."</td><td>".$value['entfernung']."</td><td>".$value['punkte']."</td></tr>";
                         }
                         
                     }
                 ?>
             </table>
+        </div>
         <script>	
             document.getElementById("branche").style.display = "none";
             document.getElementById("entfernung").style.display = "none";

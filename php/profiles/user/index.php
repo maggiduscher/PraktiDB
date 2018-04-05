@@ -5,6 +5,7 @@
         $userdata = array();
         $userdata = GetUserData($_GET['id']);
         //$userort = GetUserOrt($userdata['vaPLZ']);
+        $letzteBewerbung = GetLastApplication($_GET['id']);
 	
 ?>
 <html>
@@ -44,8 +45,12 @@
 				. "</div>"
 				. "<div id='profile_row'>"
 					. "<div id='profile_data'> &Uuml;ber mich: </div><div id='profile_data'>".strtoupper($userdata['tText'])."</div> <br/>"
-				. "</div>"
-			. "</div>";
+				. "</div>";
+                                if(isRole("teacher"))
+                                    echo "<div id='profile_row'>"
+					. "<div id='profile_data'> Letzte Bewerbung: </div><div id='profile_data'>".$letzteBewerbung->format('d.m.y')." </div> <br/>"
+                                        . "</div>";
+			echo "</div>";
             }
         ?>
         <?php

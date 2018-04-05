@@ -16,7 +16,7 @@
 					."<select name='ort' id='ort'>";
 					foreach ($places as $place) 
 					{   
-						echo "<option value='".$place[0]."'>".$place[0]." ".$place[1]."</option>";
+						echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
 					}
 					echo "</select><br/>"
 				."</div>"
@@ -44,9 +44,7 @@
 	function generateFormStudent()
 	{
             $sqlresult = databaseQuery("CALL GetAllOrt()");
-            var_dump($sqlresult);
             $places = $sqlresult->fetch_all();
-            var_dump($places);
             echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"
 				."<div id='vorname'>"
 					."<label for='vorname'>Vorname: </label>"
@@ -61,7 +59,7 @@
                                         ."<select name='ort' id='ort'>";
 					foreach ($places as $place) 
 					{   
-						echo "<option value='".$place[0]."'>".$place[0]." ".$place[1]."</option>";
+						echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
 					}
 					echo "</select><br/>"
 				."</div>"
@@ -116,7 +114,7 @@
 					."<select name='ort' id='ort'>";
 					foreach ($places as $place) 
 					{   
-						echo "<option value='".$place[0]."'>".$place[0]." ".$place[1]."</option>";
+						echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
 					}
 					echo "</select><br/>"
 				."</div>"

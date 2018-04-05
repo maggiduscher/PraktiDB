@@ -1,10 +1,21 @@
 <?php
     function GetDistanceFromGoogleAPI($origin,$dest)
     {
-        
+        $handle = fopen("../../APIkey.txt", "r");
+        if ($handle) 
+        {
+            while (($line = fgets($handle)) !== false) 
+            {
+                $key = $line;
+            }
+            fclose($handle);
+        } else 
+        {
+            echo "Can't get GoogleAPIKey from server!";
+        } 
         $origin = str_replace(' ', '+', $origin);
         $dest = str_replace(' ', '+', $dest);
-        $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=".$origin."&destinations=".$dest."&key=AIzaSyA6ZN48baQWt7Rs9RZAOaXxKrLrdqY5gl0";
+        $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=".$origin."&destinations=".$dest."&key=".$key;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -23,6 +34,9 @@
         {
             $distance = $jsonarray->rows[0]->elements[0]->distance->text;
             return $distance;
+        }else
+        {
+            return "N/A";
         }
     }
     
