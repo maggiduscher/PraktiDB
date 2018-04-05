@@ -16,7 +16,7 @@
 					."<select name='ort' id='ort'>";
 					foreach ($places as $place) 
 					{   
-						echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
+						echo "<option value='".$place[0]."'>".$place[0]." ".$place[1]."</option>";
 					}
 					echo "</select><br/>"
 				."</div>"
@@ -42,10 +42,10 @@
             setcookie("type", "company",0);
 	}
 	function generateFormStudent()
-	{
-            $sqlresult = databaseQuery("CALL GetAllOrt()");
+	{ 	                     
+			$sqlresult = databaseQuery("CALL GetAllOrt()");
             $places = $sqlresult->fetch_all();
-            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"
+			echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>"
 				."<div id='vorname'>"
 					."<label for='vorname'>Vorname: </label>"
 					."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
@@ -54,14 +54,12 @@
 					."<label for='nachname'>Nachname: </label>"
 					."<input type='text' name='nachname' id='nachname' placeholder='Nachname'/><br/>"
 				."</div>"
-				."<div id='ort'>"
+		    	."<div id='ort'>"
 					."<label for='ort'>Ort: </label>"
-
-					."<select name='ort' id='ort'>";
-
+                                        ."<select name='ort' id='ort'>";
 					foreach ($places as $place) 
 					{   
-						echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
+						echo "<option value='".$place[0]."'>d".$place[1]." ".$place[0]."</option>";
 					}
 					echo "</select><br/>"
 				."</div>"
@@ -78,10 +76,6 @@
 					."<label for='branche'>Geburtstag: </label>"
 					."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
 				."</div>"
-				."<div id='klasse'>"
-					."<label for='klasse'>Klasse: </label>"
-					."<input type='text' name='klasse' id='klasse' placeholder='Klasse'/><br/>"
-				."</div>"
 				."<div id='username'>"
 					."<label for='username'>Username: </label>"
 					."<input type='text' name='username' id='username' placeholder='Username'/><br/>"
@@ -94,9 +88,12 @@
 					."<label for='password'>Passwort:</label>"
 					."<input type='password' name='password' id='password' placeholder='Passwort'/><br/>"
 				."</div>"
-				."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
+				."<div id='senden'>"
+					."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
+				."</div>"
             ."</form>";
-            setcookie("type", "student",0);
+           setcookie("type", "student",0);
+		  
 	}
 	function generateFormTeacher()
 	{
@@ -191,7 +188,7 @@
                 }
             }else if($type == "company")
             {
-                $Data[] = $_POST['name'];
+                $Data[] = 'deactivated '.$_POST['name'];
 				$Data[] = $adress;
 				$Data[] = $_POST['ort'];
 				$Data[] = $_POST['branche'];
@@ -213,7 +210,7 @@
 				$Data[] = hash("sha256",$_POST['password']);
 				$Data[] = $_POST['ort'];
 				$Data[] = $_POST['username'];
-				$Data[] = 'teacher';
+				$Data[] = 'deactivated teacher';
 				$Data[] = $_POST['vorname'];
 				                				
                 $sqlresult = databasePreparedStatement("CALL AddUser(?,?,?,?,?,?,?,?,?,?);",$Data);

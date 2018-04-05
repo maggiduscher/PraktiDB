@@ -11,13 +11,13 @@
     <body>
         <div id="main">
             <?php
+                echo $_COOKIE["type"];
                 if(isset($_POST['submit']))
                 {
-					echo $_COOKIE['type'];
                     if($_COOKIE['type'] == "student" || $_COOKIE['type'] == "teacher" || $_COOKIE['type'] == "company")
                     {
-						
-                        registerUser($_COOKIE['type']);
+
+						//registerUser($_COOKIE['type']);
                         unset($_COOKIE['type']);
                         setcookie('type', null, -1, '/');
                     }else
@@ -27,21 +27,13 @@
                 }
                 if(isset($_POST['submitSelect']))
                 {
+					unset($_COOKIE['type']);
+                    setcookie('type', null, -1, '/');
                     $type = $_POST['type'];
-                    if($type == "student")
-                    {
-                        generateFormStudent();
-                    }else if($type == "company")
-                    {
-                        generateFormCompany();
-                    }else if($type == "teacher")
-                    {
-                        generateFormTeacher();
-                    }else
-                    {
-                        echo "Man! Hast du toll gemacht!";
-                    }
-
+                    if($type == "student"){ generateFormStudent();}
+					else if($type == "company"){generateFormCompany();}
+					else if($type == "teacher"){generateFormTeacher();}
+					else{ echo "Man! Hast du toll gemacht!";}
                 }else
                 {
                     generateFormSelect();
