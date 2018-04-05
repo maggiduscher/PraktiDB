@@ -116,33 +116,21 @@
                         $output=preg_replace('/\./','',$output);
                         $output=preg_replace('/m/','',$output);
                         $output=preg_replace('/\s+/','',$output);
-<<<<<<< HEAD
-                        echo $output;
-                        if((!isset($_POST['ok']))||($_POST['entfernung']=="default")||(isset($_POST['ok'])&&($_POST['entfernung']!="default")&&$output<=$_POST['entfernung']))
-                        {
-                            echo "<tr><td>".$value['name']."</td><td>".$value['branche']."</td><td>".$value['zeitraum']."</td><td>".$value['frei']."</td><td>".$value['entfernung']."</td><td>".$value['punkte']."</td></tr>";
-=======
                         if((!isset($_POST['ok']))||($_POST['entfernung']=="default")||(isset($_POST['ok'])&&($_POST['entfernung']!="default")&&$output<=$_POST['entfernung']))
                         {
                             echo "<tr><td><a href='../profiles/company/?id=".$value['id']."'>".$value['name']."</a></td><td>".$value['branche']."</td><td>".$value['zeitraum']."</td><td>".$value['frei']."</td><td>".$value['entfernung']."</td><td>".$value['punkte']."</td></tr>";
->>>>>>> 02f9152cd6e2969b449b6c97c7f4b69443f5329a
                         }
                         
                     }
                 ?>
             </table>
-<<<<<<< HEAD
-		</div>
-=======
         </div>
->>>>>>> 02f9152cd6e2969b449b6c97c7f4b69443f5329a
         <script>	
             document.getElementById("branche").style.display = "none";
             document.getElementById("entfernung").style.display = "none";
             document.getElementById("sortby").style.display = "none";
             document.getElementById("ok").style.display = "none";
             var show = true;
-        </script>
-        
+        </script>       
     </body>
 </html>
