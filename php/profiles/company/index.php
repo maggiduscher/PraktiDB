@@ -49,9 +49,9 @@
                         . "<span id='h2'>Punkte: ".$rating['iPunkte']." von 100.</span><br/>"
                         . $rating['vaText']."<br/>";
                 }
+                GenerateGoogleMap(GetAddressFromUser($_SESSION['id']),str_replace(' ', '+',$companydata['vaAdresse']." ".$companydata['vaPLZ']." ".$companydata['vaStadt']));
                 echo "<a href='rating.php?id=".$_GET['id']."'>Bewertungen zu diesem Unternehmnen ansehen!</a>";
                 echo "</div>";
-                    
             }
         ?>
         <?php

@@ -13,10 +13,8 @@
             <?php
                 if(isset($_POST['submit']))
                 {
-					echo $_COOKIE['type'];
                     if($_COOKIE['type'] == "student" || $_COOKIE['type'] == "teacher" || $_COOKIE['type'] == "company")
                     {
-						
                         registerUser($_COOKIE['type']);
                         unset($_COOKIE['type']);
                         setcookie('type', null, -1, '/');

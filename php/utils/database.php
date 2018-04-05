@@ -25,9 +25,10 @@
             return $sqlresult;
         }
     }
-	function databasePreparedStatement($StoredProcedure,$Data,$mute = false)
+    
+    function databasePreparedStatement($StoredProcedure,$Data,$mute = false)
     {
-	    $servername = "localhost";
+	$servername = "localhost";
         $username = "root";
         $password = "";
         $databasename = "PraktiDB";

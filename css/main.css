@@ -139,3 +139,8 @@ svg{
 	background-color: #FFF;
 	
 }
+
+div#map{
+    width: 80%;
+    height: 100%;
+}

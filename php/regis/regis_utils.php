@@ -4,152 +4,153 @@
 	
 	function generateFormCompany()
 	{
-            $sqlresult = databaseQuery("CALL GetAllOrt()");
-            $places = $sqlresult->fetch_array();
-            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>"
-				."<div id='Name'>"
-					."<label for='Name'>Name: </label>"
-					."<input type='text' name='name' id='name' placeholder='Name'/><br/>"
-				."</div>"
-				."<div id='ort'>"
-					."<label for='ort'>Ort: </label>"
-					."<select name='ort' id='ort'>";
-					foreach ($places as $place) 
-					{   
-						echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
-					}
-					echo "</select><br/>"
-				."</div>"
-				."<div id='plz'>"
-					."<label for='plz'>PLZ: </label>"
-					."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
-				."</div>"
-				."<div id='str'>"
-					."<label for='str'>Stra&szlig;e: </label>"
-					."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
-					."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
-				."</div>"
-				."<div id='email'>"
-					."<label for='email'>Email:</label>"
-					."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
-				."</div>"
-				."<div id='branche'>"
-					."<label for='branche'>Branche: </label>"
-					."<input type='text' name='branche' id='branche' placeholder='Branche'/><br/>"
-					."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
-				."</div>"
-			."</form>";
             setcookie("type", "company",0);
+            $sqlresult = databaseQuery("CALL GetAllOrt()");
+            $places = $sqlresult->fetch_all();
+            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>"
+                    ."<div id='name'>"
+                            ."<label for='name'>Name: </label>"
+                            ."<input type='text' name='name' id='name' placeholder='Name'/><br/>"
+                    ."</div>"
+                    ."<div id='ort'>"
+                            ."<label for='ort'>Ort: </label>"
+                            ."<select name='ort' id='ort'>";
+                            foreach ($places as $place) 
+                            {   
+                                    echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
+                            }
+                            echo "</select><br/>"
+                    ."</div>"
+                    ."<div id='plz'>"
+                            ."<label for='plz'>PLZ: </label>"
+                            ."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
+                    ."</div>"
+                    ."<div id='str'>"
+                            ."<label for='str'>Stra&szlig;e: </label>"
+                            ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
+                            ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
+                    ."</div>"
+                    ."<div id='email'>"
+                            ."<label for='email'>Email:</label>"
+                            ."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
+                    ."</div>"
+                    ."<div id='branche'>"
+                            ."<label for='branche'>Branche: </label>"
+                            ."<input type='text' name='branche' id='branche' placeholder='Branche'/><br/>"
+                            ."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
+                    ."</div>"
+                ."</form>";
 	}
 	function generateFormStudent()
 	{
+            setcookie("type", "student",0);
             $sqlresult = databaseQuery("CALL GetAllOrt()");
             $places = $sqlresult->fetch_all();
             echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"
-				."<div id='vorname'>"
-					."<label for='vorname'>Vorname: </label>"
-					."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
-				."</div>"
-				."<div id='nachname'>"
-					."<label for='nachname'>Nachname: </label>"
-					."<input type='text' name='nachname' id='nachname' placeholder='Nachname'/><br/>"
-				."</div>"
-				."<div id='ort'>"
-					."<label for='ort'>Ort: </label>"
+                    ."<div id='vorname'>"
+                            ."<label for='vorname'>Vorname: </label>"
+                            ."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
+                    ."</div>"
+                    ."<div id='nachname'>"
+                            ."<label for='nachname'>Nachname: </label>"
+                            ."<input type='text' name='nachname' id='nachname' placeholder='Nachname'/><br/>"
+                    ."</div>"
+                    ."<div id='ort'>"
+                            ."<label for='ort'>Ort: </label>"
 
-					."<select name='ort' id='ort'>";
+                            ."<select name='ort' id='ort'>";
 
-					foreach ($places as $place) 
-					{   
-						echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
-					}
-					echo "</select><br/>"
-				."</div>"
-				."<div id='plz'>"
-					."<label for='plz'>PLZ: </label>"
-					."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
-				."</div>"
-				."<div id='str'>"
-					."<label for='str'>Stra&szlig;e: </label>"
-					."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
-					."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
-				."</div>"
-				."<div id='branche'>"
-					."<label for='branche'>Geburtstag: </label>"
-					."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
-				."</div>"
-				."<div id='klasse'>"
-					."<label for='klasse'>Klasse: </label>"
-					."<input type='text' name='klasse' id='klasse' placeholder='Klasse'/><br/>"
-				."</div>"
-				."<div id='username'>"
-					."<label for='username'>Username: </label>"
-					."<input type='text' name='username' id='username' placeholder='Username'/><br/>"
-				."</div>"
-				."<div id='email'>"
-					."<label for='email'>Email:</label>"
-					."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
-				."</div>"
-				."<div id='password'>"
-					."<label for='password'>Passwort:</label>"
-					."<input type='password' name='password' id='password' placeholder='Passwort'/><br/>"
-				."</div>"
-				."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
-            ."</form>";
-            setcookie("type", "student",0);
+                            foreach ($places as $place) 
+                            {   
+                                    echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
+                            }
+                            echo "</select><br/>"
+                    ."</div>"
+                    ."<div id='plz'>"
+                            ."<label for='plz'>PLZ: </label>"
+                            ."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
+                    ."</div>"
+                    ."<div id='str'>"
+                            ."<label for='str'>Stra&szlig;e: </label>"
+                            ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
+                            ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
+                    ."</div>"
+                    ."<div id='branche'>"
+                            ."<label for='branche'>Geburtstag: </label>"
+                            ."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
+                    ."</div>"
+                    ."<div id='klasse'>"
+                            ."<label for='klasse'>Klasse: </label>"
+                            ."<input type='text' name='klasse' id='klasse' placeholder='Klasse'/><br/>"
+                    ."</div>"
+                    ."<div id='username'>"
+                            ."<label for='username'>Username: </label>"
+                            ."<input type='text' name='username' id='username' placeholder='Username'/><br/>"
+                    ."</div>"
+                    ."<div id='email'>"
+                            ."<label for='email'>Email:</label>"
+                            ."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
+                    ."</div>"
+                    ."<div id='password'>"
+                            ."<label for='password'>Passwort:</label>"
+                            ."<input type='password' name='password' id='password' placeholder='Passwort'/><br/>"
+                    ."</div>"
+                    ."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
+                ."</form>";
 	}
 	function generateFormTeacher()
 	{
-            $sqlresult = databaseQuery("CALL GetAllOrt()");
-            $places = $sqlresult->fetch_array();
-			echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>"
-				."<div id='vorname'>"
-					."<label for='vorname'>Vorname: </label>"
-					."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
-				."</div>"
-				."<div id='nachname'>"
-					."<label for='nachname'>Nachname: </label>"
-					."<input type='text' name='nachname' id='nachname' placeholder='Nachname'/><br/>"
-				."</div>"
-				."<div id='ort'>"
-					."<label for='ort'>Ort: </label>"
-					."<select name='ort' id='ort'>";
-					foreach ($places as $place) 
-					{   
-						echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
-					}
-					echo "</select><br/>"
-				."</div>"
-				."<div id='plz'>"
-					."<label for='plz'>PLZ: </label>"
-					."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
-				."</div>"
-				."<div id='str'>"
-					."<label for='str'>Stra&szlig;e: </label>"
-					."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
-					."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
-				."</div>"
-				."<div id='branche'>"
-					."<label for='branche'>Geburtstag: </label>"
-					."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
-				."</div>"
-				."<div id='username'>"
-					."<label for='username'>Username: </label>"
-					."<input type='text' name='username' id='username' placeholder='Username'/><br/>"
-				."</div>"
-				."<div id='email'>"
-					."<label for='email'>Email:</label>"
-					."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
-				."</div>"
-				."<div id='password'>"
-					."<label for='password'>Passwort:</label>"
-					."<input type='password' name='password' id='password' placeholder='Passwort'/><br/>"
-				."</div>"
-				."<div id='senden'>"
-					."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
-				."</div>"
-            ."</form>";
             setcookie("type", "teacher",0);
+            $sqlresult = databaseQuery("CALL GetAllOrt()");
+            $places = $sqlresult->fetch_all();
+            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>"
+                    ."<div id='vorname'>"
+                            ."<label for='vorname'>Vorname: </label>"
+                            ."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
+                    ."</div>"
+                    ."<div id='nachname'>"
+                            ."<label for='nachname'>Nachname: </label>"
+                            ."<input type='text' name='nachname' id='nachname' placeholder='Nachname'/><br/>"
+                    ."</div>"
+                    ."<div id='ort'>"
+                            ."<label for='ort'>Ort: </label>"
+                            ."<select name='ort' id='ort'>";
+                            foreach ($places as $place) 
+                            {   
+                                    echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
+                            }
+                            echo "</select><br/>"
+                    ."</div>"
+                    ."<div id='plz'>"
+                            ."<label for='plz'>PLZ: </label>"
+                            ."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
+                    ."</div>"
+                    ."<div id='str'>"
+                            ."<label for='str'>Stra&szlig;e: </label>"
+                            ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
+                            ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
+                    ."</div>"
+                    ."<div id='branche'>"
+                            ."<label for='branche'>Geburtstag: </label>"
+                            ."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
+                    ."</div>"
+                    ."<div id='username'>"
+                            ."<label for='username'>Username: </label>"
+                            ."<input type='text' name='username' id='username' placeholder='Username'/><br/>"
+                    ."</div>"
+                    ."<div id='email'>"
+                            ."<label for='email'>Email:</label>"
+                            ."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
+                    ."</div>"
+                    ."<div id='password'>"
+                            ."<label for='password'>Passwort:</label>"
+                            ."<input type='password' name='password' id='password' placeholder='Passwort'/><br/>"
+                    ."</div>"
+                    ."<div id='senden'>"
+                            ."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
+                    ."</div>"
+            ."</form>";
+            
 	}
 	
 	function generateFormSelect()
@@ -172,8 +173,12 @@
         $Data = array();
             if($type == "student")
             {
-                
-                $Data[] = "STR_TO_DATE('".$_POST['geburtsjahr']."','%d.%m.%Y'')";
+                if(strlen(explode('.',$_POST['geburtstag'])[2])==2){
+                    $datetime = DateTime::createFromFormat('d.m.y',$_POST['geburtstag']);
+                }else if(strlen(explode('.',$_POST['geburtstag'])[2])==4){
+                    $datetime = DateTime::createFromFormat('d.m.Y',$_POST['geburtstag']);
+                }
+                $Data[] = $datetime->format('Y-m-d');
 				$Data[] = $adress;
 				$Data[] = $_POST['email'];
 				$Data[] = $_POST['klasse'];
@@ -205,7 +210,12 @@
 				
             }else if($type == "teacher")
             {
-                $Data[] = "STR_TO_DATE('".$_POST['geburtsjahr']."','%d.%m.%Y'')";
+                if(strlen(explode('.',$_POST['geburtstag'])[2])==2){
+                    $datetime = DateTime::createFromFormat('d.m.y',$_POST['geburtstag']);
+                }else if(strlen(explode('.',$_POST['geburtstag'])[2])==4){
+                    $datetime = DateTime::createFromFormat('d.m.Y',$_POST['geburtstag']);
+                }
+                $Data[] = $datetime->format('Y-m-d');
 				$Data[] = $adress;
 				$Data[] = $_POST['email'];
 				$Data[] =  Null; //$_POST['klasse'];
