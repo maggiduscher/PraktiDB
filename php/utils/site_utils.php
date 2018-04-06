@@ -88,4 +88,5 @@
     {
         echo "<div id='warning_box'>".$msg."</div>";
     }
+
 ?>
