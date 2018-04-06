@@ -3,9 +3,9 @@
     function CreateHead($name)
     {
         echo "<title> PraktiDB - ".$name." </title>";
-        echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/main.css?v2\" />";
+        echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/main.css\" />";
 		echo "<link href=\"https://fonts.googleapis.com/css?family=Lato\" rel=\"stylesheet\" />"; 
-		if(strpos($name, "Profil") === false)echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/".$name.".css?v2\" />"; 
+		if(strpos($name, "Profil") === false)echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/".$name.".css\" />"; 
     }
 
     function CreateNav()
@@ -83,4 +83,5 @@
     {
         echo "<div id='warning_box'>".$msg."</div>";
     }
-?>
+
+	?>

@@ -25,9 +25,10 @@
             return $sqlresult;
         }
     }
-	function databasePreparedStatement($StoredProcedure,$Data,$mute = false)
+    
+    function databasePreparedStatement($StoredProcedure,$Data,$mute = false)
     {
-	    $servername = "localhost";
+	$servername = "localhost";
         $username = "root";
         $password = "";
         $databasename = "PraktiDB";
@@ -63,6 +64,14 @@
 			
 			case 5:
 			mysqli_stmt_bind_param($stmt,"sssss",$Data[0],$Data[1],$Data[2],$Data[3],$Data[4]);
+			break;
+			
+			case 6:
+			mysqli_stmt_bind_param($stmt,"ssssss",$Data[0],$Data[1],$Data[2],$Data[3],$Data[4],$Data[5]);
+			break;
+			
+			case 7:
+			mysqli_stmt_bind_param($stmt,"sssssss",$Data[0],$Data[1],$Data[2],$Data[3],$Data[4],$Data[5],$Data[6]);
 			break;
 			
 			case 8:
