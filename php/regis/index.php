@@ -11,41 +11,53 @@
     <body>
         <div id="main">
             <?php
+               $Fehler = Null;
                 if(isset($_POST['submit']))
                 {
-					echo $_COOKIE['type'];
                     if($_COOKIE['type'] == "student" || $_COOKIE['type'] == "teacher" || $_COOKIE['type'] == "company")
                     {
+						$Fehler = registerUser($_COOKIE['type']);				
 						
-                        registerUser($_COOKIE['type']);
-                        unset($_COOKIE['type']);
-                        setcookie('type', null, -1, '/');
-                    }else
-                    {
-                       
-                    }
+						if(count($Fehler)!= 0){
+							   Switch($_COOKIE['type'])
+							   {
+								   case "student":
+								    generateFormStudent($Fehler);
+								    break;
+								
+								    case "teacher":
+								    generateFormTeacher($Fehler);
+								    break;
+								
+								    case "company":
+								    generateFormCompany($Fehler);
+							     	break;
+								
+								    default:
+							     	break;
+							    }
+							}
+						else{
+							 unset($_COOKIE['type']);
+                             setcookie('type', null, -1, '/');
+						}
+						
+                    }else{Null;}
                 }
                 if(isset($_POST['submitSelect']))
                 {
+					
+					unset($_COOKIE['type']);
+                    setcookie('type', null, -1, '/');
                     $type = $_POST['type'];
-                    if($type == "student")
-                    {
-                        generateFormStudent();
-                    }else if($type == "company")
-                    {
-                        generateFormCompany();
-                    }else if($type == "teacher")
-                    {
-                        generateFormTeacher();
-                    }else
-                    {
-                        echo "Man! Hast du toll gemacht!";
-                    }
 
-                }else
-                {
-                    generateFormSelect();
+                    if($type == "student"){ generateFormStudent(array(Null));}
+					else if($type == "company"){generateFormCompany(array(Null));}
+					else if($type == "teacher"){generateFormTeacher(array(Null));}
+					
+					else{ echo "Man! Hast du toll gemacht!";}
                 }
+				else{if(!(count($Fehler)!= 0)){generateFormSelect();}}
             ?>
             <div>
                 <a href="../login/">Du hast schon einen Account? Dann logge dich hier ein!</a>
