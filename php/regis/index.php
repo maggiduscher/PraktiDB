@@ -38,11 +38,14 @@
 							    }
 							}
 						else{
-							 unset($_COOKIE['type']);
-                             setcookie('type', null, -1, '/');
+							 registerUser($_COOKIE['type']);
+                             unset($_COOKIE['type']);
+                            setcookie('type', null, -1, '/');
 						}
 						
-                    }else{Null;}
+                    }
+					else{Null;}
+
                 }
                 if(isset($_POST['submitSelect']))
                 {

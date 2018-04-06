@@ -31,6 +31,58 @@
                             ."<label for='email'>Email:</label>"
                             ."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
                     ."</div>"
+                    ."<div id='branche'>"
+                            ."<label for='branche'>Branche: </label>"
+                            ."<input type='text' name='branche' id='branche' placeholder='Branche'/><br/>"
+                            ."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
+                    ."</div>"
+                ."</form>";
+	}
+	function generateFormStudent()
+	{
+            setcookie("type", "student",0);
+            $sqlresult = databaseQuery("CALL GetAllOrt()");
+            $places = $sqlresult->fetch_all();
+            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"
+                    ."<div id='vorname'>"
+                            ."<label for='vorname'>Vorname: </label>"
+                            ."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
+                    ."</div>"
+                    ."<div id='nachname'>"
+                            ."<label for='nachname'>Nachname: </label>"
+                            ."<input type='text' name='nachname' id='nachname' placeholder='Nachname'/><br/>"
+                    ."</div>"
+                    ."<div id='ort'>"
+                            ."<label for='ort'>Ort: </label>"
+                            ."<select name='ort' id='ort'>";
+                            foreach ($places as $place) {echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";}
+                            echo "</select><br/>"
+                    ."</div>"
+                    ."<div id='plz'>"
+                            ."<label for='plz'>PLZ: </label>"
+                            ."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
+                    ."</div>"
+                    ."<div id='str'>"
+                            ."<label for='str'>Stra&szlig;e: </label>"
+                            ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
+                            ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
+                    ."</div>"
+                    ."<div id='branche'>"
+                            ."<label for='branche'>Geburtstag: </label>"
+                            ."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
+                    ."</div>"
+                    ."<div id='klasse'>"
+                            ."<label for='klasse'>Klasse: </label>"
+                            ."<input type='text' name='klasse' id='klasse' placeholder='Klasse'/><br/>"
+                    ."</div>"
+                    ."<div id='username'>"
+                            ."<label for='username'>Username: </label>"
+                            ."<input type='text' name='username' id='username' placeholder='Username'/><br/>"
+                    ."</div>"
+                    ."<div id='email'>"
+                            ."<label for='email'>Email:</label>"
+                            ."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
+                    ."</div>"
 					."<div id='Telefonnummer'>"
                             ."<label for='telefonnummer'>Telefonnummer:</label>"
                             ."<input type='Text' name='telefonnummer' id='telefonnummer' placeholder='Telefonnummer'/><br/>"
@@ -65,11 +117,8 @@
 				."</div>"
 		    	."<div id='ort'>"
 					."<label for='ort'>Ort: </label>"
-                                        ."<select name='ort' id='ort'>";
-					foreach ($places as $place) 
-					{   
-						echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
-					}
+                    ."<select name='ort' id='ort'>";
+					foreach ($places as $place) {   echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";}
 					echo "</select><br/>"
 				."</div>"
 				."<div id='plz'>"
@@ -128,10 +177,7 @@
                     ."<div id='ort'>"
                             ."<label for='ort'>Ort: </label>"
                             ."<select name='ort' id='ort'>";
-                            foreach ($places as $place) 
-                            {   
-                                    echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";
-                            }
+                            foreach ($places as $place) {   echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";}
                             echo "</select><br/>"
                     ."</div>"
                     ."<div id='plz'>"
@@ -162,8 +208,15 @@
                     ."<div id='senden'>"
                             ."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
                     ."</div>"
-            ."</form>";
+                    ."</form>"
+                    ."<div id='password'>"
+                            ."<label for='password'>Passwort:</label>"
+                            ."<input type='password' name='password' id='password' placeholder='Passwort'/><br/>"
+                    ."</div>"
+                    ."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
+                ."</form>";
 	}
+	
 	
 	function generateFormSelect()
 	{
@@ -270,7 +323,6 @@
 				    else if(strlen(explode('.',$date)[2])==4){$datetime = DateTime::createFromFormat('d.m.Y',$_POST['geburtstag']);}
                     $Data[] = $datetime->format('Y-m-d');	
 				}
-
 				$Data[] = $adress;
 				$Data[] = $_POST['email'];
 				$Data[] = $_POST['klasse'];
@@ -317,8 +369,6 @@
 				    else if(strlen(explode('.',$date)[2])==4){$datetime = DateTime::createFromFormat('d.m.Y',$_POST['geburtstag']);}
                     $Data[] = $datetime->format('Y-m-d');	
 				}
-				
-				
 				$Data[] = $adress;
 				$Data[] = $_POST['email'];
 				$Data[] =  Null; //$_POST['klasse'];
