@@ -8,6 +8,9 @@
             $sqlresult = databaseQuery("CALL GetAllOrt()");
             $places = $sqlresult->fetch_all();
             echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>"
+		       	.'<div id = "erros" > <ul>';
+                  foreach($erros as $error){echo '<li>'.$error.'</li> <br />';}
+				  echo '</ul></div>'
                     ."<div id='name'>"
                             ."<label for='name'>Name: </label>"
                             ."<input type='text' name='name' id='name' placeholder='Name'/><br/>"
@@ -31,63 +34,11 @@
                             ."<label for='email'>Email:</label>"
                             ."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
                     ."</div>"
-                    ."<div id='branche'>"
-                            ."<label for='branche'>Branche: </label>"
-                            ."<input type='text' name='branche' id='branche' placeholder='Branche'/><br/>"
-                            ."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
+					  ."<div id='telefonnummer'>"
+                            ."<label for=' telefonnummer '> Telefonnummer :</label>"
+                            ."<input type='Text' name='telefonnummer' id='telefonnummer' placeholder='Telefonnummer '/><br/>"
                     ."</div>"
-                ."</form>";
-	}
-	function generateFormStudent()
-	{
-            setcookie("type", "student",0);
-            $sqlresult = databaseQuery("CALL GetAllOrt()");
-            $places = $sqlresult->fetch_all();
-            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"
-                    ."<div id='vorname'>"
-                            ."<label for='vorname'>Vorname: </label>"
-                            ."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
-                    ."</div>"
-                    ."<div id='nachname'>"
-                            ."<label for='nachname'>Nachname: </label>"
-                            ."<input type='text' name='nachname' id='nachname' placeholder='Nachname'/><br/>"
-                    ."</div>"
-                    ."<div id='ort'>"
-                            ."<label for='ort'>Ort: </label>"
-                            ."<select name='ort' id='ort'>";
-                            foreach ($places as $place) {echo "<option value='".$place[0]."'>".$place[1]." ".$place[0]."</option>";}
-                            echo "</select><br/>"
-                    ."</div>"
-                    ."<div id='plz'>"
-                            ."<label for='plz'>PLZ: </label>"
-                            ."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
-                    ."</div>"
-                    ."<div id='str'>"
-                            ."<label for='str'>Stra&szlig;e: </label>"
-                            ."<input type='text' name='str' id='str' placeholder='Stra&szlig;e'/>"
-                            ."<input type='text' name='strNr' id='strNr' placeholder='Stra&szlig;e Nr.'/><br/>"
-                    ."</div>"
-                    ."<div id='branche'>"
-                            ."<label for='branche'>Geburtstag: </label>"
-                            ."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag'/><br/>"
-                    ."</div>"
-                    ."<div id='klasse'>"
-                            ."<label for='klasse'>Klasse: </label>"
-                            ."<input type='text' name='klasse' id='klasse' placeholder='Klasse'/><br/>"
-                    ."</div>"
-                    ."<div id='username'>"
-                            ."<label for='username'>Username: </label>"
-                            ."<input type='text' name='username' id='username' placeholder='Username'/><br/>"
-                    ."</div>"
-                    ."<div id='email'>"
-                            ."<label for='email'>Email:</label>"
-                            ."<input type='email' name='email' id='email' placeholder='Email'/><br/>"
-                    ."</div>"
-					."<div id='Telefonnummer'>"
-                            ."<label for='telefonnummer'>Telefonnummer:</label>"
-                            ."<input type='Text' name='telefonnummer' id='telefonnummer' placeholder='Telefonnummer'/><br/>"
-                    ."</div>"
-					."<div id='Webseite'>"
+					  ."<div id='webseite'>"
                             ."<label for='webseite'>Webseite:</label>"
                             ."<input type='Text' name='webseite' id='webseite' placeholder='Webseite'/><br/>"
                     ."</div>"
@@ -98,6 +49,7 @@
                     ."</div>"
                 ."</form>";
 	}
+	
 	function generateFormStudent($erros)
 	{ 	                     
 	        setcookie("type", "student",0);	
@@ -153,9 +105,7 @@
 				."<div id='senden'>"
 					."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
 				."</div>"
-            ."</form>";
-           setcookie("type", "student",0);
-		  
+            ."</form>";	  
 	}
 	function generateFormTeacher($erros)
 	{
@@ -208,12 +158,6 @@
                     ."<div id='senden'>"
                             ."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
                     ."</div>"
-                    ."</form>"
-                    ."<div id='password'>"
-                            ."<label for='password'>Passwort:</label>"
-                            ."<input type='password' name='password' id='password' placeholder='Passwort'/><br/>"
-                    ."</div>"
-                    ."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
                 ."</form>";
 	}
 	
@@ -346,19 +290,67 @@
 				
             }else if($type == "company")
             {
-                $Data[] = 'deactivated '.$_POST['name'];
+				if(empty(trim($_POST['name']))){$Data[] = " ";}
+				else{$Data[] = 'deactivated '.$_POST['name'];}
+                
 				$Data[] = $adress;
 				$Data[] = $_POST['ort'];
 				$Data[] = $_POST['branche'];
 				$Data[] = $_POST['email'];
-				$Data[] = $_POST['telefonnummer'];
+				if(preg_match('/[A-Z]/i',$_POST['telefonnummer']) == 0 ){$Data[] = $_POST['telefonnummer'];}
+				else{$Data[] = " ";}
 				$Data[] = $_POST['webseite'];
+
 				
-				$sqlresult = databasePreparedStatement("CALL AddUnternehmen(?,?,?,?,?,?,?);",$Data);
-                if ($sqlresult != null) 
-                {
-                    CreateWarning("Erfolg!");
-                }
+					for($i= 0; $i < count($Data);++$i)
+				   {
+					 if(empty(trim($Data[$i])))
+				     {
+					      switch($i)
+						  {
+							  case 0:
+							  $Fehler[] = "Sie haben keinen Namen eingegeben";
+							  break;
+							  
+							  case 1:
+							  $Fehler[] = "Sie haben keine Adress eingegeben";
+							  break;
+							  
+							  case 2:
+							  $Fehler[] = "Sie haben keine Ort eingegeben";
+							  break;
+							  
+							  case 3:
+							  $Fehler[] = "Sie haben keine Branche eingegeben";
+							  break;
+							  
+							  case 4:
+							   $Fehler[] = "Sie haben keine Email eingegeben";
+							  break;
+							  
+							  case 5:
+							  $Fehler[] = "Sie haben keine Telefonnummer eingegeben";
+							  break;
+							  
+							  case 6:
+							  $Fehler[] = "Sie haben keine Webseite eingegeben";
+							  break;
+							  
+							 
+
+							  default: 
+							  break;
+							
+						  }
+				     }
+				  }
+				
+				
+				if(count($Fehler)!= 0){return $Fehler;}
+				else{
+					$sqlresult = databasePreparedStatement("CALL AddUnternehmen(?,?,?,?,?,?,?);",$Data);
+					return Null;
+				}
 				
             }else if($type == "teacher")
             {

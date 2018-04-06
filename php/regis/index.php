@@ -29,7 +29,7 @@
 								    generateFormTeacher($Fehler);
 								    break;
 								
-								    case "company":
+								    case "company":									
 								    generateFormCompany($Fehler);
 							     	break;
 								
