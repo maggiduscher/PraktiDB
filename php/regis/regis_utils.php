@@ -44,6 +44,7 @@
 	function generateFormStudent()
 	{
             $sqlresult = databaseQuery("CALL GetAllOrt()");
+			 setcookie("type", "student",0);
             $places = $sqlresult->fetch_all();
             echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"
 				."<div id='vorname'>"
@@ -96,7 +97,7 @@
 				."</div>"
 				."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
             ."</form>";
-            setcookie("type", "student",0);
+           
 	}
 	function generateFormTeacher()
 	{
@@ -173,7 +174,7 @@
             if($type == "student")
             {
                 
-                $Data[] = "STR_TO_DATE('".$_POST['geburtsjahr']."','%d.%m.%Y'')";
+                $Data[] = "STR_TO_DATE('".$_POST['geburtstag']."','%d.%m.%Y'')";
 				$Data[] = $adress;
 				$Data[] = $_POST['email'];
 				$Data[] = $_POST['klasse'];
@@ -205,7 +206,7 @@
 				
             }else if($type == "teacher")
             {
-                $Data[] = "STR_TO_DATE('".$_POST['geburtsjahr']."','%d.%m.%Y'')";
+                $Data[] = "STR_TO_DATE('".$_POST['gerburtstag']."','%d.%m.%Y'')";
 				$Data[] = $adress;
 				$Data[] = $_POST['email'];
 				$Data[] =  Null; //$_POST['klasse'];
