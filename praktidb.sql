@@ -3,13 +3,11 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 05. Apr 2018 um 17:27
+-- Erstellungszeit: 06. Apr 2018 um 17:12
 -- Server-Version: 10.1.21-MariaDB
 -- PHP-Version: 5.6.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-SET AUTOCOMMIT = 0;
-START TRANSACTION;
 SET time_zone = "+00:00";
 
 
@@ -49,8 +47,9 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `AddOrt` (IN `PLZ` VARCHAR(50), IN `
  END$$
 
 DROP PROCEDURE IF EXISTS `AddUnternehmen`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `AddUnternehmen` (IN `Name` VARCHAR(50), IN `Adresse` VARCHAR(50), IN `PLZ` VARCHAR(50), IN `Branche` VARCHAR(50), IN `Email` VARCHAR(50))  BEGIN
-INSERT INTO tbunternehmen(vaName,vaAdresse,vaPLZ,vaBranche,vaEmail) VALUES(Name,Adresse,PLZ,Branche,Email);
+CREATE DEFINER=`root`@`localhost` PROCEDURE `AddUnternehmen` (IN `Name` VARCHAR(50), IN `Adresse` VARCHAR(50), IN `PLZ` VARCHAR(50), IN `Branche` VARCHAR(50), IN `Email` VARCHAR(50), IN `Telefonnummer` VARCHAR(50), IN `Weblinke` VARCHAR(255))  BEGIN
+INSERT INTO tbunternehmen(vaName,vaAdresse,vaPLZ,vaBranche,vaEmail,vaTelefonnummer
+                          ,vaWeblinke) VALUES(Name,Adresse,PLZ,Branche,Email,Telefonnummer,Weblinke);
 
 END$$
 
@@ -111,6 +110,16 @@ BEGIN
 SELECT DISTINCT (vaAngebots_Art) FROM tbangebote;
 END$$
 
+DROP PROCEDURE IF EXISTS `GetAllAngenommende`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllAngenommende` ()  NO SQL
+BEGIN
+ SELECT u.*,an.* FROM tbuser u JOIN tbangenommene a 
+ ON(u.biUserID = a.biUserID)
+ JOIN tbangebote an 
+ ON(an.biAngebotsID = a.biAngebotsID)
+ WHERE u.vaUserRole LIKE 'student';
+END$$
+
 DROP PROCEDURE IF EXISTS `GetAllDeactivatedUnternehmen`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllDeactivatedUnternehmen` ()  NO SQL
 BEGIN
@@ -125,6 +134,16 @@ BEGIN
  WHERE vaUserRole LIKE '%deactivated%';
 END$$
 
+DROP PROCEDURE IF EXISTS `GetAllNichtAngenommende`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllNichtAngenommende` ()  NO SQL
+BEGIN
+ SELECT u.* FROM tbuser u
+ WHERE biUserID <>(
+     SELECT biUserID FROM tbangenommene
+ )
+ AND  u.vaUserRole LIKE 'student';
+END$$
+
 DROP PROCEDURE IF EXISTS `GetAllOrt`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllOrt` ()  NO SQL
 BEGIN
@@ -134,7 +153,8 @@ END$$
 DROP PROCEDURE IF EXISTS `GetAllUnternehmen`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllUnternehmen` ()  BEGIN
 SELECT u.*,o.vaStadt FROM tbunternehmen u JOIN tbort o
-ON(u.vaPLZ = o.vaPLZ);
+ON(u.vaPLZ = o.vaPLZ)
+WHERE u.vaName NOT LIKE '%deactivated%';
 END$$
 
 DROP PROCEDURE IF EXISTS `GetAllUser`$$
@@ -207,6 +227,19 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `GetStadt` (IN `PLZ` VARCHAR(50))  N
 BEGIN
 SELECT * FROM tbort
  WHERE vaPLZ = PLZ;
+END$$
+
+DROP PROCEDURE IF EXISTS `GetTeacherForCumpany`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetTeacherForCumpany` ()  NO SQL
+BEGIN
+ SELECT us.vaUsername, un.vaName 
+ FROM tbuser us JOIN tbangenommene an 
+ ON(us.biUserID = an.biUserID)
+ JOIN tbangebote ang
+ ON(ang.biAngebotsID = an.biAngebotsID)
+ JOIN tbunternehmen un 
+ ON(un.biUnternehmensID = ang.biUnternehmensID)
+ WHERE us.vaUserRole NOT LIKE 'student';
 END$$
 
 DROP PROCEDURE IF EXISTS `GetUnternehmen`$$
@@ -304,31 +337,39 @@ DELIMITER ;
 --
 
 DROP TABLE IF EXISTS `tbangebote`;
-CREATE TABLE `tbangebote` (
-  `biAngebotsID` bigint(20) NOT NULL,
+CREATE TABLE IF NOT EXISTS `tbangebote` (
+  `biAngebotsID` bigint(20) NOT NULL AUTO_INCREMENT,
   `biUnternehmensID` bigint(20) DEFAULT NULL,
   `vaAngebots_Art` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
   `dAnfangsdatum` date DEFAULT NULL,
   `dEnddatum` date DEFAULT NULL,
   `iGesuchte_Bewerber` int(11) DEFAULT NULL,
   `iAnzahl_Bewerber` int(11) DEFAULT NULL,
-  `iAngenommene_Bewerber` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+  `iAngenommene_Bewerber` int(11) DEFAULT NULL,
+  PRIMARY KEY (`biAngebotsID`),
+  KEY `biUnternehmensID` (`biUnternehmensID`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
---
--- RELATIONEN DER TABELLE `tbangebote`:
---
-
---
--- TRUNCATE Tabelle vor dem Einfügen `tbangebote`
---
-
-TRUNCATE TABLE `tbangebote`;
 --
 -- Daten für Tabelle `tbangebote`
 --
 
-INSERT DELAYED INTO `tbangebote` (`biAngebotsID`, `biUnternehmensID`, `vaAngebots_Art`, `dAnfangsdatum`, `dEnddatum`, `iGesuchte_Bewerber`, `iAnzahl_Bewerber`, `iAngenommene_Bewerber`) VALUES(2, 1, 'IT', '2018-02-23', '2018-02-23', 5, 2, 2);
+INSERT INTO `tbangebote` (`biAngebotsID`, `biUnternehmensID`, `vaAngebots_Art`, `dAnfangsdatum`, `dEnddatum`, `iGesuchte_Bewerber`, `iAnzahl_Bewerber`, `iAngenommene_Bewerber`) VALUES
+(2, 1, 'IT', '2018-02-23', '2018-02-23', 5, 2, 2);
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `tbangenommene`
+--
+
+DROP TABLE IF EXISTS `tbangenommene`;
+CREATE TABLE IF NOT EXISTS `tbangenommene` (
+  `biUserID` bigint(20) NOT NULL,
+  `biAngebotsID` bigint(20) NOT NULL,
+  KEY `biUserID` (`biUserID`),
+  KEY `biAngebotsID` (`biAngebotsID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 -- --------------------------------------------------------
 
@@ -337,4511 +378,4506 @@ INSERT DELAYED INTO `tbangebote` (`biAngebotsID`, `biUnternehmensID`, `vaAngebot
 --
 
 DROP TABLE IF EXISTS `tbort`;
-CREATE TABLE `tbort` (
+CREATE TABLE IF NOT EXISTS `tbort` (
   `vaPLZ` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
-  `vaStadt` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL
+  `vaStadt` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
+  PRIMARY KEY (`vaPLZ`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
---
--- RELATIONEN DER TABELLE `tbort`:
---
-
---
--- TRUNCATE Tabelle vor dem Einfügen `tbort`
---
-
-TRUNCATE TABLE `tbort`;
 --
 -- Daten für Tabelle `tbort`
 --
 
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01067', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01069', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01097', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01099', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01108', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01109', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01127', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01129', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01139', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01156', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01157', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01159', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01169', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01187', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01189', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01217', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01219', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01237', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01239', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01257', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01259', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01277', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01279', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01307', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01309', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01324', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01326', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01328', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01445', ' Radebeul');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01454', ' Radeberg, Wachau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01458', ' Ottendorf-Okrilla');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01465', ' Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01468', ' Moritzburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01471', ' Radeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01477', ' Arnsdorf b. Dresden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01558', ' GroÃŸenhain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01561', ' GroÃŸenhain, Ebersbach u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01587', ' Riesa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01589', ' Riesa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01591', ' Riesa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01594', ' Riesa, Stauchitz, Hirschstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01609', ' GrÃ¶ditz, WÃ¼lknitz, RÃ¶deraue');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01612', ' NÃ¼nchritz, Glaubitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01616', ' Strehla');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01619', ' Zeithain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01623', ' Lommatzsch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01640', ' Coswig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01662', ' MeiÃŸen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01665', ' KÃ¤bschÃ¼tztal, Klipphausen, Diera-Zehren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01683', ' Nossen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01689', ' WeinbÃ¶hla');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01705', ' Freital');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01723', ' Wilsdruff');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01728', ' Bannewitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01731', ' Kreischa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01734', ' Rabenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01737', ' Tharandt u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01738', ' Dorfhain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01744', ' Dippoldiswalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01762', ' Hartmannsdorf-Reichenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01768', ' GlashÃ¼tte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01773', ' Altenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01774', ' Klingenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01776', ' Hermsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01778', ' Altenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01796', ' Pirna, Struppen, Dohma');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01809', ' Heidenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01814', ' Bad Schandau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01816', ' Bad Gottleuba-BerggieÃŸhÃ¼bel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01819', ' Bahretal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01824', ' KÃ¶nigstein/SÃ¤chs.Schw.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01825', ' Liebstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01829', ' Wehlen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01833', ' Stolpen, DÃ¼rrrÃ¶hrsdorf-Dittersbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01844', ' Neustadt i. Sa.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01847', ' Lohmen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01848', ' Hohnstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01855', ' Sebnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01877', ' Bischofswerda u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01896', ' Pulsnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01900', ' GroÃŸrÃ¶hrsdorf, Bretnig-Hauswalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01904', ' Neukirch/Lausitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01906', ' Burkau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01909', ' GroÃŸharthau, Frankenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01917', ' Kamenz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01920', ' Elstra, OÃŸling u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01936', ' KÃ¶nigsbrÃ¼ck u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01945', ' Ruhland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01968', ' Senftenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01979', ' Lauchhammer');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01983', ' GroÃŸrÃ¤schen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01987', ' Schwarzheide N.L.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01990', ' Ortrand');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01993', ' Schipkau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01994', ' Schipkau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01996', ' Senftenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('01998', ' Schipkau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02625', ' Bautzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02627', ' WeiÃŸenberg, Hochkirch u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02633', ' GÃ¶da');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02681', ' Wilthen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02689', ' Sohland a. d. Spree');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02692', ' Doberschau-GauÃŸig, GroÃŸpostwitz, Obergurig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02694', ' GroÃŸdubrau, Malschwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02699', ' KÃ¶nigswartha');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02708', ' LÃ¶bau, Kottmar u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02727', ' Ebersbach-Neugersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02730', ' Ebersbach-Neugersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02733', ' Cunewalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02736', ' Beiersdorf, Oppach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02739', ' Kottmar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02742', ' Neusalza-Spremberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02747', ' Herrnhut');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02748', ' Bernstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02763', ' Zittau u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02779', ' GroÃŸschÃ¶nau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02782', ' Seifhennersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02785', ' Olbersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02788', ' Zittau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02791', ' Oderwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02794', ' Leutersdorf, Spitzkunnersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02796', ' Jonsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02797', ' Oybin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02799', ' GroÃŸschÃ¶nau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02826', ' GÃ¶rlitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02827', ' GÃ¶rlitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02828', ' GÃ¶rlitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02829', ' Markersdorf, NeiÃŸeaue u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02894', ' Reichenbach, Vierkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02899', ' Ostritz, SchÃ¶nau-Berzdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02906', ' Niesky, Hohendubrau u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02923', ' HÃ¤hnichen, Horka, Kodersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02929', ' Rothenburg/O.L.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02943', ' WeiÃŸwasser, Boxberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02953', ' Bad Muskau, GroÃŸ DÃ¼ben, Gablenz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02956', ' Rietschen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02957', ' Krauschwitz, WeiÃŸkeiÃŸel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02959', ' Schleife');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02977', ' Hoyerswerda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02979', ' Spreetal, Elsterheide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02991', ' Lauta');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02994', ' Bernsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02997', ' Wittichenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('02999', ' Lohsa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03042', ' Cottbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03044', ' Cottbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03046', ' Cottbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03048', ' Cottbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03050', ' Cottbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03051', ' Cottbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03052', ' Cottbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03053', ' Cottbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03054', ' Cottbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03055', ' Cottbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03058', ' Neuhausen/Spree');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03096', ' Burg/Spreewald u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03099', ' Kolkwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03103', ' Neu-Seeland, Neupetershain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03116', ' Drebkau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03119', ' Welzow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03130', ' Spremberg, Tschernitz u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03149', ' Forst/ Lausitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03159', ' DÃ¶bern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03172', ' Guben, SchenkendÃ¶bern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03185', ' Peitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03197', ' JÃ¤nschwalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03205', ' Calau, Bronkow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03222', ' LÃ¼bbenau/ Spreewald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03226', ' Vetschau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03229', ' AltdÃ¶bern, Luckaitztal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03238', ' Finsterwalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03246', ' Crinitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03249', ' Sonnewalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('03253', ' Doberlug-Kirchhain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04103', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04105', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04107', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04109', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04129', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04155', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04157', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04158', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04159', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04177', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04178', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04179', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04205', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04207', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04209', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04229', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04249', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04275', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04277', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04279', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04288', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04289', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04299', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04315', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04316', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04317', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04318', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04319', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04328', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04329', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04347', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04349', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04356', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04357', ' Leipzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04416', ' Markkleeberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04420', ' MarkranstÃ¤dt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04425', ' Taucha');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04435', ' Schkeuditz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04442', ' Zwenkau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04451', ' Borsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04463', ' GroÃŸpÃ¶sna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04509', ' Delitzsch, Krostitz u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04519', ' Rackwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04523', ' Pegau, Elstertrebnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04539', ' Groitzsch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04552', ' Borna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04564', ' BÃ¶hlen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04565', ' Regis-Breitingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04567', ' Kitzscher');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04571', ' RÃ¶tha');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04575', ' Neukieritzsch, Deutzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04600', ' Altenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04603', ' Nobitz, GÃ¶hren, Windischleuba');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04610', ' Meuselwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04613', ' Lucka');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04617', ' Rositz, Starkenberg, Treben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04618', ' Langenleuba-Niederhain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04626', ' SchmÃ¶lln, Altkirchen, NÃ¶bdenitz u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04639', ' GÃ¶ÃŸnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04643', ' Geithain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04651', ' Bad Lausick');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04654', ' Frohburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04668', ' Grimma');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04680', ' Colditz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04683', ' Naunhof');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04687', ' Trebsen/Mulde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04703', ' Leisnig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04720', ' DÃ¶beln, GroÃŸweitzschen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04736', ' Waldheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04741', ' RoÃŸwein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04746', ' Hartha');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04749', ' Ostrau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04758', ' Oschatz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04769', ' MÃ¼geln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04774', ' Dahlen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04779', ' Wermsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04808', ' Wurzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04821', ' Brandis');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04824', ' Brandis');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04827', ' Machern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04828', ' Bennewitz, Machern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04838', ' Eilenburg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04849', ' Bad DÃ¼ben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04860', ' Torgau, Dreiheide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04861', ' Torgau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04862', ' Mockrehna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04874', ' Belgern-Schildau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04880', ' Dommitzsch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04886', ' Arzberg, Beilrode');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04889', ' Belgern-Schildau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04895', ' Falkenberg/ Elster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04910', ' Elsterwerda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04916', ' Herzberg/ Elster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04924', ' Bad Liebenwerda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04928', ' Plessa, Schraden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04931', ' MÃ¼hlberg, Bad Liebenwerda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04932', ' RÃ¶derland, GroÃŸthiemig u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04934', ' Hohenleipisch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04936', ' Schlieben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('04938', ' Uebigau-WahrenbrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06108', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06110', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06112', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06114', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06116', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06118', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06120', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06122', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06124', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06126', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06128', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06130', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06132', ' Halle/ Saale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06179', ' Teutschenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06184', ' Kabelsketal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06188', ' Landsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06193', ' Petersberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06198', ' Salzatal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06217', ' Merseburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06231', ' Bad DÃ¼rrenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06237', ' Leuna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06242', ' Braunsbedra');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06246', ' Bad LauchstÃ¤dt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06249', ' MÃ¼cheln/ Geiseltal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06255', ' MÃ¼cheln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06258', ' Schkopau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06259', ' Frankleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06268', ' Querfurt, Obhausen, MÃ¼cheln u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06279', ' Schraplau, FarnstÃ¤dt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06295', ' Eisleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06308', ' Klostermansfeld, Benndorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06311', ' Helbra');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06313', ' Hergisdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06317', ' Seegebiet Mansfelder Land');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06333', ' Hettstedt, Endorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06343', ' Mansfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06347', ' Gerbstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06366', ' KÃ¶then');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06369', ' SÃ¼dliches Anhalt u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06385', ' Aken (Elbe)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06386', ' Aken, Osternienburger Land, SÃ¼dliches Anhalt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06388', ' SÃ¼dliches Anhalt, KÃ¶then');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06406', ' Bernburg (Saale)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06408', ' Ilberstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06420', ' KÃ¶nnern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06425', ' Alsleben/Saale, PlÃ¶tzkau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06429', ' Nienburg (Saale)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06449', ' Aschersleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06456', ' Arnstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06458', ' Hedersleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06463', ' Falkenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06464', ' Seeland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06466', ' Seeland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06467', ' Seeland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06469', ' Seeland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06484', ' Quedlinburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06485', ' Quedlinburg, Ballenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06493', ' Ballenstedt, Harzgerode');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06502', ' Thale, Blankenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06526', ' Sangerhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06528', ' Wallhausen, Blankenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06536', ' SÃ¼dharz, Berga');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06537', ' Kelbra (KyffhÃ¤user)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06542', ' Allstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06543', ' Falkenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06556', ' Artern/Unstrut u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06567', ' Bad Frankenhausen/ KyffhÃ¤user');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06571', ' RoÃŸleben, Wiehe, Donndorf, Nausitz, Gehofen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06577', ' Heldrungen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06578', ' Bilzingsleben Kannawurf Oldisleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06618', ' Naumburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06628', ' Lanitz-Hassel-Tal, Molauer Land');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06632', ' Freyburg, BalgstÃ¤dt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06636', ' Laucha an der Unstrut');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06638', ' Karsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06642', ' Nebra, Kaiserpfalz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06647', ' Bad Bibra, Finne u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06648', ' Eckartsberga');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06667', ' WeiÃŸenfels, StÃ¶ÃŸen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06679', ' HohenmÃ¶lsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06682', ' Teuchern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06686', ' LÃ¼tzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06688', ' WeiÃŸenfels');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06711', ' Zeitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06712', ' Zeitz, Gutenborn u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06721', ' Meineweh, Osterfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06722', ' DroyÃŸig, Wetterzeube');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06729', ' Elsteraue');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06749', ' Bitterfeld-Wolfen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06766', ' Bitterfeld-Wolfen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06772', ' GrÃ¤fenhainichen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06773', ' GrÃ¤fenhainichen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06774', ' Muldestausee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06779', ' Raguhn-JeÃŸnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06780', ' ZÃ¶rbig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06785', ' Oranienbaum-WÃ¶rlitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06792', ' Sandersdorf-Brehna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06794', ' Sandersdorf-Brehna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06796', ' Sandersdorf-Brehna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06800', ' Raguhn-JeÃŸnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06803', ' Bitterfeld-Wolfen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06808', ' Bitterfeld-Wolfen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06809', ' Roitzsch, Petersroda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06842', ' Dessau-RoÃŸlau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06844', ' Dessau-RoÃŸlau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06846', ' Dessau-RoÃŸlau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06847', ' Dessau-RoÃŸlau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06849', ' Dessau-RoÃŸlau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06861', ' Dessau-RoÃŸlau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06862', ' Dessau-RoÃŸlau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06868', ' Coswig (Anhalt)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06869', ' Coswig (Anhalt)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06886', ' Wittenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06888', ' Wittenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06889', ' Wittenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06895', ' Zahna-Elster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06901', ' Kemberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06905', ' Bad Schmiedeberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06917', ' Jessen (Elster)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('06925', ' Annaburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07318', ' Saalfeld/Saale, Wittgendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07330', ' Probstzella');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07333', ' Unterwellenborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07334', ' Kamsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07338', ' Kaulsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07343', ' Wurzbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07349', ' Lehesten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07356', ' Lobenstein, Neundorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07366', ' Blankenstein, Blankenberg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07368', ' Remptendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07381', ' PÃ¶ÃŸneck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07387', ' KrÃ¶lpa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07389', ' Ranis');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07407', ' Rudolstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07422', ' Bad Blankenburg, Saalfelder HÃ¶he');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07426', ' KÃ¶nigsee-Rottenbach u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07427', ' Schwarzburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07429', ' DÃ¶schnitz, Sitzendorf, Rohrbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07545', ' Gera');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07546', ' Gera');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07548', ' Gera');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07549', ' Gera');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07551', ' Gera');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07552', ' Gera');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07554', ' Brahmenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07557', ' Gera, Zedlitz u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07570', ' Weida, Harth-PÃ¶llnitz, WÃ¼nschendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07580', ' Ronneburg, Braunichswalde, GroÃŸenstein u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07586', ' Bad KÃ¶stritz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07589', ' MÃ¼nchenbernsdorf, Schwarzbach, Bocka');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07607', ' Eisenberg, GÃ¶sen, Hainspitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07613', ' Crossen, Heideland u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07616', ' BÃ¼rgel u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07619', ' SchkÃ¶len');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07629', ' Hermsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07639', ' Bad Klosterlausnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07646', ' Stadtroda u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07743', ' Jena');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07745', ' Jena');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07747', ' Jena');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07749', ' Jena');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07751', ' Jena, Bucha, GroÃŸpÃ¼rschÃ¼tz u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07768', ' Kahla');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07774', ' Dornburg-Camburg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07778', ' NeuengÃ¶nna u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07806', ' Neustadt/ Orla');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07819', ' Triptis');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07907', ' Schleiz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07919', ' Kirschkau, Pausa-MÃ¼hltroff');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07922', ' Tanna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07924', ' ZiegenrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07926', ' Gefell');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07927', ' Hirschberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07929', ' Saalburg-Ebersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07937', ' Zeulenroda-Triebes, Langenwolschendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07950', ' Zeulenroda-Triebes, WeiÃŸendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07952', ' Pausa-MÃ¼hltroff');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07955', ' Auma-Weidatal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07957', ' Langenwetzendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07958', ' Hohenleuben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07973', ' Greiz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07980', ' Berga/Elster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07985', ' Elsterberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('07987', ' Mohlsdorf-Teichwolframsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08056', ' Zwickau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08058', ' Zwickau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08060', ' Zwickau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08062', ' Zwickau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08064', ' Zwickau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08066', ' Zwickau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08107', ' Kirchberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08112', ' Wilkau-HaÃŸlau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08115', ' Lichtentanne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08118', ' Hartenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08132', ' MÃ¼lsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08134', ' LangenweiÃŸbach, Wildenfels');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08141', ' Reinsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08144', ' Hirschfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08147', ' Crinitzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08209', ' Auerbach/Vogtl.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08223', ' Falkenstein/Vogtl.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08228', ' Rodewisch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08233', ' Treuen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08236', ' Ellefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08237', ' Steinberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08239', ' Bergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08248', ' Klingenthal/Sa.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08258', ' Markneukirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08261', ' SchÃ¶neck/Vogtl.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08262', ' Muldenhammer');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08267', ' Klingenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08280', ' Aue');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08289', ' Schneeberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08294', ' LÃ¶ÃŸnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08297', ' ZwÃ¶nitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08301', ' Schlema');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08304', ' SchÃ¶nheide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08309', ' Eibenstock');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08315', ' Lauter-Bernsbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08321', ' Zschorlau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08324', ' Bockau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08328', ' StÃ¼tzengrÃ¼n');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08340', ' Schwarzenberg/Erzgeb.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08344', ' GrÃ¼nhain-Beierfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08349', ' Johanngeorgenstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08352', ' Raschau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08359', ' Breitenbrunn/Erzgeb.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08371', ' Glauchau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08373', ' Remse');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08393', ' Meerane');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08396', ' Waldenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08412', ' Werdau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08427', ' Fraureuth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08428', ' Langenbernsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08451', ' Crimmitschau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08459', ' Neukirchen/PleiÃŸe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08468', ' Reichenbach/Vogtl.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08485', ' Lengenfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08491', ' Netzschkau, Limbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08496', ' Neumark');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08499', ' Mylau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08523', ' Plauen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08525', ' Plauen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08527', ' Plauen, RÃ¶ÃŸnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08529', ' Plauen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08538', ' Weischlitz u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08539', ' Rosenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08541', ' Neuensalz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08543', ' PÃ¶hl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08547', ' JÃ¶ÃŸnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08548', ' Rosenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08606', ' Oelsnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08626', ' Adorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08645', ' Bad Elster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('08648', ' Bad Brambach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09111', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09112', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09113', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09114', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09116', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09117', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09119', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09120', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09122', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09123', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09125', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09126', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09127', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09128', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09130', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09131', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09212', ' Limbach-Oberfrohna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09217', ' BurgstÃ¤dt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09221', ' Neukirchen/Erzgeb.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09224', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09228', ' Chemnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09232', ' Hartmannsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09235', ' Burkhardtsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09236', ' ClauÃŸnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09241', ' MÃ¼hlau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09243', ' Niederfrohna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09244', ' Lichtenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09247', ' RÃ¶hrsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09249', ' Taura b. BurgstÃ¤dt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09306', ' Rochlitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09322', ' Penig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09326', ' Geringswalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09328', ' Lunzenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09337', ' Callenberg, Hohenstein-Ernstthal, Bernsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09350', ' Lichtenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09353', ' Oberlungwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09355', ' Gersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09356', ' St. Egidien');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09366', ' Stollberg/Erzgeb.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09376', ' Oelsnitz/Erzgebirge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09380', ' Thalheim/Erzgebirge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09385', ' Lugau/Erzgeb.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09387', ' Jahnsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09390', ' Gornsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09392', ' Auerbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09394', ' Hohndorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09399', ' NiederwÃ¼rschnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09405', ' Zschopau, Gornau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09419', ' Thum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09423', ' Gelenau/Erzgeb.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09427', ' Ehrenfriedersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09429', ' Wolkenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09430', ' Drebach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09432', ' GroÃŸolbersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09434', ' Zschopau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09437', ' BÃ¶rnichen, Gornau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09439', ' Amtsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09456', ' Annaberg-Buchholz, Mildenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09465', ' Sehma');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09468', ' Geyer');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09471', ' BÃ¤renstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09474', ' Crottendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09477', ' JÃ¶hstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09481', ' Scheibenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09484', ' Oberwiesenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09487', ' Schlettau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09488', ' Wiesa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09496', ' Marienberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09509', ' Pockau-Lengefeld (Pockau)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09514', ' Pockau-Lengefeld (Lengefeld)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09518', ' GroÃŸrÃ¼ckerswalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09526', ' Olbernhau, Pfaffroda, Heidersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09544', ' Neuhausen/Erzgeb.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09548', ' Seiffen/Erzgeb.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09557', ' FlÃ¶ha');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09569', ' Oederan');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09573', ' Leubsdorf, Gornau, Augustusburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09575', ' Eppendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09577', ' Niederwiesa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09579', ' GrÃ¼nhainichen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09599', ' Freiberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09600', ' WeiÃŸenborn, OberschÃ¶na');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09603', ' GroÃŸschirma');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09618', ' Brand-Erbisdorf, GroÃŸhartmannsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09619', ' Dorfchemnitz, Mulda, Sayda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09623', ' Frauenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09627', ' Bobritzsch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09629', ' Reinsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09633', ' HalsbrÃ¼cke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09634', ' Reinsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09638', ' Lichtenberg/Erzgeb.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09648', ' Mittweida, Kriebstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09661', ' Hainichen, Rossau, Striegistal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('09669', ' Frankenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('1', '2');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10115', ' Berlin Mitte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10117', ' Berlin Mitte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10119', ' Berlin Mitte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10178', ' Berlin Mitte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10179', ' Berlin Mitte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10243', ' Berlin Friedrichshain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10245', ' Berlin Friedrichshain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10247', ' Berlin Friedrichshain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10249', ' Berlin Friedrichshain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10315', ' Berlin Friedrichsfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10317', ' Berlin Rummelsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10318', ' Berlin Karlshorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10319', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10365', ' Berlin Lichtenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10367', ' Berlin Lichtenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10369', ' Berlin Lichtenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10405', ' Berlin Prenzlauer Berg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10407', ' Berlin Prenzlauer Berg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10409', ' Berlin Prenzlauer Berg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10435', ' Berlin Prenzlauer Berg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10437', ' Berlin Prenzlauer Berg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10439', ' Berlin Prenzlauer Berg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10551', ' Berlin Moabit');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10553', ' Berlin Moabit');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10555', ' Berlin Moabit');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10557', ' Berlin Moabit');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10559', ' Berlin Moabit');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10585', ' Berlin Charlottenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10587', ' Berlin Charlottenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10589', ' Berlin Charlottenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10623', ' Berlin Charlottenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10625', ' Berlin Charlottenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10627', ' Berlin Charlottenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10629', ' Berlin Charlottenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10707', ' Berlin Wilmersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10709', ' Berlin Wilmersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10711', ' Berlin Halensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10713', ' Berlin Wilmersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10715', ' Berlin Wilhelmsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10717', ' Berlin Wilmersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10719', ' Berlin Wilmersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10777', ' Berlin Wilmersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10779', ' Berlin SchÃ¶neberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10781', ' Berlin SchÃ¶neberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10783', ' Berlin SchÃ¶neberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10785', ' Berlin Tiergarten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10787', ' Berlin Tiergarten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10789', ' Berlin SchÃ¶neberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10823', ' Berlin-West');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10825', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10827', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10829', ' Berlin SchÃ¶neberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10961', ' Berlin Kreuzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10963', ' Berlin Kreuzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10965', ' Berlin Kreuzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10967', ' Berlin Kreuzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10969', ' Berlin Kreuzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10997', ' Berlin Kreuzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('10999', ' Berlin Kreuzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12043', ' Berlin NeukÃ¶lln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12045', ' Berlin NeukÃ¶lln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12047', ' Berlin Kreuzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12049', ' Berlin NeukÃ¶lln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12051', ' Berlin NeukÃ¶lln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12053', ' Berlin NeukÃ¶lln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12055', ' Berlin NeukÃ¶lln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12057', ' Berlin NeukÃ¶lln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12059', ' Berlin NeukÃ¶lln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12099', ' Berlin Tempelhof');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12101', ' Berlin Tempelhof');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12103', ' Berlin Tempelhof');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12105', ' Berlin Mariendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12107', ' Berlin Mariendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12109', ' Berlin Mariendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12157', ' Berlin SchÃ¶neberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12159', ' Berlin Friedenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12161', ' Berlin Friedenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12163', ' Berlin Steglitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12165', ' Berlin Steglitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12167', ' Berlin Steglitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12169', ' Berlin Steglitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12203', ' Berlin Lichtenfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12205', ' Berlin Lichtenfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12207', ' Berlin Lichtenfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12209', ' Berlin-Lichterfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12247', ' Berlin Lankwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12249', ' Berlin Lankwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12277', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12279', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12305', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12307', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12309', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12347', ' Berlin Britz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12349', ' Berlin Buckow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12351', ' Berlin Buckow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12353', ' Berlin Gropiusstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12355', ' Berlin Rudow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12357', ' Berlin Rudow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12359', ' Berlin Britz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12435', ' Berlin Alt Treptow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12437', ' Berlin Baumschulenweg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12439', ' Berlin NiederschÃ¶neweide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12459', ' Berlin OberschÃ¶neweide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12487', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12489', ' Berlin Teltowkanal III');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12524', ' Berlin Altglienicke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12526', ' Berlin Bohnsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12527', ' Berlin SchmÃ¶ckwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12529', ' SchÃ¶nefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12555', ' Berlin KÃ¶penik');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12557', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12559', ' Berlin KÃ¶penick');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12587', ' Berlin Wiesengrund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12589', ' Berlin Rahnsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12619', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12621', ' Berlin Kaulsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12623', ' Berlin Mahlsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12627', ' Berlin Hellersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12629', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12679', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12681', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12683', ' Berlin Biesdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12685', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12687', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('12689', ' Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13051', ' Berlin Neu-SchÃ¶nhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13053', ' Berlin Alt-HohenschÃ¶nhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13055', ' Berlin Alt-HohenschÃ¶nhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13057', ' Berlin Falkenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13059', ' Berlin Wartenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13086', ' Berlin WeiÃŸensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13088', ' Berlin WeiÃŸensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13089', ' Berlin Heinelsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13125', ' Berlin Buch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13127', ' Berlin FranzÃ¶sisch Buchholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13129', ' Berlin Blankenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13156', ' Berlin NiederschÃ¶nhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13158', ' Berlin Rosenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13159', ' Berlin Blankenfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13187', ' Berlin Pankow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13189', ' Berlin Pankow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13347', ' Berlin Wedding');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13349', ' Berlin Wedding');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13351', ' Berlin Wedding');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13353', ' Berlin Wedding');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13355', ' Berlin Wedding');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13357', ' Berlin Gesundbrunnen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13359', ' Berlin Gesundbrunnen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13403', ' Berlin Reinickendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13405', ' Berlin Wedding');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13407', ' Berlin-West');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13409', ' Berlin-West');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13435', ' Berlin MÃ¤rkisches Viertel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13437', ' Berlin Reinickendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13439', ' Berlin MÃ¤rkisches Viertel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13465', ' Berlin Frohnau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13467', ' Berlin Hermsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13469', ' Berlin LÃ¼bars');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13503', ' Berlin Tegel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13505', ' Berlin Tegel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13507', ' Berlin Tegel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13509', ' Berlin Reinickendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13581', ' Berlin Spandau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13583', ' Berlin Spandau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13585', ' Berlin Spandau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13587', ' Berlin Hakenfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13589', ' Berlin Falkenhagener Feld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13591', ' Berlin Staaken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13593', ' Berlin Wilhelmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13595', ' Berlin Wlhelmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13597', ' Berlin Spandau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13599', ' Berlin Haselhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13627', ' Berlin Charlottenburg-Nord');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('13629', ' Berlin Siemensstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14050', ' Berlin Westend');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14052', ' Berlin Westend');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14053', ' Berlin Westend');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14055', ' Berlin Westend');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14057', ' Berlin Charlottenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14059', ' Berlin Charlottenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14089', ' Berlin Gatow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14109', ' Berlin Wannsee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14129', ' Berlin Nikolassee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14163', ' Berlin Zehlendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14165', ' Berlin Zehlendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14167', ' Berlin Zehlendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14169', ' Berlin Zehlendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14193', ' Berlin Grunewald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14195', ' Berlin Dahlem');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14197', ' Berlin Wilmersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14199', ' Berlin Schmargendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14467', ' Potsdam');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14469', ' Potsdam');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14471', ' Potsdam');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14473', ' Potsdam');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14476', ' Potsdam');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14478', ' Potsdam');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14480', ' Potsdam');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14482', ' Potsdam');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14513', ' Teltow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14532', ' Kleinmachnow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14542', ' Werder/ Havel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14547', ' Beelitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14548', ' Schwielowswee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14550', ' GroÃŸ Kreutz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14552', ' Michendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14554', ' Seddinger See');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14558', ' Nuthetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14612', ' Falkensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14621', ' SchÃ¶nwalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14624', ' Dallgow-DÃ¶beritz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14641', ' Nauen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14656', ' Brieselang');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14662', ' Friesack');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14669', ' Ketzin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14712', ' Rathenow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14715', ' Milower Land, Schollene, Nennhausen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14727', ' Premnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14728', ' Rhinow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14770', ' Brandenburg/ Havel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14772', ' Brandenburg/ Havel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14774', ' Brandenburg/ Havel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14776', ' Brandenburg/Havel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14778', ' Beetzsee, Wollin, Wenzlow, Golzow u.a');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14789', ' Wusterwitz, Rosenau, Bensdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14793', ' Ziesar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14797', ' Lehnin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14798', ' Havelsee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14806', ' Belzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14822', ' BrÃ¼ck, Borkheide u.a');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14823', ' Niemegk');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14827', ' Wiesenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14828', ' GÃ¶rzke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14913', ' JÃ¼terbog');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14929', ' Treuenbrietzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14943', ' Luckenwalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14947', ' Nuthe-Urstromtal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14959', ' Trebbin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14974', ' Ludwigsfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('14979', ' GroÃŸbeeren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15230', ' Frankfurt/ Oder');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15232', ' Frankfurt/ Oder');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15234', ' Frankfurt/ Oder');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15236', ' Treplin, Jacobsdorf, Frankfurt (Oder)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15295', ' Brieskow-Finkenheerd');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15299', ' MÃ¼llrose');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15306', ' Seelow, Lietzen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15320', ' Neutrebbin, Neuhardenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15324', ' Letschin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15326', ' Zeschdorf, Podelzig, Lebus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15328', ' Golzow, Zechin u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15344', ' Strausberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15345', ' Lichtenow, Altlandsberg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15366', ' Neuenhagen, Hoppegarten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15370', ' Fredersdorf-Vogelsdorf, Petershagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15374', ' MÃ¼ncheberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15377', ' Oberbarnim, MÃ¤rkische HÃ¶he u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15378', ' RÃ¼dersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15517', ' FÃ¼rstenwalde/ Spree');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15518', ' Briesen, Rauen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15526', ' Bad Saarow-Pieskow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15528', ' Spreenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15537', ' Erkner');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15562', ' RÃ¼dersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15566', ' SchÃ¶neiche bei Berlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15569', ' Woltersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15711', ' KÃ¶nigs Wusterhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15712', ' KÃ¶nigs Wusterhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15713', ' KÃ¶nigs Wusterhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15732', ' Schulzendorf b. Eichenwade');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15738', ' Zeuthen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15741', ' Bestensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15745', ' Wildau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15746', ' GroÃŸ KÃ¶ris');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15748', ' MÃ¤rkisch Buchholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15749', ' Mittenwalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15754', ' Heidesee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15755', ' Teupitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15757', ' Halbe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15806', ' Zossen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15827', ' Blankenfelde-Mahlow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15831', ' Blankenfelde-Mahlow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15834', ' Rangsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15837', ' Baruth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15838', ' Am Mellensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15848', ' Beeskow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15859', ' Storkow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15864', ' Wendisch Rietz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15868', ' Lieberose');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15890', ' EisenhÃ¼ttenstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15898', ' Neuzelle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15907', ' LÃ¼bben (Spreewald)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15910', ' SchÃ¶nwalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15913', ' Straupitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15926', ' Luckau, Waldrehna, Heideblick, FÃ¼rstlich Drehna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15936', ' Dahme u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('15938', ' GolÃŸen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16225', ' Eberswalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16227', ' Eberswalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16230', ' Melchow, Chorin u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16244', ' Schorfheide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16247', ' Joachimsthal u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16248', ' Oderberg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16259', ' Bad Freienwalde u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16269', ' Wriezen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16278', ' AngermÃ¼nde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16303', ' Schwedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16306', ' Biesendahlshof, Berkholz-Meyenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16307', ' Gartz (Oder)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16321', ' Bernau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16341', ' Panketal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16348', ' Wandlitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16356', ' Werneuchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16359', ' Biesenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16515', ' Oranienburg, MÃ¼hlenbecker Land');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16540', ' Hohen Neuendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16547', ' Birkenwerder');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16548', ' Glienicke/Nordbahn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16552', ' MÃ¼hlenbecker Land');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16556', ' Borgsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16559', ' Liebenwalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16562', ' Hohen Neuendorf OT Bergfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16567', ' MÃ¼hlenbecker Land');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16727', ' Velten, OberkrÃ¤mer');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16761', ' Hennigsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16766', ' Kremmen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16767', ' Leegebruch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16775', ' Gransee, LÃ¶wenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16792', ' Zehdenick');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16798', ' FÃ¼rstenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16816', ' Neuruppin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16818', ' Fehrbellin, Temnitzquell, MÃ¤rkisch Linden u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16827', ' Neuruppin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16831', ' Rheinsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16833', ' Fehrbellin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16835', ' Lindow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16837', ' Rheinsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16845', ' Neustadt (Dosse) u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16866', ' Gumtow, Kyritz u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16868', ' Wusterhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16909', ' Wittstock/Dosse, Heiligengrabe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16928', ' Pritzwalk, GroÃŸ Pankow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16945', ' Meyenburg, KÃ¼mmernitztal u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('16949', ' Triglitz, Putlitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17033', ' Neubrandenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17034', ' Neubrandenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17036', ' Neubrandenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17039', ' Sponholz, Neunkirchen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17087', ' Altentreptow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17089', ' Burow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17091', ' Rosenow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17094', ' CÃ¶lpin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17098', ' Friedland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17099', ' Friedland, Galenbeck, Datzetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17109', ' Demmin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17111', ' Demmin u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17121', ' Loitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17126', ' Jarmen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17129', ' Bentzin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17139', ' Malchin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17153', ' Stavenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17154', ' Neukalen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17159', ' Dargun');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17166', ' Dahmen, GroÃŸ Wokern, Teterow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17168', ' JÃ¶rdenstorf, Prebberede u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17179', ' Gnoien u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17192', ' Waren/ MÃ¼ritz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17194', ' GrabowhÃ¶fe, Moltzow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17207', ' RÃ¶bel/ MÃ¼ritz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17209', ' Wredenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17213', ' Malchow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17214', ' Nossentiner HÃ¼tte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17217', ' Penzlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17219', ' MÃ¶llenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17235', ' Neustrelitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17237', ' MÃ¶llenbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17248', ' Rechlin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17252', ' Mirow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17255', ' Wesenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17258', ' Feldberger Seenlandschaft');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17268', ' Templin, Boitzenburg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17279', ' Lychen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17291', ' Prenzlau u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17309', ' Pasewalk u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17321', ' LÃ¶cknitz, Rothenklempenow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17322', ' Blankensee, Grambow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17326', ' BrÃ¼ssow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17328', ' Penkun u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17329', ' Krackow, Nadrensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17335', ' Strasburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17337', ' Uckerland, GroÃŸ Luckow, SchÃ¶nhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17348', ' Woldegk');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17349', ' GroÃŸ Miltzow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17358', ' Torgelow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17367', ' Eggesin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17373', ' UeckermÃ¼nde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17375', ' Vogelsang-Warsin, Meiersberg, MÃ¶nkebude u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17379', ' Ferdinandshof u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17389', ' Anklam');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17390', ' Klein BÃ¼nzow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17391', ' Krien u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17392', ' Spantekow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17398', ' Ducherow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17406', ' Usedom u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17419', ' Seebad Ahlbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17424', ' Ostseebad Heringsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17429', ' Benz, Heringsdorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17438', ' Wolgast');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17440', ' KrÃ¶slin, Krummin, Lassan u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17449', ' Karlshagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17454', ' Zinnowitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17459', ' Koserow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17489', ' Greifswald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17491', ' Greifswald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17493', ' Greifswald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17495', ' Karlsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17498', ' Neuenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17506', ' GÃ¼tzkow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('17509', ' Lubmin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18055', '');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18057', '');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18059', '');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18069', '');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18106', '');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18107', ' Elmenhorst/Lichtenhagen, Rostock');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18109', ' Rostock');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18119', ' Rostock');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18146', ' Rostock');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18147', ' Rostock');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18181', ' Rostock, Graal-MÃ¼ritz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18182', ' Rostock, Gelbensande, RÃ¶vershagen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18184', ' Roggentin, Broderstorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18190', ' Sanitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18195', ' Tessin, Grammow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18196', ' Dummerstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18198', '');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18209', ' Bad Doberan, Bartenshagen-Parkentin u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18211', ' Retschow, Admannshagen-Bargeshagen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18225', ' KÃ¼hlungsborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18230', ' Rerik, Bastorf, Biendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18233', ' Neubukow, Ravensberg, WestenbrÃ¼gge u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18236', ' KrÃ¶pelin, Carinerland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18239', ' Satow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18246', ' BÃ¼tzow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18249', ' Bernitt, Qualitz, Warnow, Zernin u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18258', ' Schwaan u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18273', ' GÃ¼strow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18276', ' Reimershagen, Lohmen, Zehna, HÃ¤gerfelde u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18279', ' Lalendorf, Langhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18292', ' Krakow, Dobbin-Linstow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18299', ' Laage, Wardow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18311', ' Ribnitz-Damgarten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18314', ' LÃ¶bnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18317', ' Saal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18320', ' Ahrenshagen-Daskow, Trinwillershagen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18334', ' Bad SÃ¼lze');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18337', ' Marlow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18347', ' Dierhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18356', ' Barth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18374', ' Zingst a. DarÃŸ');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18375', ' Prerow a. DarÃŸ');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18435', ' Stralsund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18437', ' Stralsund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18439', ' Stralsund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18442', ' Niepars');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18445', ' Prohn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18461', ' Franzburg, Richtenberg, u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18465', ' Tribsees');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18469', ' Velgast');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18507', ' Grimmen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18510', ' Wittenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18513', ' Glewitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18516', ' Rakow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18519', ' Miltzow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18528', ' Bergen/ RÃ¼gen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18546', ' Sassnitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18551', ' Sagard');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18556', ' Dranske');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18565', ' Hiddensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18569', ' Gingst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18573', ' Samtens');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18574', ' Garz/ RÃ¼gen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18581', ' Putbus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18586', ' Sellin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('18609', ' Binz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19053', ' Schwerin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19055', ' Schwerin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19057', ' Schwerin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19059', ' Schwerin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19061', ' Schwerin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19063', ' Schwerin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19065', ' Pinnow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19067', ' Leezen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19069', ' LÃ¼bstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19071', ' BrÃ¼sewitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19073', ' WittenfÃ¶rden u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19075', ' Pampow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19077', ' Rastow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19079', ' Banzkow, Sukow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19086', ' Plate');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19089', ' Crivitz, Friedrichsruhe u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19205', ' Gadebusch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19209', ' LÃ¼tzow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19217', ' Rehna, Carlow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19230', ' Hagenow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19243', ' Wittenburg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19246', ' Zarrentin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19249', ' LÃ¼btheen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19258', ' Boizenburg, Gresse, Greven u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19260', ' Vellahn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19273', ' Amt Neuhaus, Stapel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19288', ' Ludwigslust');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19294', ' Neu KaliÃŸ');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19300', ' Grabow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19303', ' DÃ¶mitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19306', ' Neustadt-Glewe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19309', ' Lenzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19322', ' Wittenberge, RÃ¼hstÃ¤dt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19336', ' Legde/QuitzÃ¶bel, Bad Wilsnack');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19339', ' Plattenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19348', ' Perleberg, Berge u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19357', ' KarstÃ¤dt, Dambeck, KlÃ¼ÃŸ');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19370', ' Parchim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19372', ' Spornitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19374', ' DomsÃ¼hl, Mestlin, Obere Warnow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19376', ' Marnitz, Siggelkow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19386', ' LÃ¼bz, Passow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19395', ' Plau am See');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19399', ' Goldberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19406', ' Sternberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19412', ' BrÃ¼el');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('19417', ' Warin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20095', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20097', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20099', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20144', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20146', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20148', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20149', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20249', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20251', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20253', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20255', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20257', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20259', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20354', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20355', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20357', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20359', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20457', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20459', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20535', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20537', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('20539', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21029', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21031', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21033', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21035', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21037', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21039', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21073', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21075', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21077', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21079', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21107', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21109', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21129', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21147', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21149', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21217', ' Seevetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21218', ' Seevetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21220', ' Seevetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21224', ' Rosengarten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21227', ' Bendestorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21228', ' Harmstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21244', ' Buchholz in der Nordheide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21255', ' Tostedt, Kakenstorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21256', ' Handeloh');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21258', ' Heidenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21259', ' Otter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21261', ' Welle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21266', ' Jesteburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21271', ' Hanstedt, Asendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21272', ' Eggestorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21274', ' Undeloh');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21279', ' Hollenstedt, Drestedt u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21335', ' LÃ¼neburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21337', ' LÃ¼neburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21339', ' LÃ¼neburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21354', ' Bleckede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21357', ' Bardowick, Wittorf, Barum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21358', ' Mechtersen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21360', ' VÃ¶gelsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21365', ' Adendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21368', ' Dahlenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21369', ' Nahrendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21371', ' Tosterglope');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21376', ' Salzhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21379', ' Scharnebeck, Echem, LÃ¼dersburg, Rullstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21380', ' Artlenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21382', ' Brietlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21385', ' Oldendorf (Luhe), Amelinghausen, Rehlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21386', ' Betzendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21388', ' Soderstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21391', ' Reppenstedt, LÃ¼neburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21394', ' Kirchgellersen, Westergellersen, SÃ¼dergellersen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21395', ' Tespe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21397', ' Barendorf, Vastorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21398', ' Neetze');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21400', ' Reinstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21401', ' Thomasburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21403', ' Wendisch Evern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21406', ' Melbeck, Barnstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21407', ' Deutsch Evern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21409', ' Embsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21423', ' Winsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21435', ' Stelle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21436', ' Marschacht');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21438', ' Brackel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21439', ' Marxen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21441', ' Garstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21442', ' Toppenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21444', ' VierhÃ¶fen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21445', ' Wulfsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21447', ' Handorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21449', ' Radbruch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21465', ' Reinbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21481', ' Lauenburg/Elbe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21483', ' GÃ¼lzow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21493', ' Fuhlenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21502', ' Geesthacht');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21509', ' Glinde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21514', ' BrÃ¶then');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21516', ' Woltersdorf, MÃ¼ssen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21521', ' AumÃ¼hle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21522', ' Hohnstorf (Elbe), Hittbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21524', ' Brunstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21526', ' Hohenhorn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21527', ' Kollow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21529', ' KrÃ¶ppelshagen-Fahrendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21614', ' Buxtehude');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21629', ' Neu Wulmstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21635', ' Jork');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21640', ' Horneburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21641', ' Apensen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21643', ' Beckdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21644', ' Sauensiek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21646', ' Halvesbostel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21647', ' Moisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21649', ' Regesbostel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21680', ' Stade');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21682', ' Stade');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21683', ' Stade');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21684', ' Stade');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21698', ' Harsefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21702', ' Ahlerstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21706', ' Drochtersen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21709', ' Himmelpforten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21710', ' Engelschoff');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21712', ' GroÃŸenwÃ¶rden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21714', ' Hammah');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21717', ' Fredenbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21720', ' GrÃ¼nendeich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21723', ' Hollern-Twielenfleth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21726', ' Oldendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21727', ' Estorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21729', ' Freiburg (Elbe)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21730', ' Balje');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21732', ' Krummendeich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21734', ' Oederquart');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21737', ' Wischhafen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21739', ' Dollern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21745', ' Hemmoor');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21755', ' Hechthausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21756', ' Osten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21762', ' Otterndorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21763', ' Neuenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21765', ' Nordleda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21769', ' Lamstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21770', ' Mittelstenahe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21772', ' Stinstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21775', ' Ihlienworth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21776', ' Wanna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21781', ' Cadenberge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21782', ' BÃ¼lkau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21785', ' Neuhaus (Oste)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21787', ' Oberndorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('21789', ' Wingst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22041', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22043', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22045', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22047', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22049', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22081', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22083', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22085', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22087', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22089', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22111', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22113', ' Hamburg, Oststeinbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22115', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22117', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22119', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22143', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22145', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22147', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22149', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22159', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22175', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22177', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22179', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22297', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22299', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22301', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22303', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22305', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22307', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22309', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22335', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22337', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22339', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22359', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22391', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22393', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22395', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22397', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22399', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22415', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22417', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22419', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22453', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22455', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22457', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22459', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22523', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22525', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22527', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22529', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22547', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22549', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22559', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22587', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22589', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22605', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22607', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22609', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22761', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22763', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22765', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22767', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22769', ' Hamburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22844', ' Norderstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22846', ' Norderstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22848', ' Norderstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22850', ' Norderstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22851', ' Norderstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22869', ' Schenefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22880', ' Wedel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22885', ' BarsbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22889', ' Tangstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22926', ' Ahrensburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22927', ' GroÃŸhansdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22929', ' Hamfelde, Kasseburg, KÃ¶thel, Rausdorf, SchÃ¶nber');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22941', ' Bargteheide, Delingsdorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22946', ' Trittau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22949', ' Ammersbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22952', ' LÃ¼tjensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22955', ' Hoisdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22956', ' GrÃ¶nwohld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22958', ' KuddewÃ¶rde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22959', ' Linau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22961', ' Hoisdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22962', ' Siek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22964', ' Steinburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22965', ' Todendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22967', ' TremsbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('22969', ' Witzhave');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23552', ' LÃ¼beck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23554', ' LÃ¼beck St. Lorenz Nord');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23556', ' LÃ¼beck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23558', ' LÃ¼beck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23560', ' LÃ¼beck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23562', ' LÃ¼beck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23564', ' LÃ¼beck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23566', ' LÃ¼beck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23568', ' LÃ¼beck Schlutup/St. Gertrud');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23569', ' LÃ¼beck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23570', ' LÃ¼beck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23611', ' Bad Schwartau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23617', ' Stockelsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23619', ' Zarpen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23623', ' AhrensbÃ¶k');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23626', ' Ratekau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23627', ' GroÃŸ GrÃ¶nau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23628', ' Krummesse, Klempau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23629', ' Sarkwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23669', ' Timmendorfer Strand');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23683', ' Scharbeutz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23684', ' Scharbeutz, SÃ¼sel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23689', ' Pansdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23701', ' Eutin, SÃ¼sel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23714', ' Malente, KirchnÃ¼chel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23715', ' Bosau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23717', ' Kasseedorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23719', ' Glasau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23730', ' Neustadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23738', ' Lensahn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23743', ' GrÃ¶mitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23744', ' SchÃ¶nwalde am Bungsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23746', ' Kellenhusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23747', ' Dahme');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23749', ' Grube');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23758', ' Oldenburg in Holstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23769', ' Fehmarn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23774', ' Heiligenhafen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23775', ' GroÃŸenbrode');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23777', ' Heringsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23779', ' Neukirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23795', ' Bad Segeberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23812', ' Wahlstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23813', ' Nehms');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23815', ' Geschendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23816', ' Leezen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23818', ' NeuengÃ¶rs');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23820', ' Pronstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23821', ' Rohlstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23823', ' Seedorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23824', ' Tensfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23826', ' Bark');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23827', ' Wensin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23829', ' Wittenborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23843', ' Bad Oldesloe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23845', ' Seth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23847', ' Lasbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23858', ' Reinfeld (Holstein)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23860', ' Klein Wesenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23863', ' Bargfeld-Stegen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23866', ' Nahe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23867', ' SÃ¼lfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23869', ' Elmenhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23879', ' MÃ¶lln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23881', ' Breitenfelde, Lankau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23883', ' Sterley');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23896', ' Nusse');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23898', ' Sandesneben u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23899', ' Gudow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23909', ' Ratzeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23911', ' Ziethen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23919', ' Berkenthin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23923', ' SchÃ¶nberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23936', ' GrevesmÃ¼hlen, Stepenitztal, Upahl u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23942', ' Dassow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23946', ' Boltenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23948', ' KlÃ¼tz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23966', ' Wismar, GroÃŸ Krankow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23968', ' Barnekow, GÃ¤gelow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23970', ' Wismar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23972', ' Dorf Mecklenburg, LÃ¼bow u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23974', ' Neuburg-Steinhausen, Hornstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23992', ' Neukloster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23996', ' Bad Kleinen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('23999', ' Insel Poel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24103', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24105', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24106', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24107', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24109', ' Melsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24111', ' Kiel Russee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24113', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24114', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24116', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24118', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24119', ' Kronshagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24143', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24145', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24146', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24147', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24148', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24149', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24159', ' Kiel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24161', ' Altenholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24211', ' Preetz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24214', ' Gettorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24217', ' SchÃ¶nberg (Holstein)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24220', ' Flintbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24222', ' Schwentinental');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24223', ' Schwentinetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24226', ' Heikendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24229', ' DÃ¤nischenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24232', ' SchÃ¶nkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24235', ' Laboe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24238', ' Selent');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24239', ' Achterwehr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24241', ' Blumenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24242', ' Felde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24244', ' Felm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24245', ' Kirchbarkau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24247', ' Mielkendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24248', ' MÃ¶nkeberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24250', ' Nettelsee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24251', ' Osdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24253', ' Probsteierhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24254', ' Rumohr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24256', ' Fargau-Pratjau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24257', ' Hohenfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24259', ' Westensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24306', ' PlÃ¶n');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24321', ' LÃ¼tjenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24326', ' Ascheberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24327', ' Blekendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24329', ' Grebin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24340', ' EckernfÃ¶rde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24351', ' Damp');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24354', ' Kosel, Rieseby u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24357', ' Fleckeby u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24358', ' Ascheffel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24360', ' Barkelsby');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24361', ' GroÃŸ Wittensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24363', ' Holtsee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24364', ' Holzdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24366', ' Loose');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24367', ' Osterby');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24369', ' Waabs');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24376', ' Kappeln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24392', ' SÃ¼derbrarup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24395', ' Gelting');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24398', ' DÃ¶rphof');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24399', ' Arnis, Marienhof');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24401', ' BÃ¶el');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24402', ' Esgrus, Schrepperie');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24404', ' Maasholm, SchleimÃ¼nde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24405', ' Mohrkirch, RÃ¼gge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24407', ' Rabenkirchen-FaulÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24409', ' StoltebÃ¼ll');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24534', ' NeumÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24536', ' NeumÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24537', ' NeumÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24539', ' NeumÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24558', ' Henstedt-Ulzburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24568', ' Kaltenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24576', ' Bad Bramstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24582', ' Bordesholm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24589', ' Nortorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24594', ' Hohenwestedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24598', ' Boostedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24601', ' Wankendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24610', ' Trappenkamp');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24613', ' Aukrug, Wiedenborstel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24616', ' Brokstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24619', ' BÃ¶rnhÃ¶ved');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24620', ' BÃ¶nebÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24622', ' Gnutz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24623', ' GroÃŸenaspe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24625', ' GroÃŸharrie');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24626', ' GroÃŸ Kummerfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24628', ' Hartenholm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24629', ' Kisdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24631', ' Langwedel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24632', ' LentfÃ¶hrden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24634', ' Padenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24635', ' Rickling');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24637', ' Schillsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24638', ' Schmalensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24640', ' Schmalfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24641', ' SievershÃ¼tten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24643', ' StruvenhÃ¼tten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24644', ' Timmaspe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24646', ' Warder');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24647', ' Wasbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24649', ' Wiemersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24768', ' Rendsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24782', ' BÃ¼delsdorf, Rickert');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24783', ' OsterrÃ¶nfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24784', ' WesterrÃ¶nfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24787', ' Fockbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24790', ' Schacht-Audorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24791', ' Alt Duvenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24793', ' Bargstedt, Brammer, OldenbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24794', ' Borgstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24796', ' Bredenbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24797', ' Breiholz, Tackesdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24799', ' Meggerdorf, Friedrichsholm, Friedrichsgraben u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24800', ' Elsdorf-WestermÃ¼hlen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24802', ' Emkendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24803', ' Erfde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24805', ' Hamdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24806', ' Hohn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24808', ' Jevenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24809', ' NÃ¼bbel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24811', ' Owschlag u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24813', ' SchÃ¼lp bei Rendsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24814', ' Sehestedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24816', ' Hamweddel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24817', ' Tetenhusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24819', ' TodenbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24837', ' Schleswig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24848', ' Kropp u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24850', ' Schuby');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24852', ' Eggebek, Langstedt, Sollerup, SÃ¼derhackstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24855', ' Bollingstedt, JÃ¼bek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24857', ' Fahrdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24860', ' BÃ¶klund u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24861', ' Bergenhusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24863', ' BÃ¶rm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24864', ' Brodersby, Goltoft');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24866', ' Busdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24867', ' Dannewerk');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24869', ' DÃ¶rpstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24870', ' Ellingstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24872', ' GroÃŸ Rheide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24873', ' Havetoft');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24876', ' Hollingstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24878', ' Jagel, Lottorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24879', ' Idstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24881', ' NÃ¼bel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24882', ' Schaalby, Geelbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24884', ' Selk, Geltdorf, Hahnekrug');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24885', ' Sieverstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24887', ' Silberstedt, Schwittschau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24888', ' Steinfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24890', ' Stolk');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24891', ' Struxdorf, Schnarup-Thumby');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24893', ' Taarstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24894', ' Tolk, Twedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24896', ' Treia, AhrenviÃ¶lfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24897', ' Ulsnis');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24899', ' Wohlde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24937', ' Flensburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24939', ' Flensburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24941', ' Flensburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24943', ' Flensburg, Tastrup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24944', ' Flensburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24955', ' Harrislee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24960', ' GlÃ¼cksburg, Munkbrarup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24963', ' Tarp');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24966', ' SÃ¶rup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24969', ' GroÃŸenwiehe, Lindewitt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24972', ' Steinberg, Steinbergkirche');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24975', ' Husby');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24976', ' Handewitt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24977', ' Langballig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24980', ' Schafflund, Meyn u.a');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24983', ' Handewitt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24986', ' Mittelangeln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24988', ' Oeversee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24989', ' Dollerup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24991', ' GroÃŸsolt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24992', ' JÃ¶rl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24994', ' Medelby');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24996', ' Sterup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24997', ' Wanderup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('24999', ' Wees');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25335', ' Elmshorn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25336', ' Elmshorn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25337', ' Elmshorn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25348', ' GlÃ¼ckstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25355', ' Barmstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25358', ' Horst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25361', ' Krempe, Grevenkop, SÃ¼derau, Muchelndorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25364', ' Brande-HÃ¶rnerkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25365', ' Klein Offenseth-Sparrieshoop');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25368', ' Kiebitzreihe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25370', ' Seester');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25371', ' SeestermÃ¼he');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25373', ' Ellerhoop');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25376', ' Borsfleth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25377', ' Kollmar, Pagensand');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25379', ' Herzhorn, Kamerlanderdeich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25421', ' Pinneberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25436', ' Uetersen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25451', ' Quickborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25462', ' Rellingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25469', ' Halstenbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25474', ' Ellerbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25479', ' Ellerau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25482', ' Appen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25485', ' Hemdingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25486', ' Alveslohe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25488', ' Holm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25489', ' Haseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25491', ' Hetlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25492', ' Heist');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25494', ' Borstel-Hohenraden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25495', ' Kummerfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25497', ' Prisdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25499', ' Tangstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25524', ' Itzehoe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25541', ' BrunsbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25548', ' Kellinghusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25551', ' Hohenlockstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25554', ' Wilster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25557', ' Hanerau-Hademarschen, Seefeld u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25560', ' Schenefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25563', ' Wrist');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25566', ' LÃ¤gerdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25569', ' Kremperheide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25572', ' Sankt Margarethen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25573', ' Beidenfleth, Klein Kampen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25575', ' Beringstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25576', ' Brokdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25578', ' DÃ¤geling, Neuenbrook');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25579', ' Fitzbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25581', ' Hennstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25582', ' Hohenaspe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25584', ' Holstenniendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25585', ' LÃ¼tjenwestedt, Tackesdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25587', ' MÃ¼nsterdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25588', ' Oldendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25590', ' Osterstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25591', ' OttenbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25593', ' Reher');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25594', ' Vaale');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25596', ' Wacken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25597', ' Westermoor');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25599', ' Wewelsfleth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25693', ' Sankt Michaelisdonn,Gudendorf,Volsemenhusen,Trenn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25704', ' Meldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25709', ' Kronprinzenkoog, Marne u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25712', ' Burg (Dithmarschen)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25715', ' Eddelak, Averlak, Dingen, Ramhusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25718', ' Friedrichskoog');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25719', ' Barlt, Busenwurth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25721', ' Eggstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25724', ' Neufeld, Schmedeswurth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25725', ' Schafstedt, Weidenhof, Bornholt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25727', ' SÃ¼derhastedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25729', ' Windbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25746', ' Heide u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25761', ' BÃ¼sum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25764', ' Wesselburen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25767', ' Albersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25770', ' Hemmingstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25774', ' Lunden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25776', ' Sankt Annen, Rehm-Flehde-Bargen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25779', ' Hennstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25782', ' Tellingstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25785', ' Nordhastedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25786', ' Dellstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25788', ' Delve');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25791', ' Linden, Barkenholm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25792', ' Neuenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25794', ' Pahlen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25795', ' Weddingstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25797', ' WÃ¶hrden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25799', ' Wrohm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25813', ' Husum, Schwesing u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25821', ' Bredstedt, Breklum u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25826', ' Sankt Peter-Ording');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25832', ' TÃ¶nning');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25836', ' Garding, Osterhever, PoppenbÃ¼ll u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25840', ' Friedrichstadt, KoldenbÃ¼ttel u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25842', ' Langenhorn, Ockholm u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25845', ' Nordstrand, Elisabeth-Sophien-Koog, SÃ¼dfall');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25849', ' SÃ¼deroog, Pellworm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25850', ' Behrendorf, Bondelum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25852', ' Bordelum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25853', ' AhrenshÃ¶ft');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25855', ' Haselund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25856', ' Hattstedt u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25858', ' HÃ¶gel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25859', ' Hallig Hooge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25860', ' Horstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25862', ' Joldelund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25863', ' LangeneÃŸ');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25864', ' LÃ¶wenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25866', ' Mildstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25867', ' Oland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25869', ' Habel, GrÃ¶de');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25870', ' Oldenswort');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25872', ' Ostenfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25873', ' Rantrum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25876', ' Schwabstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25878', ' Drage, Seeth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25879', ' Stapel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25881', ' Tating, Westerhever, TÃ¼mlauer Koog');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25882', ' TetenbÃ¼ll');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25884', ' ViÃ¶l');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25885', ' Wester-Ohrstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25887', ' Winnert');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25889', ' UelvesbÃ¼ll, Witzwort');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25899', ' NiebÃ¼ll');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25917', ' Leck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25920', ' Risum-Lindholm, Stedesand');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25923', ' SÃ¼derlÃ¼gum, Braderup u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25924', ' RodenÃ¤s');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25926', ' Ladelund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25927', ' Neukirchen, Aventoft');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25938', ' FÃ¶hr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25946', ' Amrum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25980', ' Sylt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25992', ' List');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25996', ' Wenningstedt-Braderup (Sylt)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25997', ' HÃ¶rnum (Sylt)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('25999', ' Kampen (Sylt)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26121', ' Oldenburg (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26122', ' Oldenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26123', ' Oldenburg (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26125', ' Oldenburg (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26127', ' Oldenburg (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26129', ' Oldenburg (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26131', ' Oldenburg (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26133', ' Oldenburg (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26135', ' Oldenburg (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26160', ' Bad Zwischenahn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26169', ' Friesoythe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26180', ' Rastede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26188', ' Edewecht');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26197', ' GroÃŸenkneten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26203', ' Wardenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26209', ' Hatten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26215', ' Wiefelstede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26219', ' BÃ¶sel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26316', ' Varel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26340', ' Zetel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26345', ' Bockhorn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26349', ' Jade');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26382', ' Wilhelmshaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26384', ' Wilhelmshaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26386', ' Wilhelmshaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26388', ' Wilhelmshaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26389', ' Wilhelmshaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26409', ' Wittmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26419', ' Schortens');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26427', ' Esens, Neuharlingersiel u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26434', ' Wangerland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26441', ' Jever');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26446', ' Friedeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26452', ' Sande');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26465', ' Langeoog');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26474', ' Spiekeroog');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26486', ' Wangerooge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26487', ' Blomberg, Neuschoo');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26489', ' Ochtersum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26506', ' Norden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26524', ' Hage, Halbemond u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26529', ' Upgant-Schott, Osteel u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26532', ' GroÃŸheide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26548', ' Norderney');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26553', ' Dornum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26556', ' Westerholt, Schweindorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26571', ' Juist, Memmert');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26579', ' Baltrum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26603', ' Aurich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26605', ' Aurich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26607', ' Aurich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26624', ' SÃ¼dbrookmerland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26629', ' GroÃŸefehn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26632', ' Ihlow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26639', ' Wiesmoor');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26655', ' Westerstede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26670', ' Uplengen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26676', ' BarÃŸel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26683', ' Saterland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26689', ' Apen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26721', ' Emden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26723', ' Emden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26725', ' Emden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26736', ' KrummhÃ¶rn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26757', ' Borkum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26759', ' Hinte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26789', ' Leer');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26802', ' Moormerland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26810', ' Westoverledingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26817', ' Rhauderfehn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26826', ' Weener');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26831', ' Bunde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26835', ' Hesel, Neukamperfehn u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26842', ' Ostrhauderfehn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26844', ' Jemgum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26845', ' Nortmoor');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26847', ' Detern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26849', ' Filsum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26871', ' Papenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26892', ' DÃ¶rpen, Lehe, u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26897', ' Esterwegen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26899', ' Rhede (Ems)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26901', ' Lorup, Rastdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26903', ' Surwold');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26904', ' BÃ¶rger');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26906', ' Dersum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26907', ' Walchum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26909', ' NeubÃ¶rger, Neulehe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26919', ' Brake');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26931', ' Elsfleth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26935', ' Stadland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26936', ' Stadland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26937', ' Stadland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26939', ' OvelgÃ¶nne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26954', ' Nordenham');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('26969', ' Butjadingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27211', ' Bassum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27232', ' Sulingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27239', ' Twistringen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27243', ' Harpstedt, GroÃŸ Ippener, Colnrade u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27245', ' Bahrenborstel, Barenburg, Kirchdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27246', ' Borstel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27248', ' Ehrenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27249', ' Maasen, Mellinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27251', ' Neuenkirchen, Scholen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27252', ' SchwafÃ¶rden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27254', ' Siedenburg, Staffhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27257', ' Affinghausen und Sudwalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27259', ' Freistatt, Varrel, Wehrbleck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27283', ' Verden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27299', ' Langwedel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27305', ' Bruchhausen-Vilsen, SÃ¼stedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27308', ' Kirchlinteln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27313', ' DÃ¶rverden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27318', ' Hoya, Hoyerhagen, Hilgermissen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27321', ' Thedinghausen, Emtinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27324', ' Eystrup, Hassel u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27327', ' Martfeld, Schwarme');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27330', ' Asendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27333', ' Schweringen, Warpe, BÃ¼cken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27336', ' Rethem (Aller), HÃ¤uslingen, Frankenfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27337', ' Blender');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27339', ' Riede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27356', ' Rotenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27367', ' Sottrum, ReeÃŸum, BÃ¶tersen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27374', ' VisselhÃ¶vede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27383', ' ScheeÃŸel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27386', ' Bothel, Kirchwalsede u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27389', ' Fintel, LauenbrÃ¼ck u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27404', ' Zeven, Elsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27412', ' Tarmstedt, Breddorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27419', ' Sittensen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27432', ' BremervÃ¶rde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27442', ' Gnarrenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27446', ' Selsingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27449', ' Kutenholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27472', ' Cuxhaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27474', ' Cuxhaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27476', ' Cuxhaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27478', ' Cuxhaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27498', ' Helgoland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27499', ' Neuwerk');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27568', ' Bremerhaven, Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27570', ' Bremerhaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27572', ' Bremerhaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27574', ' Bremerhaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27576', ' Bremerhaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27578', ' Bremerhaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27580', ' Bremerhaven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27607', ' Geestland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27612', ' Loxstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27616', ' Beverstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27619', ' Schiffdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27624', ' Geestland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27628', ' Hagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27639', ' Wurster NordseekÃ¼ste');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27711', ' Osterholz-Scharmbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27721', ' Ritterhude');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27726', ' Worpswede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27729', ' Hambergen, Holste u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27749', ' Delmenhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27751', ' Delmenhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27753', ' Delmenhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27755', ' Delmenhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27777', ' Ganderkesee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27793', ' Wildeshausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27798', ' Hude (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27801', ' DÃ¶tlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27804', ' Berne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('27809', ' Lemwerder');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28195', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28197', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28199', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28201', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28203', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28205', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28207', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28209', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28211', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28213', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28215', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28217', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28219', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28237', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28239', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28259', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28277', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28279', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28307', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28309', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28325', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28327', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28329', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28355', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28357', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28359', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28717', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28719', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28755', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28757', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28759', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28777', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28779', ' Bremen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28790', ' Schwanewede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28816', ' Stuhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28832', ' Achim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28844', ' Weyhe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28857', ' Syke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28865', ' Lilienthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28870', ' Ottersberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28876', ' Oyten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('28879', ' Grasberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29221', ' Celle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29223', ' Celle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29225', ' Celle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29227', ' Celle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29229', ' Celle, Wittbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29303', ' Bergen, Lohheide u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29308', ' Winsen (Aller)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29313', ' HambÃ¼hren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29320', ' Hermannsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29323', ' Wietze');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29328', ' FaÃŸberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29331', ' Lachendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29336', ' Nienhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29339', ' Wathlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29342', ' Wienhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29345', ' UnterlÃ¼ÃŸ');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29348', ' Eschede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29351', ' Eldingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29352', ' Adelheidsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29353', ' Ahnsbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29355', ' Beedenbostel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29356', ' BrÃ¶ckel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29358', ' Eicklingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29359', ' Habighorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29361', ' HÃ¶fer');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29362', ' Hohne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29364', ' Langlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29365', ' Sprakensehl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29367', ' Steinhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29369', ' Ummern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29378', ' Wittingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29379', ' Wittingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29386', ' HankensbÃ¼ttel, Obernholz, Dedelstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29389', ' Bad Bodenteich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29392', ' Wesendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29393', ' GroÃŸ Oesingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29394', ' LÃ¼der');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29396', ' SchÃ¶newÃ¶rde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29399', ' Wahrenholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29410', ' Salzwedel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29413', ' DÃ¤hre, Diesdorf, Wallstawe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29416', ' Kuhfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29439', ' LÃ¼chow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29451', ' Dannenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29456', ' Hitzacker (Elbe)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29459', ' Clenze');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29462', ' Wustrow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29465', ' Schnega');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29468', ' Bergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29471', ' Gartow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29472', ' Damnatz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29473', ' GÃ¶hrde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29475', ' Gorleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29476', ' Gusborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29478', ' HÃ¶hbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29479', ' Jameln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29481', ' Karwitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29482', ' KÃ¼sten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29484', ' Langendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29485', ' Lemgow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29487', ' Luckau (Wendland)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29488', ' LÃ¼bbow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29490', ' Neu Darchau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29491', ' Prezelle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29493', ' Schnackenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29494', ' Trebel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29496', ' Waddeweitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29497', ' Woltersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29499', ' Zernien');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29525', ' Uelzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29549', ' Bad Bevensen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29553', ' BienenbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29556', ' Suderburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29559', ' Wrestedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29562', ' Suhlendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29565', ' Wriedel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29571', ' Rosche');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29574', ' Ebstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29575', ' Altenmedingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29576', ' Barum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29578', ' Eimke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29579', ' Emmendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29581', ' Gerdau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29582', ' Hanstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29584', ' Himbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29585', ' Jelmstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29587', ' Natendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29588', ' Oetzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29590', ' RÃ¤tzlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29591', ' RÃ¶mstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29593', ' Schwienau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29594', ' Soltendiek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29597', ' Stoetze');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29599', ' Weste');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29614', ' Soltau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29633', ' Munster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29640', ' Schneverdingen, Heimbuch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29643', ' Neuenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29646', ' Bispingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29649', ' Wietzendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29664', ' Walsrode, Ostenholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29683', ' Bad Fallingbostel, Osterheide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29690', ' Schwarmstedt u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29693', ' Hodenhagen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('29699', ' Bomlitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30159', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30161', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30163', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30165', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30167', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30169', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30171', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30173', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30175', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30177', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30179', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30419', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30449', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30451', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30453', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30455', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30457', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30459', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30519', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30521', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30539', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30559', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30625', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30627', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30629', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30655', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30657', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30659', ' Hannover');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30669', ' Langenhagen (Flughafen)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30823', ' Garbsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30826', ' Garbsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30827', ' Garbsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30851', ' Langenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30853', ' Langenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30855', ' Langenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30880', ' Laatzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30890', ' Barsinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30900', ' Wedemark');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30916', ' Isernhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30926', ' Seelze');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30938', ' Burgwedel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30952', ' Ronnenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30966', ' Hemmingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30974', ' Wennigsen (Deister)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30982', ' Pattensen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('30989', ' Gehrden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31008', ' Elze');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31020', ' Salzhemmendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31028', ' Gronau (Leine)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31036', ' Eime');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31061', ' Alfeld (Leine)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31073', ' GrÃ¼nenplan, Delligsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31079', ' Sibbesse');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31084', ' Freden (Leine)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31089', ' Duingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31134', ' Hildesheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31135', ' Hildesheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31137', ' Hildesheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31139', ' Hildesheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31141', ' Hildesheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31157', ' Sarstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31162', ' Bad Salzdetfurth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31167', ' Bockenem');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31171', ' Nordstemmen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31174', ' Schellerten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31177', ' Harsum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31180', ' Giesen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31185', ' SÃ¶hlde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31188', ' Holle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31191', ' Algermissen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31195', ' Lamspringe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31199', ' Diekholzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31224', ' Peine');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31226', ' Peine');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31228', ' Peine');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31234', ' Edemissen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31241', ' Ilsede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31246', ' Lahstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31249', ' Hohenhameln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31275', ' Lehrte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31303', ' Burgdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31311', ' Uetze');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31319', ' Sehnde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31515', ' Wunstorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31535', ' Neustadt am RÃ¼benberge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31542', ' Bad Nenndorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31547', ' Rehburg-Loccum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31552', ' Apelern, Rodenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31553', ' Auhagen, Sachsenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31555', ' Suthfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31556', ' WÃ¶lpinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31558', ' Hagenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31559', ' Haste, Hohnhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31582', ' Nienburg/Weser');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31592', ' Stolzenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31595', ' Steyerberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31600', ' Uchte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31603', ' Diepenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31604', ' Raddestorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31606', ' Warmsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31608', ' Marklohe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31609', ' Balge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31613', ' Wietzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31618', ' Liebenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31619', ' Binnen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31621', ' Pennigsehl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31622', ' Heemsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31623', ' Drakenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31626', ' HaÃŸbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31627', ' Rohrsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31628', ' Landesbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31629', ' Estorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31632', ' Husum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31633', ' Leese');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31634', ' Steimbke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31636', ' Linsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31637', ' Rodewald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31638', ' StÃ¶ckse');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31655', ' Stadthagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31675', ' BÃ¼ckeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31683', ' Obernkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31688', ' NienstÃ¤dt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31691', ' Helpsen, Seggebruch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31693', ' Hespe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31698', ' Lindhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31699', ' Beckedorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31700', ' HeuerÃŸen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31702', ' LÃ¼dersfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31707', ' HeeÃŸen, Bad Eilsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31708', ' Ahnsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31710', ' Buchholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31711', ' Luhden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31712', ' NiederwÃ¶hren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31714', ' Lauenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31715', ' Meerbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31717', ' Nordsehl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31718', ' Pollhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31719', ' Wiedensahl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31737', ' Rinteln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31749', ' Auetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31785', ' Hameln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31787', ' Hameln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31789', ' Hameln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31812', ' Bad Pyrmont');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31832', ' Springe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31840', ' Hessisch Oldendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31848', ' Bad MÃ¼nder am Deister');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31855', ' Aerzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31860', ' Emmerthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31863', ' CoppenbrÃ¼gge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31867', ' Pohle, Lauenau, Messenkamp, HÃ¼lsede etc');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('31868', ' Ottenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32049', ' Herford');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32051', ' Herford');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32052', ' Herford');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32105', ' Bad Salzuflen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32107', ' Bad Salzuflen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32108', ' Bad Salzuflen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32120', ' Hiddenhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32130', ' Enger');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32139', ' Spenge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32257', ' BÃ¼nde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32278', ' Kirchlengern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32289', ' RÃ¶dinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32312', ' LÃ¼bbecke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32339', ' Espelkamp');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32351', ' Stemwede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32361', ' PreuÃŸisch Oldendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32369', ' Rahden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32423', ' Minden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32425', ' Minden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32427', ' Minden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32429', ' Minden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32457', ' Porta Westfalica');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32469', ' Petershagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32479', ' Hille');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32545', ' Bad Oeynhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32547', ' Bad Oeynhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32549', ' Bad Oeynhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32584', ' LÃ¶hne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32602', ' Vlotho');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32609', ' HÃ¼llhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32657', ' Lemgo');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32676', ' LÃ¼gde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32683', ' Barntrup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32689', ' Kalletal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32694', ' DÃ¶rentrup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32699', ' Extertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32756', ' Detmold');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32758', ' Detmold');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32760', ' Detmold');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32791', ' Lage');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32805', ' Horn-Bad Meinberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32816', ' Schieder-Schwalenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32825', ' Blomberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32832', ' Augustdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('32839', ' Steinheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33014', ' Bad Driburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33034', ' Brakel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33039', ' Nieheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33098', ' Paderborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33100', ' Paderborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33102', ' Paderborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33104', ' Paderborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33106', ' Paderborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33129', ' DelbrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33142', ' BÃ¼ren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33154', ' Salzkotten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33161', ' HÃ¶velhof');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33165', ' Lichtenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33175', ' Bad Lippspringe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33178', ' Borchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33181', ' WÃ¼nnenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33184', ' Altenbeken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33189', ' Schlangen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33330', ' GÃ¼tersloh');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33332', ' GÃ¼tersloh');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33333', ' Bertelsmann');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33334', ' GÃ¼tersloh');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33335', ' GÃ¼tersloh');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33378', ' Rheda-WiedenbrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33397', ' Rietberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33415', ' Verl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33428', ' Harsewinkel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33442', ' Herzebrock-Clarholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33449', ' Langenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33602', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33604', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33605', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33607', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33609', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33611', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33613', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33615', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33617', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33619', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33647', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33649', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33659', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33689', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33699', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33719', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33729', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33739', ' Bielefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33758', ' SchloÃŸ Holte-Stukenbrock');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33775', ' Versmold');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33790', ' Halle (Westfalen)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33803', ' Steinhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33813', ' Oerlinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33818', ' LeopoldshÃ¶he');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33824', ' Werther (Westf.)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('33829', ' Borgholzhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34117', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34119', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34121', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34123', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34125', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34127', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34128', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34130', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34131', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34132', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34134', ' Kassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34212', ' Melsungen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34225', ' Baunatal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34233', ' Kassel, Fuldatal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34246', ' Vellmar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34253', ' Lohfelden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34260', ' Kaufungen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34266', ' Niestetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34270', ' Schauenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34277', ' FuldabrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34281', ' Gudensberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34286', ' Spangenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34289', ' Zierenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34292', ' Ahnatal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34295', ' EdermÃ¼nde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34298', ' Helsa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34302', ' Guxhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34305', ' Niedenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34308', ' Bad Emstal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34311', ' Naumburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34314', ' Espenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34317', ' Habichtswald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34320', ' SÃ¶hrewald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34323', ' Malsfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34326', ' Morschen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34327', ' KÃ¶rle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34329', ' Nieste');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34346', ' Hann. MÃ¼nden, Gutsbezirk Reinhardswald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34355', ' Staufenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34359', ' Reinhardshagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34369', ' Hofgeismar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34376', ' Immenhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34379', ' Calden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34385', ' Bad Karlshafen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34388', ' Trendelburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34393', ' Grebenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34396', ' Liebenau (Hessen)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34399', ' Oberweser');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34414', ' Warburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34431', ' Marsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34434', ' Borgentreich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34439', ' Willebadessen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34454', ' Bad Arolsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34466', ' Wolfhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34471', ' Volkmarsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34474', ' Diemelstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34477', ' Twistetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34479', ' Breuna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34497', ' Korbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34508', ' Willingen (Upland)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34513', ' Waldeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34516', ' VÃ¶hl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34519', ' Diemelsee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34537', ' Bad Wildungen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34549', ' Edertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34560', ' Fritzlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34576', ' Homberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34582', ' Borken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34587', ' Felsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34590', ' Wabern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34593', ' KnÃ¼llwald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34596', ' Bad Zwesten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34599', ' Neuental');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34613', ' Schwalmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34621', ' Frielendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34626', ' Neukirchen (KnÃ¼ll)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34628', ' Willingshausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34630', ' Gilserberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34632', ' Jesberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34633', ' Ottrau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34637', ' Schrecksbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('34639', ' Schwarzenborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35037', ' Marburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35039', ' Marburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35041', ' Marburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35043', ' Marburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35066', ' Frankenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35075', ' Gladenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35080', ' Bad Endbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35083', ' Wetter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35085', ' Ebsdorfergrund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35088', ' Battenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35091', ' CÃ¶lbe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35094', ' Lahntal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35096', ' Weimar (Lahn)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35099', ' Burgwald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35102', ' Lohra');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35104', ' Lichtenfels');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35108', ' Allendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35110', ' Frankenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35112', ' Fronhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35114', ' Haina');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35116', ' Hatzfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35117', ' MÃ¼nchhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35119', ' Rosenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35216', ' Biedenkopf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35232', ' Dautphetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35236', ' Breidenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35239', ' Steffenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35260', ' Stadtallendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35274', ' Kirchhain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35279', ' Neustadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35282', ' Rauschenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35285', ' GemÃ¼nden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35287', ' AmÃ¶neburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35288', ' Wohratal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35305', ' GrÃ¼nberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35315', ' Homberg (Ohm)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35321', ' Laubach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35325', ' MÃ¼cke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35327', ' Ulrichstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35329', ' GemÃ¼nden (Felda)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35390', ' GieÃŸen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35392', ' GieÃŸen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35394', ' GieÃŸen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35396', ' GieÃŸen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35398', ' GieÃŸen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35410', ' Hungen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35415', ' Pohlheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35418', ' Buseck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35423', ' Lich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35428', ' LanggÃ¶ns');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35435', ' Wettenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35440', ' Linden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35444', ' Biebertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35447', ' Reiskirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35452', ' Heuchelheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35457', ' Lollar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35460', ' Staufenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35463', ' Fernwald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35466', ' Rabenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35469', ' Allendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35510', ' Butzbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35516', ' MÃ¼nzenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35519', ' Rockenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35576', ' Wetzlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35578', ' Wetzlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35579', ' Wetzlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35580', ' Wetzlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35581', ' Wetzlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35582', ' Wetzlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35583', ' Wetzlar Garbeinheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35584', ' Wetzlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35585', ' Wetzlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35586', ' Wetzlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35606', ' Solms');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35614', ' AÃŸlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35619', ' Braunfels');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35625', ' HÃ¼ttenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35630', ' Ehringshausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35633', ' Lahnau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35638', ' Leun');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35641', ' SchÃ¶ffengrund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35644', ' Hohenahr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35647', ' Waldolms');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35649', ' Bischoffen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35683', ' Dillenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35684', ' Dillenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35685', ' Dillenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35686', ' Dillenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35687', ' Dillenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35688', ' Dillenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35689', ' Dillenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35690', ' Dillenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35708', ' Haiger');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35713', ' Eschenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35716', ' DietzhÃ¶lztal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35719', ' Angelburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35745', ' Herborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35753', ' Greifenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35756', ' Mittenaar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35759', ' Driedorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35764', ' Sinn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35767', ' Breitscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35768', ' Siegbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35781', ' Weilburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35789', ' WeilmÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35792', ' LÃ¶hnberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35794', ' Mengerskirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35796', ' Weinbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('35799', ' Merenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36037', ' Fulda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36039', ' Fulda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36041', ' Fulda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36043', ' Fulda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36088', ' HÃ¼nfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36093', ' KÃ¼nzell');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36100', ' Petersberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36103', ' Flieden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36110', ' Schlitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36115', ' Hilders, Ehrenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36119', ' Neuhof');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36124', ' Eichenzell');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36129', ' Gersfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36132', ' Eiterfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36137', ' GroÃŸenlÃ¼der');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36142', ' Tann');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36145', ' Hofbieber');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36148', ' Kalbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36151', ' Burghaun');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36154', ' Hosenfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36157', ' Ebersburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36160', ' Dipperz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36163', ' Poppenhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36166', ' Haunetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36167', ' NÃ¼sttal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36169', ' Rasdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36179', ' Bebra');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36199', ' Rotenburg an der Fulda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36205', ' Sontra');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36208', ' Wildeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36211', ' Alheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36214', ' Nentershausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36217', ' Ronshausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36219', ' Cornberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36251', ' Bad Hersfeld, Ludwigsau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36266', ' Heringen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36269', ' Philippsthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36272', ' Niederaula');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36275', ' Kirchheim (Hessen)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36277', ' Schenklengsfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36280', ' Oberaula');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36282', ' Hauneck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36284', ' Hohenroda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36286', ' Neuenstein (Hessen)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36287', ' Breitenbach am Herzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36289', ' Friedewald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36304', ' Alsfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36318', ' Schwalmtal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36320', ' Kirtorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36323', ' Grebenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36325', ' Feldatal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36326', ' Antrifttal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36329', ' Romrod');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36341', ' Lauterbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36355', ' Grebenhain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36358', ' Herbstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36364', ' Bad Salzschlirf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36367', ' Wartenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36369', ' Lautertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36381', ' SchlÃ¼chtern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36391', ' Sinntal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36396', ' Steinau an der StraÃŸe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36399', ' Freiensteinau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36404', ' Vacha, Unterbreizbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36414', ' Unterbreizbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36419', ' Geisa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36433', ' Bad Salzungen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36448', ' Bad Liebenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36452', ' Kaltennordheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36456', ' Barchfeld-Immelborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36457', ' Stadtlengsfeld, Weilar, Urnshausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36460', ' Krayenberggemeinde, Frauensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36466', ' Dermbach, Wiesenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('36469', ' Tiefenort');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37073', ' GÃ¶ttingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37075', ' GÃ¶ttingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37077', ' GÃ¶ttingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37079', ' GÃ¶ttingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37081', ' GÃ¶ttingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37083', ' GÃ¶ttingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37085', ' GÃ¶ttingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37115', ' Duderstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37120', ' Bovenden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37124', ' Rosdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37127', ' Dransfeld u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37130', ' Gleichen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37133', ' Friedland');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37136', ' Seulingen, Waake u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37139', ' Adelebsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37154', ' Northeim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37170', ' Uslar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37176', ' NÃ¶rten-Hardenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37181', ' Hardegsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37186', ' Moringen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37191', ' Katlenburg-Lindau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37194', ' Bodenfelde, Wahlsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37197', ' Hattorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37199', ' Wulften');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37213', ' Witzenhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37214', ' Witzenhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37215', ' Witzenhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37216', ' Witzenhausen, Gutsbezirk');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37217', ' Witzenhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37218', ' Witzenhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37235', ' Hessisch Lichtenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37242', ' Bad Sooden-Allendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37247', ' GroÃŸalmerode');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37249', ' Neu-Eichenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37269', ' Eschwege');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37276', ' Meinhard');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37281', ' Wanfried');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37284', ' Waldkappel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37287', ' Wehretal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37290', ' MeiÃŸner');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37293', ' Herleshausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37296', ' Ringgau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37297', ' Berkatal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37299', ' WeiÃŸenborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37308', ' Heiligenstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37318', ' Arenshausen, Uder u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37327', ' Leinefelde-Worbis, Wingerode, Hausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37339', ' Worbis');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37345', ' Am Ohmberg, Sonnenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37351', ' DingelstÃ¤dt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37355', ' Niederorschel u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37359', ' KÃ¼llstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37412', ' Herzberg, Elbingerode, HÃ¶rden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37431', ' Bad Lauterberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37434', ' Gieboldehausen, Rhumequelle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37441', ' Bad Sachsa');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37444', ' Braunlage');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37445', ' Walkenried');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37447', ' Wieda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37449', ' Zorge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37520', ' Osterode am Harz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37539', ' Bad Grund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37574', ' Einbeck, Kreiensen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37581', ' Bad Gandersheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37586', ' Dassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37589', ' Kalefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37603', ' Holzminden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37619', ' Bodenwerder, Pegestorf, Kirchbrak, Hehlen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37620', ' Halle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37627', ' Stadtoldendorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37632', ' Holzen, Eschershausen, Eimen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37633', ' Dielmissen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37635', ' LÃ¼erdissen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37639', ' Bevern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37640', ' Golmbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37642', ' Holenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37643', ' Negenborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37647', ' BrevÃ¶rde, Polle, Vahlbruch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37649', ' Heinsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37671', ' HÃ¶xter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37688', ' Beverungen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37691', ' Boffzen, Derental');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37696', ' MarienmÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37697', ' LauenfÃ¶rde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('37699', ' FÃ¼rstenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38100', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38102', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38104', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38106', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38108', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38110', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38112', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38114', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38116', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38118', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38120', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38122', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38124', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38126', ' Braunschweig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38154', ' KÃ¶nigslutter am Elm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38159', ' Vechelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38162', ' Cremlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38165', ' Lehre');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38170', ' SchÃ¶ppenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38173', ' Sickte, Dettum u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38176', ' Wendeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38179', ' SchwÃ¼lper');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38226', ' Salzgitter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38228', ' Salzgitter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38229', ' Salzgitter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38239', ' Salzgitter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38259', ' Salzgitter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38268', ' Lengede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38271', ' Baddeckenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38272', ' Burgdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38274', ' Elbe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38275', ' Haverlah');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38277', ' Heere');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38279', ' Sehlde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38300', ' WolfenbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38302', ' WolfenbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38304', ' WolfenbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38312', ' Dorstadt, FlÃ¶the, BÃ¶rÃŸum u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38315', ' Schladen-Werla');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38319', ' Remlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38321', ' Denkte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38322', ' Hedeper');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38324', ' KissenbrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38325', ' Roklum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38327', ' Semmenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38329', ' Wittmar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38350', ' Helmstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38364', ' SchÃ¶ningen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38368', ' Rennau, Querenhorst, Mariental, Grasleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38372', ' BÃ¼ddenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38373', ' SÃ¼pplingen, Frellstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38375', ' RÃ¤bke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38376', ' SÃ¼pplingenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38378', ' Warberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38379', ' Wolsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38381', ' Jerxheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38382', ' Beierstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38384', ' Gevensleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38387', ' SÃ¶llingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38440', ' Wolfsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38442', ' Wolfsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38444', ' Wolfsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38446', ' Wolfsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38448', ' Wolfsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38458', ' Velpke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38459', ' Bahrdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38461', ' Danndorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38462', ' Grafhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38464', ' GroÃŸ TwÃ¼lpstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38465', ' Brome');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38467', ' Bergfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38468', ' Ehra-Lessien');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38470', ' Parsau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38471', ' RÃ¼hen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38473', ' Tiddische');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38474', ' TÃ¼lau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38476', ' Barwedel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38477', ' Jembke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38479', ' Tappenbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38486', ' KlÃ¶tze, Apenburg-Winterfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38489', ' Beetzendorf, Rohrberg, JÃ¼bar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38518', ' Gifhorn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38524', ' Sassenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38527', ' Meine');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38528', ' AdenbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38530', ' Didderse');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38531', ' RÃ¶tgesbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38533', ' Vordorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38536', ' Meinersen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38539', ' MÃ¼den (Aller)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38542', ' Leiferde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38543', ' Hillerse');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38547', ' Calberlah');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38550', ' IsenbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38551', ' RibbesbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38553', ' WasbÃ¼ttel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38554', ' Weyhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38556', ' Bokensdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38557', ' OsloÃŸ');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38559', ' Wagenhoff, Ringelah');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38640', ' Goslar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38642', ' Goslar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38644', ' Goslar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38667', ' Bad Harzburg, Torfhaus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38678', ' Clausthal-Zellerfeld, Oberschulenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38685', ' Langelsheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38690', ' Goslar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38700', ' Braunlage');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38704', ' Liebenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38707', ' Altenau, Schulenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38709', ' Wildemann');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38723', ' Seesen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38729', ' Hahausen, Lutter, Wallmoden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38820', ' Halberstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38822', ' Halberstadt, GroÃŸ Quenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38828', ' Wegeleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38829', ' Harsleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38835', ' Osterwieck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38836', ' Badersleben u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38838', ' Huy');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38855', ' Wernigerode, Nordharz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38871', ' Ilsenburg, Nordharz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38875', ' Oberharz am Brocken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38877', ' Oberharz am Brocken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38879', ' Wernigerode');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38889', ' Blankenburg, Oberharz am Brocken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38895', ' Langenstein, Derenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('38899', ' Oberharz am Brocken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39104', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39106', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39108', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39110', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39112', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39114', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39116', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39118', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39120', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39122', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39124', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39126', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39128', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39130', ' Magdeburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39164', ' Wanzleben-BÃ¶rde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39167', ' Eichenbarleben, Ochtmersleben, Irxleben, Schnarsl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39171', ' SÃ¼lzetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39175', ' Gerwisch, Biederitz, Menz, KÃ¶rbelitz etc');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39179', ' Barleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39217', ' SchÃ¶nebeck (Elbe)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39218', ' SchÃ¶nebeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39221', ' Welsleben, Biere, Eickendorf, Eggersdorf, GroÃŸmÃ');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39240', ' Calbe, Rosenburg, LÃ¶dderitz etc');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39245', ' Gommern, Dannigkow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39249', ' Barby');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39261', ' Zerbst/Anhalt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39264', ' GÃ¼terglÃ¼ck, LÃ¼bs, Deetz, JÃ¼trichau etc');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39279', ' Loburg, Leitzkau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39288', ' Burg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39291', ' MÃ¶ckern, Schermen, Nedlitz etc');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39307', ' Genthin, Hohenseeden, Zabakuck u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39317', ' Elbe-Parey');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39319', ' Jerichow');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39326', ' Wolmirstedt u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39340', ' Haldensleben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39343', ' Erxleben, Nordgermersleben u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39345', ' Haldensleben, Flechtingen, BÃ¼lstringen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39356', ' Weferlingen, Behnsdorf, Belsdorf etc');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39359', ' RÃ¤tzlingen, Wegenstedt, CalvÃ¶rde, BÃ¶ddensell e');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39365', ' Harbke, Sommersdorf, Wefensleben, Ummendorf, Eils');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39387', ' Oschersleben (Bode)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39393', ' HÃ¶tensleben, VÃ¶lpke, Ottleben, Hamersleben etc');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39397', ' Schwanebeck, GrÃ¶ningen, Kroppenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39418', ' StaÃŸfurt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39435', ' Egeln, Unseburg, Wolmirsleben, Borne etc');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39439', ' GÃ¼sten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39443', ' StaÃŸfurt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39444', ' Hecklingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39446', ' StaÃŸfurt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39448', ' BÃ¶rde-Hakel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39517', ' TangerhÃ¼tte u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39524', ' Sandau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39539', ' Havelberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39576', ' Stendal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39579', ' Bismark, Rochau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39590', ' TangermÃ¼nde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39596', ' Goldbeck, Arneburg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39599', ' Bismark');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39606', ' Osterburg, AltmÃ¤rkische HÃ¶he');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39615', ' Seehausen, Werben, Leppin, Wahrenberg etc');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39619', ' Arendsee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39624', ' Kalbe, Bismark');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39629', ' Bismark');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39638', ' Gardelegen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39646', ' Oebisfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('39649', ' Gardelegen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40210', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40211', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40212', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40213', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40215', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40217', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40219', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40221', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40223', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40225', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40227', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40229', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40231', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40233', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40235', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40237', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40239', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40468', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40470', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40472', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40474', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40476', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40477', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40479', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40489', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40545', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40547', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40549', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40589', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40591', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40593', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40595', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40597', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40599', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40625', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40627', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40629', ' DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40667', ' Meerbusch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40668', ' Meerbusch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40670', ' Meerbusch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40699', ' Erkrath');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40721', ' Hilden, DÃ¼sseldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40723', ' Hilden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40724', ' Hilden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40764', ' Langenfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40789', ' Monheim am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40822', ' Mettmann');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40878', ' Ratingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40880', ' Ratingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40882', ' Ratingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40883', ' Ratingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('40885', ' Ratingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41061', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41063', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41065', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41066', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41068', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41069', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41169', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41179', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41189', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41199', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41236', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41238', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41239', ' MÃ¶nchengladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41334', ' Nettetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41352', ' Korschenbroich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41363', ' JÃ¼chen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41366', ' Schwalmtal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41372', ' NiederkrÃ¼chten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41379', ' BrÃ¼ggen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41460', ' Neuss');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41462', ' Neuss');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41464', ' Neuss');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41466', ' Neuss');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41468', ' Neuss');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41469', ' Neuss');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41470', ' Neuss');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41472', ' Neuss');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41515', ' Grevenbroich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41516', ' Grevenbroich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41517', ' Grevenbroich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41539', ' Dormagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41540', ' Dormagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41541', ' Dormagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41542', ' Dormagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41564', ' Kaarst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41569', ' Rommerskirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41747', ' Viersen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41748', ' Viersen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41749', ' Viersen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41751', ' Viersen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41812', ' Erkelenz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41836', ' HÃ¼ckelhoven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41844', ' Wegberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('41849', ' Wassenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42103', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42105', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42107', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42109', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42111', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42113', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42115', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42117', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42119', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42275', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42277', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42279', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42281', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42283', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42285', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42287', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42289', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42327', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42329', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42349', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42369', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42389', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42399', ' Wuppertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42477', ' Radevormwald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42489', ' WÃ¼lfrath');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42499', ' HÃ¼ckeswagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42549', ' Velbert');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42551', ' Velbert');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42553', ' Velbert');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42555', ' Velbert');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42579', ' Heiligenhaus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42651', ' Solingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42653', ' Solingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42655', ' Solingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42657', ' Solingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42659', ' Solingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42697', ' Solingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42699', ' Solingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42719', ' Solingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42781', ' Haan');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42799', ' Leichlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42853', ' Remscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42855', ' Remscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42857', ' Remscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42859', ' Remscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42897', ' Remscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42899', ' Remscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('42929', ' Wermelskirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44135', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44137', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44139', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44141', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44143', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44145', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44147', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44149', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44225', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44227', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44229', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44263', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44265', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44267', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44269', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44287', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44289', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44309', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44319', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44328', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44329', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44339', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44357', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44359', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44369', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44379', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44388', ' Dortmund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44532', ' LÃ¼nen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44534', ' LÃ¼nen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44536', ' LÃ¼nen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44575', ' Castrop-Rauxel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44577', ' Castrop-Rauxel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44579', ' Castrop-Rauxel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44581', ' Castrop-Rauxel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44623', ' Herne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44625', ' Herne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44627', ' Herne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44628', ' Herne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44629', ' Herne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44649', ' Herne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44651', ' Herne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44652', ' Herne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44653', ' Herne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44787', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44789', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44791', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44793', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44795', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44797', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44799', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44801', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44803', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44805', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44807', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44809', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44866', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44867', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44869', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44879', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44892', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('44894', ' Bochum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45127', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45128', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45130', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45131', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45133', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45134', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45136', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45138', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45139', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45141', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45143', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45144', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45145', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45147', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45149', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45219', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45239', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45257', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45259', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45276', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45277', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45279', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45289', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45307', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45309', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45326', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45327', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45329', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45355', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45356', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45357', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45359', ' Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45468', ' MÃ¼lheim an der Ruhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45470', ' MÃ¼lheim an der Ruhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45472', ' MÃ¼lheim an der Ruhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45473', ' MÃ¼lheim an der Ruhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45475', ' MÃ¼lheim an der Ruhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45476', ' MÃ¼lheim an der Ruhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45478', ' MÃ¼lheim an der Ruhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45479', ' MÃ¼lheim an der Ruhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45481', ' MÃ¼lheim an der Ruhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45525', ' Hattingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45527', ' Hattingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45529', ' Hattingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45549', ' SprockhÃ¶vel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45657', ' Recklinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45659', ' Recklinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45661', ' Recklinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45663', ' Recklinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45665', ' Recklinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45699', ' Herten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45701', ' Herten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45711', ' Datteln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45721', ' Haltern am See');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45731', ' Waltrop');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45739', ' Oer-Erkenschwick');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45768', ' Marl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45770', ' Marl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45772', ' Marl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45879', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45881', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45883', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45884', ' Gelsenkirchen Rotthausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45886', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45888', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45889', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45891', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45892', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45894', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45896', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45897', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45899', ' Gelsenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45964', ' Gladbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45966', ' Gladbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('45968', ' Gladbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46045', ' Oberhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46047', ' Oberhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46049', ' Oberhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46117', ' Oberhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46119', ' Oberhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46145', ' Oberhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46147', ' Oberhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46149', ' Oberhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46236', ' Bottrop');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46238', ' Bottrop');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46240', ' Bottrop');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46242', ' Bottrop');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46244', ' Bottrop');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46282', ' Dorsten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46284', ' Dorsten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46286', ' Dorsten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46325', ' Borken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46342', ' Velen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46348', ' Raesfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46354', ' SÃ¼dlohn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46359', ' Heiden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46395', ' Bocholt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46397', ' Bocholt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46399', ' Bocholt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46414', ' Rhede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46419', ' Isselburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46446', ' Emmerich am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46459', ' Rees');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46483', ' Wesel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46485', ' Wesel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46487', ' Wesel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46499', ' Hamminkeln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46509', ' Xanten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46514', ' Schermbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46519', ' Alpen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46535', ' Dinslaken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46537', ' Dinslaken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46539', ' Dinslaken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46562', ' Voerde (Niederrhein)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('46569', ' HÃ¼nxe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47051', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47053', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47055', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47057', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47058', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47059', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47119', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47137', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47138', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47139', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47166', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47167', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47169', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47178', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47179', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47198', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47199', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47226', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47228', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47229', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47239', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47249', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47259', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47269', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47279', ' Duisburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47441', ' Moers');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47443', ' Moers');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47445', ' Moers');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47447', ' Moers');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47475', ' Kamp-Lintfort');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47495', ' Rheinberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47506', ' Neukirchen-Vluyn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47509', ' Rheurdt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47533', ' Kleve');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47546', ' Kalkar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47551', ' Bedburg-Hau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47559', ' Kranenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47574', ' Goch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47589', ' Uedem');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47608', ' Geldern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47623', ' Kevelaer-Mitte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47624', ' Kevelaer-Twisteden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47625', ' Kevelaer-Wetten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47626', ' Kevelaer-Winnekendonk');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47627', ' Kevelaer-Kervenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47638', ' Straelen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47647', ' Kerken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47652', ' Weeze');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47661', ' Issum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47665', ' Sonsbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47669', ' Wachtendonk');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47798', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47799', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47800', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47802', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47803', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47804', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47805', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47807', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47809', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47829', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47839', ' Krefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47877', ' Willich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47906', ' Kempen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47918', ' TÃ¶nisvorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('47929', ' Grefrath');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48143', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48145', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48147', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48149', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48151', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48153', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48155', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48157', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48159', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48161', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48163', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48165', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48167', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48231', ' Warendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48249', ' DÃ¼lmen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48268', ' Greven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48282', ' Emsdetten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48291', ' Telgte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48301', ' Nottuln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48308', ' Senden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48317', ' Drensteinfurt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48324', ' Sendenhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48329', ' Havixbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48336', ' Sassenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48341', ' Altenberge');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48346', ' Ostbevern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48351', ' Everswinkel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48356', ' Nordwalde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48361', ' Beelen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48366', ' Laer');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48369', ' Saerbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48429', ' Rheine');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48431', ' Rheine');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48432', ' Rheine');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48455', ' Bad Bentheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48465', ' Engden, Isterberg, SchÃ¼ttorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48477', ' HÃ¶rstel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48480', ' LÃ¼nne, Schapen, Spelle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48485', ' Neuenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48488', ' EmsbÃ¼ren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48493', ' Wettringen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48496', ' Hopsten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48499', ' Salzbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48527', ' Nordhorn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48529', ' Nordhorn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48531', ' Nordhorn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48565', ' Steinfurt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48599', ' Gronau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48607', ' Ochtrup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48612', ' Horstmar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48619', ' Heek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48624', ' SchÃ¶ppingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48629', ' Metelen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48653', ' Coesfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48683', ' Ahaus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48691', ' Vreden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48703', ' Stadtlohn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48712', ' Gescher');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48720', ' Rosendahl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48727', ' Billerbeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48734', ' Reken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('48739', ' Legden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49074', ' OsnabrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49076', ' OsnabrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49078', ' OsnabrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49080', ' OsnabrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49082', ' OsnabrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49084', ' OsnabrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49086', ' OsnabrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49088', ' OsnabrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49090', ' OsnabrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49124', ' GeorgsmarienhÃ¼tte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49134', ' Wallenhorst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49143', ' Bissendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49152', ' Bad Essen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49163', ' Bohmte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49170', ' Hagen am Teutoburger Wald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49176', ' Hilter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49179', ' Ostercappeln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49186', ' Bad Iburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49191', ' Belm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49196', ' Bad Laer');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49201', ' Dissen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49205', ' Hasbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49214', ' Bad Rothenfelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49219', ' Glandorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49324', ' Melle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49326', ' Melle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49328', ' Melle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49356', ' Diepholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49377', ' Vechta');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49393', ' Lohne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49401', ' Damme');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49406', ' Barnstorf, Eydelstedt, Drentwede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49413', ' Dinklage');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49419', ' Wagenfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49424', ' Goldenstedt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49429', ' Visbek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49434', ' Neuenkirchen-VÃ¶rden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49439', ' Steinfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49448', ' LemfÃ¶rde u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49451', ' Holdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49453', ' Barver, Dickel, Hemsloh, Rehden, Wetschen, Wehrbl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49456', ' Bakum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49457', ' Drebber');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49459', ' Lembruch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49477', ' IbbenbÃ¼ren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49479', ' IbbenbÃ¼ren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49492', ' Westerkappeln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49497', ' Mettingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49504', ' Lotte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49509', ' Recke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49525', ' Lengerich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49536', ' Lienen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49545', ' Tecklenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49549', ' Ladbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49565', ' Bramsche');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49577', ' Kettenkamp, EggermÃ¼hlen, Ankum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49584', ' FÃ¼rstenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49586', ' Merzen, Neuenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49593', ' BersenbrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49594', ' Alfhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49596', ' Gehrde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49597', ' Rieste');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49599', ' Voltlage');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49610', ' QuakenbrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49624', ' LÃ¶ningen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49626', ' Berge, Bippen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49632', ' Essen (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49635', ' Badbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49637', ' Menslage');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49638', ' Nortrup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49661', ' Cloppenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49681', ' Garrel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49685', ' Emstek');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49688', ' Lastrup');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49692', ' Cappeln (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49696', ' Molbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49699', ' Lindern (Oldenburg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49716', ' Meppen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49733', ' Haren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49740', ' HaselÃ¼nne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49744', ' Geeste');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49751', ' SÃ¶gel u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49757', ' Werlte, Vrees, Lahn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49762', ' Sustrum, Lathen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49767', ' Twist');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49770', ' Herzlake, Dohren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49774', ' LÃ¤hden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49777', ' Stavern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49779', ' Oberlangen, Niederlangen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49808', ' Lingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49809', ' Lingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49811', ' Lingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49824', ' Ringe, Laar, Emlichheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49828', ' Esche, Georgsdorf, Lage, Neuenhaus, Osterwald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49832', ' Andervenne, Beesten, Freren, Messingen, Thuine');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49835', ' Wietmarschen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49838', ' Lengerich u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49843', ' Uelsen, Halle, GÃ¶lenkamp, Getelo');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49844', ' Bawinkel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49846', ' Hoogstede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49847', ' Itterbeck/Wielen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('49849', ' Wilsum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50126', ' Bergheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50127', ' Bergheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50129', ' Bergheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50169', ' Kerpen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50170', ' Kerpen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50171', ' Kerpen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50181', ' Bedburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50189', ' Elsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50226', ' Frechen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50259', ' Pulheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50321', ' BrÃ¼hl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50354', ' HÃ¼rth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50374', ' Erftstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50389', ' Wesseling');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50667', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50668', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50670', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50672', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50674', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50676', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50677', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50678', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50679', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50733', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50735', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50737', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50739', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50765', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50767', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50769', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50823', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50825', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50827', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50829', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50858', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50859', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50931', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50933', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50935', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50937', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50939', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50968', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50969', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50996', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50997', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('50999', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51061', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51063', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51065', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51067', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51069', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51103', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51105', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51107', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51109', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51143', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51145', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51147', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51149', ' KÃ¶ln');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51371', ' Leverkusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51373', ' Leverkusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51375', ' Leverkusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51377', ' Leverkusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51379', ' Leverkusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51381', ' Leverkusen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51399', ' Burscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51427', ' Bergisch Gladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51429', ' Bergisch Gladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51465', ' Bergisch Gladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51467', ' Bergisch Gladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51469', ' Bergisch Gladbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51491', ' Overath');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51503', ' RÃ¶srath');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51515', ' KÃ¼rten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51519', ' Odenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51545', ' WaldbrÃ¶l');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51570', ' Windeck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51580', ' Reichshof');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51588', ' NÃ¼mbrecht');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51597', ' Morsbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51598', ' Friesenhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51643', ' Gummersbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51645', ' Gummersbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51647', ' Gummersbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51674', ' Wiehl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51688', ' WipperfÃ¼rth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51702', ' Bergneustadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51709', ' Marienheide');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51766', ' Engelskirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('51789', ' Lindlar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52062', ' Aachen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52064', ' Aachen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52066', ' Aachen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52068', ' Aachen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52070', ' Aachen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52072', ' Aachen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52074', ' Aachen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52076', ' Aachen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52078', ' Aachen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52080', ' Aachen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52134', ' Herzogenrath');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52146', ' WÃ¼rselen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52152', ' Simmerath');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52156', ' Monschau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52159', ' Roetgen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52222', ' Stolberg (Rhld.)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52223', ' Stolberg (Rhld.)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52224', ' Stolberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52249', ' Eschweiler');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52349', ' DÃ¼ren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52351', ' DÃ¼ren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52353', ' DÃ¼ren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52355', ' DÃ¼ren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52372', ' Kreuzau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52379', ' Langerwehe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52382', ' Niederzier');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52385', ' Nideggen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52388', ' NÃ¶rvenich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52391', ' VettweiÃŸ');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52393', ' HÃ¼rtgenwald');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52396', ' Heimbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52399', ' Merzenich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52428', ' JÃ¼lich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52441', ' Linnich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52445', ' Titz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52457', ' Aldenhoven');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52459', ' Inden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52477', ' Alsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52499', ' Baesweiler');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52511', ' Geilenkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52525', ' Waldfeucht, Heinsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52531', ' Ãœbach-Palenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('52538', ' Gangelt, Selfkant');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53111', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53113', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53115', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53117', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53119', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53121', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53123', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53125', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53127', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53129', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53173', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53175', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53177', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53179', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53225', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53227', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53229', ' Bonn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53332', ' Bornheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53340', ' Meckenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53343', ' Wachtberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53347', ' Alfter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53359', ' Rheinbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53424', ' Remagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53426', ' Schalkenbach, KÃ¶nigsfeld, Dedenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53474', ' Bad Neuenahr-Ahrweiler');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53489', ' Sinzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53498', ' Bad Breisig, Waldorf, GÃ¶nnersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53501', ' Grafschaft');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53505', ' Altenahr, Berg, Kalenborn, Kirchsahr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53506', ' AhrbrÃ¼ck, Heckenbach, HÃ¶nningen, Kesseling, Rec');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53507', ' Dernau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53508', ' MayschoÃŸ');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53518', ' Adenau, Kottenborn u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53520', ' Reifferscheid, Kaltenborn, Wershofen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53533', ' Antweiler, Aremberg, Dorsel, Eichenbach, Aremberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53534', ' Barweiler, Bauler, Hoffeld, Pomster, Wiesemscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53539', ' Bodenbach, Kelberg, Kirsbach u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53545', ' Linz am Rhein, Ockenfels');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53547', ' Breitscheid, Dattenberg, Hausen, HÃ¼mmerich, Kasb');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53557', ' Bad HÃ¶nningen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53560', ' VettelschloÃŸ, Kretzhaus (Linz am Rhein)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53562', ' Sankt Katharinen (Landkreis Neuwied)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53567', ' Asbach, Buchholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53572', ' Bruchhausen, Unkel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53577', ' Neustadt (Wied)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53578', ' Windhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53579', ' Erpel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53604', ' Bad Honnef');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53619', ' Rheinbreitbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53639', ' KÃ¶nigswinter');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53721', ' Siegburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53757', ' Sankt Augustin');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53773', ' Hennef (Sieg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53783', ' Eitorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53797', ' Lohmar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53804', ' Much');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53809', ' Ruppichteroth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53819', ' Neunkirchen-Seelscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53840', ' Troisdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53842', ' Troisdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53844', ' Troisdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53859', ' Niederkassel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53879', ' Euskirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53881', ' Euskirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53894', ' Mechernich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53902', ' Bad MÃ¼nstereifel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53909', ' ZÃ¼lpich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53913', ' Swisttal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53919', ' Weilerswist');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53925', ' Kall');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53937', ' Schleiden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53940', ' Hellenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53945', ' Blankenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53947', ' Nettersheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('53949', ' Dahlem');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54290', ' Trier');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54292', ' Trier');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54293', ' Trier');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54294', ' Trier');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54295', ' Trier');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54296', ' Trier');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54298', ' Welschbillig, Igel, Aach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54306', ' Kordel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54308', ' Langsur');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54309', ' Newel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54310', ' Ralingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54311', ' Trierweiler');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54313', ' Zemmer');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54314', ' Zerf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54316', ' Pluwig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54317', ' Osburg, Gusterath, Farschweiler, Kasel u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54318', ' Mertesdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54320', ' Waldrach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54329', ' Konz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54331', ' Pellingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54332', ' Wasserliesch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54338', ' Schweich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54340', ' Leiwen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54341', ' Fell');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54343', ' FÃ¶hren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54344', ' Kenn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54346', ' Mehring');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54347', ' Neumagen-Dhron');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54349', ' Trittenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54411', ' Deuselbach, Hermeskeil, Rorodt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54413', ' Gusenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54421', ' Reinsfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54422', ' NeuhÃ¼tten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54424', ' Thalfang');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54426', ' Malborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54427', ' Kell am See');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54429', ' Schillingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54439', ' Saarburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54441', ' Ayl, Trassem u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54450', ' Freudenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54451', ' Irsch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54453', ' Nittel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54455', ' Serrig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54456', ' Tawern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54457', ' Wincheringen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54459', ' Wiltingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54470', ' Bernkastel-Kues u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54472', ' Monzelfeld, Hochscheid u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54483', ' Kleinich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54484', ' Maring-Noviand');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54486', ' MÃ¼lheim (Mosel)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54487', ' Wintrich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54492', ' Zeltingen-Rachtig, Erden, LÃ¶snich u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54497', ' Morbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54498', ' Piesport');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54516', ' Wittlich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54518', ' Binsfeld, HeckenmÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54523', ' Hetzerath, Dierscheid, HeckenmÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54524', ' Klausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54526', ' Landscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54528', ' Salmtal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54529', ' Spangdahlem');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54531', ' Manderscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54533', ' Bettenfeld, NiederÃ¶fflingen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54534', ' GroÃŸlittgen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54536', ' KrÃ¶v');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54538', ' Bausendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54539', ' Ãœrzig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54550', ' Daun');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54552', ' Mehren u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54558', ' Gillenfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54568', ' Gerolstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54570', ' Pelm, Neroth u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54574', ' Birresborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54576', ' Hillesheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54578', ' Walsdorf, Nohn u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54579', ' Ãœxheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54584', ' JÃ¼nkerath');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54585', ' Esch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54586', ' SchÃ¼ller');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54587', ' Lissendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54589', ' Stadtkyll');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54595', ' PrÃ¼m');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54597', ' Pronsfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54608', ' Bleialf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54610', ' BÃ¼desheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54611', ' Hallschlag');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54612', ' Lasel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54614', ' SchÃ¶necken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54616', ' Winterspelt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54617', ' LÃ¼tzkampen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54619', ' Ãœttfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54634', ' Bitburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54636', ' Rittersdorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54646', ' Bettingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54647', ' Dudeldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54649', ' Waxweiler');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54655', ' Kyllburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54657', ' Badem, Gindorf, Neidenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54662', ' Speicher');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54664', ' Preist');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54666', ' Irrel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54668', ' Ferschweiler');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54669', ' Bollendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54673', ' Neuerburg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54675', ' KÃ¶rperich u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54687', ' Arzfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('54689', ' Daleiden, Preischeid u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55116', ' Mainz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55118', ' Mainz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55120', ' Mainz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55122', ' Mainz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55124', ' Mainz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55126', ' Mainz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55127', ' Mainz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55128', ' Mainz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55129', ' Mainz Ebersheim, Hechtsheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55130', ' Mainz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55131', ' Mainz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55218', ' Ingelheim am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55232', ' Alzey');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55234', ' Albig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55237', ' Flonheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55239', ' Gau-Odernheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55246', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55252', ' Mainz-Kastel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55257', ' Budenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55262', ' Heidesheim am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55263', ' Wackernheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55268', ' Nieder-Olm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55270', ' Ober-Olm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55271', ' Stadecken-Elsheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55276', ' Oppenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55278', ' Mommenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55283', ' Nierstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55286', ' WÃ¶rrstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55288', ' Armsheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55291', ' Saulheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55294', ' Bodenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55296', ' Harxheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55299', ' Nackenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55411', ' Bingen am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55413', ' Weiler bei Bingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55422', ' Bacharach, Breitscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55424', ' MÃ¼nster-Sarmsheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55425', ' Waldalgesheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55430', ' Oberwesel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55432', ' Niederburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55435', ' Gau-Algesheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55437', ' Ockenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55442', ' Stromberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55444', ' Seibersbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55450', ' Langenlonsheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55452', ' Guldental');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55457', ' Gensingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55459', ' Aspisheim, Grolsheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55469', ' Simmern/HunsrÃ¼ck u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55471', ' Tiefenbach u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55481', ' Kirchberg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55483', ' Dickenschied u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55487', ' Sohren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55490', ' GemÃ¼nden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55491', ' BÃ¼chenbeuren');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55494', ' RheinbÃ¶llen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55496', ' Argenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55497', ' Ellern (HunsrÃ¼ck), Schnorbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55499', ' Riesweiler');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55543', ' Bad Kreuznach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55545', ' Bad Kreuznach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55546', ' Hackenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55559', ' Bretzenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55566', ' Sobernheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55568', ' Staudernheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55569', ' Monzingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55571', ' Odernheim am Glan');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55576', ' Sprendlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55578', ' Wallertheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55583', ' Bad Kreuznach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55585', ' Norheim u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55590', ' Meisenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55592', ' Rehborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55593', ' RÃ¼desheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55595', ' Hargesheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55596', ' WaldbÃ¶ckelheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55597', ' WÃ¶llstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55599', ' Gau-Bickelheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55606', ' Kirn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55608', ' Bergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55618', ' Simmertal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55619', ' Hennweiler');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55621', ' Hundsbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55624', ' Rhaunen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55626', ' Bundenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55627', ' Merxheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55629', ' Seesbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55743', ' Idar-Oberstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55756', ' Herrstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55758', ' NiederwÃ¶rresbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55765', ' Birkenfeld u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55767', ' BrÃ¼cken, Oberbrombach u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55768', ' HoppstÃ¤dten-Weiersbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55774', ' Baumholder');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55776', ' Berglangenbach, Ruschberg u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55777', ' Berschweiler bei Baumholder');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('55779', ' Heimbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56068', ' Koblenz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56070', ' Koblenz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56072', ' Koblenz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56073', ' Koblenz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56075', ' Koblenz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56076', ' Koblenz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56077', ' Koblenz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56112', ' Lahnstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56130', ' Bad Ems');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56132', ' Dausenau, Nievern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56133', ' Fachbach, Exklave Lahnstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56154', ' Boppard');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56170', ' Bendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56179', ' Vallendar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56182', ' Urbar (bei Koblenz)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56191', ' Weitersburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56203', ' HÃ¶hr-Grenzhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56204', ' Hillscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56206', ' Hilgert');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56218', ' MÃ¼lheim-KÃ¤rlich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56220', ' Urmitz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56235', ' Ransbach-Baumbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56237', ' Nauort');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56242', ' Selters (Westerwald)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56244', ' Freilingen, Freirachdorf u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56249', ' Herschbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56253', ' Treis-Karden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56254', ' MÃ¼den');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56269', ' Dierdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56271', ' Kleinmaischeid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56276', ' GroÃŸmaischeid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56281', ' Emmelshausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56283', ' Wildenbungert, Gondershausen, NÃ¶rtershausen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56288', ' Kastellaun');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56290', ' Beltheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56291', ' Leiningen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56294', ' MÃ¼nstermaifeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56295', ' Lonnig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56299', ' Ochtendung');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56305', ' Puderbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56307', ' DÃ¼rrholz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56316', ' Raubach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56317', ' Urbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56321', ' Rhens');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56322', ' Spay');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56323', ' Waldesch, HÃ¼nenfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56329', ' Sankt Goar');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56330', ' Kobern-Gondorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56332', ' Lehmen, Niederfell, Oberfell, Wolken u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56333', ' Winningen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56335', ' NeuhÃ¤usel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56337', ' Eitelborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56338', ' Braubach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56340', ' Osterspai');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56341', ' Kamp-Bornhofen-Filsen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56346', ' Sankt Goarshausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56348', ' Bornich, Patersberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56349', ' Kaub');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56355', ' NastÃ¤tten u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56357', ' Miehlen u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56368', ' Katzenelnbogen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56370', ' SchÃ¶nborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56377', ' Nassau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56379', ' Singhofen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56410', ' Montabaur');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56412', ' Nentershausen, HÃ¼bingen, Niederelbert u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56414', ' Meudt, Molsberg, Hundsangen, Niederahr u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56422', ' Wirges, Stadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56424', ' Mogendorf, Ebernhahn, Staudt u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56427', ' Siershahn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56428', ' Dernbach (Westerwald)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56457', ' Westerburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56459', ' Bellingen, KÃ¶lbingen, GemÃ¼nden etc');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56462', ' HÃ¶hn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56470', ' Bad Marienberg (Westerwald)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56472', ' Nisterau u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56477', ' Rennerod, Zehnhausen, Nister-MÃ¶hrendorf, Waigand');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56479', ' Oberrod u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56564', ' Neuwied');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56566', ' Neuwied');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56567', ' Neuwied');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56575', ' WeiÃŸenthurm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56579', ' Rengsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56581', ' Melsbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56584', ' Anhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56587', ' StraÃŸenhaus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56588', ' Waldbreitbach, Hasuen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56589', ' Niederbreitbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56593', ' Horhausen (Westerwald)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56594', ' Willroth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56598', ' Rheinbrohl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56599', ' Leutesdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56626', ' Andernach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56630', ' Kretz');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56637', ' Plaidt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56642', ' Kruft');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56645', ' Nickenich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56648', ' Saffig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56651', ' Niederzissen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56653', ' Wehr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56656', ' Brohl-LÃ¼tzing');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56659', ' Burgbrohl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56727', ' Mayen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56729', ' Ettringen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56736', ' Kottenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56743', ' Mendig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56745', ' Bell');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56746', ' Kempenich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56751', ' Polch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56753', ' Mertloch, Welling u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56754', ' Binningen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56759', ' Kaisersesch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56761', ' DÃ¼ngenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56766', ' Ulmen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56767', ' Uersfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56769', ' Retterath');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56812', ' Cochem');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56814', ' Ediger-Eller');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56818', ' Klotten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56820', ' Senheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56821', ' Ellenz-Poltersdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56823', ' BÃ¼chel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56825', ' Gevenich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56826', ' Lutzerath');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56828', ' Alflen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56829', ' Pommern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56841', ' Traben-Trarbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56843', ' Irmenach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56850', ' Enkirch u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56856', ' Zell (Mosel)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56858', ' Peterswald-LÃ¶ffelscheid u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56859', ' Bullay, Alf, Zell');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56861', ' Reil');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56862', ' PÃ¼nderich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56864', ' Bad Bertrich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56865', ' Blankenrath u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56867', ' Briedel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('56869', ' Mastershausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57072', ' Siegen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57074', ' Siegen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57076', ' Siegen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57078', ' Siegen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57080', ' Siegen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57223', ' Kreuztal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57234', ' Wilnsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57250', ' Netphen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57258', ' Freudenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57271', ' Hilchenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57290', ' Neunkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57299', ' Burbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57319', ' Bad Berleburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57334', ' Bad Laasphe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57339', ' ErndtebrÃ¼ck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57368', ' Lennestadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57392', ' Schmallenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57399', ' Kirchhundem');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57413', ' Finnentrop');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57439', ' Attendorn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57462', ' Olpe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57482', ' Wenden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57489', ' Drolshagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57518', ' Betzdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57520', ' Emmerzhausen, Niederdreisbach, Steinebach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57537', ' Wissen, HÃ¶vels u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57539', ' FÃ¼rthen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57548', ' Kirchen (Sieg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57555', ' Mudersbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57562', ' Herdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57567', ' Daaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57572', ' Niederfischbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57577', ' Hamm (Sieg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57578', ' Elkenroth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57580', ' Gebhardshain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57581', ' Katzwinkel (Sieg)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57583', ' Nauroth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57584', ' Scheuerfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57586', ' Weitefeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57587', ' Birken-Honigsessen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57589', ' Pracht');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57610', ' Altenkirchen (Westerwald)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57612', ' Birnbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57614', ' Steimel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57627', ' Hachenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57629', ' Malberg, Norken, HÃ¶chstenbach u.a.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57632', ' Flammersfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57635', ' Weyerbusch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57636', ' Mammelzen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57638', ' Neitersen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57639', ' Oberdreis');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57641', ' Oberlahr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57642', ' Alpenrod');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57644', ' Hattert');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57645', ' Nister');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57647', ' Nistertal, Enspel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('57648', ' Unnau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58089', ' Hagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58091', ' Hagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58093', ' Hagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58095', ' Hagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58097', ' Hagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58099', ' Hagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58119', ' Hagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58135', ' Hagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58239', ' Schwerte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58256', ' Ennepetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58285', ' Gevelsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58300', ' Wetter (Ruhr)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58313', ' Herdecke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58332', ' Schwelm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58339', ' Breckerfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58452', ' Witten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58453', ' Witten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58454', ' Witten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58455', ' Witten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58456', ' Witten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58507', ' LÃ¼denscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58509', ' LÃ¼denscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58511', ' LÃ¼denscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58513', ' LÃ¼denscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58515', ' LÃ¼denscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58540', ' Meinerzhagen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58553', ' Halver');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58566', ' Kierspe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58579', ' SchalksmÃ¼hle');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58636', ' Iserlohn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58638', ' Iserlohn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58640', ' Iserlohn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58642', ' Iserlohn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58644', ' Iserlohn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58675', ' Hemer');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58706', ' Menden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58708', ' Menden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58710', ' Menden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58730', ' FrÃ¶ndenberg/Ruhr');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58739', ' Wickede (Ruhr)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58762', ' Altena');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58769', ' Nachrodt-Wiblingwerde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58791', ' Werdohl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58802', ' Balve');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58809', ' Neuenrade');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58840', ' Plettenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('58849', ' Herscheid');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59063', ' Hamm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59065', ' Hamm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59067', ' Hamm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59069', ' Hamm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59071', ' Hamm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59073', ' Hamm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59075', ' Hamm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59077', ' Hamm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59174', ' Kamen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59192', ' Bergkamen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59199', ' BÃ¶nen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59227', ' Ahlen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59229', ' Ahlen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59269', ' Beckum');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59302', ' Oelde');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59320', ' Ennigerloh');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59329', ' Wadersloh');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59348', ' LÃ¼dinghausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59368', ' Werne');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59379', ' Selm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59387', ' Ascheberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59394', ' Nordkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59399', ' Olfen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59423', ' Unna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59425', ' Unna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59427', ' Unna');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59439', ' Holzwickede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59457', ' Werl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59469', ' Ense');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59494', ' Soest');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59505', ' Bad Sassendorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59510', ' Lippetal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59514', ' Welver');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59519', ' MÃ¶hnesee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59555', ' Lippstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59556', ' Lippstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59557', ' Lippstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59558', ' Lippstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59581', ' Warstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59590', ' Geseke');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59597', ' Erwitte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59602', ' RÃ¼then');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59609', ' AnrÃ¶chte');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59755', ' Arnsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59757', ' Arnsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59759', ' Arnsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59821', ' Arnsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59823', ' Arnsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59846', ' Sundern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59872', ' Meschede');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59889', ' Eslohe');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59909', ' Bestwig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59929', ' Brilon');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59939', ' Olsberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59955', ' Winterberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59964', ' Medebach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('59969', ' Bromskirchen, Hallenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60306', ' Frankfurt am Main, Opernturm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60308', ' Frankfurt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60310', ' Frankfurt am Main (Taunusturm)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60311', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60313', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60314', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60316', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60318', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60320', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60322', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60323', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60325', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60326', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60327', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60329', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60385', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60386', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60388', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60389', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60431', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60433', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60435', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60437', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60438', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60439', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60486', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60487', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60488', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60489', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60528', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60529', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60549', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60594', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60596', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60598', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('60599', ' Frankfurt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61118', ' Bad Vilbel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61130', ' Nidderau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61137', ' SchÃ¶neck');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61138', ' Niederdorfelden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61169', ' Friedberg (Hessen)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61184', ' Karben');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61191', ' Rosbach v.d. HÃ¶he');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61194', ' Niddatal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61197', ' Florstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61200', ' WÃ¶lfersheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61203', ' Reichelsheim (Wetterau)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61206', ' WÃ¶llstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61209', ' Echzell');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61231', ' Bad Nauheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61239', ' Ober-MÃ¶rlen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61250', ' Usingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61267', ' Neu-Anspach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61273', ' Wehrheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61276', ' Weilrod');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61279', ' GrÃ¤venwiesbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61348', ' Bad Homburg v.d. HÃ¶he');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61350', ' Bad Homburg v.d. HÃ¶he');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61352', ' Bad Homburg v.d. HÃ¶he');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61381', ' Friedrichsdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61389', ' Schmitten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61440', ' Oberursel (Taunus)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61449', ' Steinbach (Taunus)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61462', ' KÃ¶nigstein im Taunus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61476', ' Kronberg im Taunus');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('61479', ' GlashÃ¼tten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63065', ' Offenbach am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63067', ' Offenbach am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63069', ' Offenbach am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63071', ' Offenbach am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63073', ' Offenbach am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63075', ' Offenbach am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63110', ' Rodgau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63128', ' Dietzenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63150', ' Heusenstamm');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63165', ' MÃ¼hlheim am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63179', ' Obertshausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63225', ' Langen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63263', ' Neu-Isenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63303', ' Dreieich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63322', ' RÃ¶dermark');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63329', ' Egelsbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63450', ' Hanau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63452', ' Hanau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63454', ' Hanau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63456', ' Hanau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63457', ' Hanau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63477', ' Maintal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63486', ' BruchkÃ¶bel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63500', ' Seligenstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63505', ' Langenselbold');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63512', ' Hainburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63517', ' Rodenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63526', ' Erlensee');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63533', ' Mainhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63538', ' GroÃŸkrotzenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63543', ' Neuberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63546', ' Hammersbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63549', ' Ronneburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63571', ' Gelnhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63579', ' Freigericht');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63584', ' GrÃ¼ndau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63589', ' Linsengericht');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63594', ' Hasselroth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63599', ' BiebergemÃ¼nd');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63607', ' WÃ¤chtersbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63619', ' Bad Orb');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63628', ' Bad Soden-SalmÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63633', ' Birstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63636', ' Brachttal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63637', ' Jossgrund');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63639', ' FlÃ¶rsbachtal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63654', ' BÃ¼dingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63667', ' Nidda');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63674', ' Altenstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63679', ' Schotten');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63683', ' Ortenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63688', ' Gedern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63691', ' Ranstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63694', ' Limeshain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63695', ' Glauburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63697', ' Hirzenhain');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63699', ' Kefenrod');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63739', ' Aschaffenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63741', ' Aschaffenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63743', ' Aschaffenburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63755', ' Alzenau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63762', ' GroÃŸostheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63768', ' HÃ¶sbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63773', ' Goldbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63776', ' MÃ¶mbris');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63785', ' Obernburg a.Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63791', ' Karlstein am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63796', ' Kahl am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63801', ' Kleinostheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63808', ' Haibach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63811', ' Stockstadt am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63814', ' Mainaschaff');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63820', ' Elsenfeld');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63825', ' SchÃ¶llkrippen, Blankenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63826', ' Geiselbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63828', ' Kleinkahl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63829', ' Krombach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63831', ' Wiesen, Wiesener Forst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63834', ' Sulzbach am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63839', ' Kleinwallstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63840', ' Hausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63843', ' Niedernberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63846', ' Laufach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63849', ' Leidersbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63853', ' MÃ¶mlingen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63856', ' Bessenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63857', ' Waldaschaff, Waldaschaffer Forst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63860', ' Rothenbuch, Rothenbucher Forst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63863', ' Eschau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63864', ' Glattbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63867', ' Johannesberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63868', ' GroÃŸwallstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63869', ' HeigenbrÃ¼cken');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63871', ' Heinrichsthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63872', ' Heimbuchenthal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63874', ' Dammbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63875', ' Mespelbrunn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63877', ' Sailauf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63879', ' Weibersbrunn, Rohrbrunner Forst');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63897', ' Miltenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63906', ' Erlenbach a.Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63911', ' Klingenberg a. Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63916', ' Amorbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63920', ' GroÃŸheubach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63924', ' Kleinheubach, RÃ¼denau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63925', ' Laudenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63927', ' BÃ¼rgstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63928', ' EichenbÃ¼hl');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63930', ' Neunkirchen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63931', ' Kirchzell');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63933', ' MÃ¶nchberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63934', ' RÃ¶llbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63936', ' Schneeberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63937', ' Weilbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('63939', ' WÃ¶rth a.Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64283', ' Darmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64285', ' Darmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64287', ' Darmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64289', ' Darmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64291', ' Darmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64293', ' Darmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64295', ' Darmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64297', ' Darmstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64319', ' Pfungstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64331', ' Weiterstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64342', ' Seeheim-Jugenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64347', ' Griesheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64354', ' Reinheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64367', ' MÃ¼hltal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64372', ' Ober-Ramstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64380', ' RoÃŸdorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64385', ' Reichelsheim (Odenwald)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64390', ' Erzhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64395', ' Brensbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64397', ' Modautal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64401', ' GroÃŸ-Bieberau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64404', ' Bickenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64405', ' Fischbachtal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64407', ' FrÃ¤nkisch-Crumbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64409', ' Messel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64521', ' GroÃŸ-Gerau');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64546', ' MÃ¶rfelden-Walldorf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64560', ' Riedstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64569', ' Nauheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64572', ' BÃ¼ttelborn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64579', ' Gernsheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64584', ' Biebesheim am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64589', ' Stockstadt am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64625', ' Bensheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64646', ' Heppenheim (BergstraÃŸe)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64653', ' Lorsch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64658', ' FÃ¼rth');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64665', ' Alsbach-HÃ¤hnlein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64668', ' Rimbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64673', ' Zwingenberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64678', ' Lindenfels');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64683', ' Einhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64686', ' Lautertal (Odenwald)');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64689', ' Grasellenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64711', ' Erbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64720', ' Michelstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64732', ' Bad KÃ¶nig');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64739', ' HÃ¶chst i. Odw.');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64747', ' Breuberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64750', ' LÃ¼tzelbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64753', ' Brombachtal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64754', ' Badisch SchÃ¶llenbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64756', ' Mossautal');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64757', ' Unter-Hainbrunn');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64760', ' Oberzent');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64807', ' Dieburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64823', ' GroÃŸ-Umstadt');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64832', ' Babenhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64839', ' MÃ¼nster');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64846', ' GroÃŸ-Zimmern');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64850', ' Schaafheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64853', ' Otzberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('64859', ' Eppertshausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65183', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65185', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65187', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65189', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65191', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65193', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65195', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65197', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65199', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65201', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65203', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65205', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65207', ' Wiesbaden');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65232', ' Taunusstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65239', ' Hochheim am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65307', ' Bad Schwalbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65321', ' Heidenrod');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65326', ' Aarbergen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65329', ' Hohenstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65343', ' Eltville am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65344', ' Eltville am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65345', ' Eltville am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65346', ' Eltville am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65347', ' Eltville am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65366', ' Geisenheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65375', ' Oestrich-Winkel');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65385', ' RÃ¼desheim am Rhein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65388', ' Schlangenbad');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65391', ' Lorch');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65396', ' Walluf');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65399', ' Kiedrich');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65428', ' RÃ¼sselsheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65439', ' FlÃ¶rsheim am Main');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65451', ' Kelsterbach');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65462', ' Ginsheim-Gustavsburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65468', ' Trebur');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65474', ' Bischofsheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65479', ' Raunheim');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65510', ' HÃ¼nstetten, Idstein');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65520', ' Bad Camberg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65527', ' Niedernhausen');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65529', ' Waldems');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65549', ' Limburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65550', ' Limburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65551', ' Limburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65552', ' Limburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65553', ' Limburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65554', ' Limburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65555', ' Limburg');
-INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65556', ' Limburg');
+INSERT INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES
+('01067', ' Dresden'),
+('01069', ' Dresden'),
+('01097', ' Dresden'),
+('01099', ' Dresden'),
+('01108', ' Dresden'),
+('01109', ' Dresden'),
+('01127', ' Dresden'),
+('01129', ' Dresden'),
+('01139', ' Dresden'),
+('01156', ' Dresden'),
+('01157', ' Dresden'),
+('01159', ' Dresden'),
+('01169', ' Dresden'),
+('01187', ' Dresden'),
+('01189', ' Dresden'),
+('01217', ' Dresden'),
+('01219', ' Dresden'),
+('01237', ' Dresden'),
+('01239', ' Dresden'),
+('01257', ' Dresden'),
+('01259', ' Dresden'),
+('01277', ' Dresden'),
+('01279', ' Dresden'),
+('01307', ' Dresden'),
+('01309', ' Dresden'),
+('01324', ' Dresden'),
+('01326', ' Dresden'),
+('01328', ' Dresden'),
+('01445', ' Radebeul'),
+('01454', ' Radeberg, Wachau'),
+('01458', ' Ottendorf-Okrilla'),
+('01465', ' Dresden'),
+('01468', ' Moritzburg'),
+('01471', ' Radeburg'),
+('01477', ' Arnsdorf b. Dresden'),
+('01558', ' GroÃŸenhain'),
+('01561', ' GroÃŸenhain, Ebersbach u.a.'),
+('01587', ' Riesa'),
+('01589', ' Riesa'),
+('01591', ' Riesa'),
+('01594', ' Riesa, Stauchitz, Hirschstein'),
+('01609', ' GrÃ¶ditz, WÃ¼lknitz, RÃ¶deraue'),
+('01612', ' NÃ¼nchritz, Glaubitz'),
+('01616', ' Strehla'),
+('01619', ' Zeithain'),
+('01623', ' Lommatzsch'),
+('01640', ' Coswig'),
+('01662', ' MeiÃŸen'),
+('01665', ' KÃ¤bschÃ¼tztal, Klipphausen, Diera-Zehren'),
+('01683', ' Nossen'),
+('01689', ' WeinbÃ¶hla'),
+('01705', ' Freital'),
+('01723', ' Wilsdruff'),
+('01728', ' Bannewitz'),
+('01731', ' Kreischa'),
+('01734', ' Rabenau'),
+('01737', ' Tharandt u.a.'),
+('01738', ' Dorfhain'),
+('01744', ' Dippoldiswalde'),
+('01762', ' Hartmannsdorf-Reichenau'),
+('01768', ' GlashÃ¼tte'),
+('01773', ' Altenberg'),
+('01774', ' Klingenberg'),
+('01776', ' Hermsdorf'),
+('01778', ' Altenberg'),
+('01796', ' Pirna, Struppen, Dohma'),
+('01809', ' Heidenau'),
+('01814', ' Bad Schandau'),
+('01816', ' Bad Gottleuba-BerggieÃŸhÃ¼bel'),
+('01819', ' Bahretal'),
+('01824', ' KÃ¶nigstein/SÃ¤chs.Schw.'),
+('01825', ' Liebstadt'),
+('01829', ' Wehlen'),
+('01833', ' Stolpen, DÃ¼rrrÃ¶hrsdorf-Dittersbach'),
+('01844', ' Neustadt i. Sa.'),
+('01847', ' Lohmen'),
+('01848', ' Hohnstein'),
+('01855', ' Sebnitz'),
+('01877', ' Bischofswerda u.a.'),
+('01896', ' Pulsnitz'),
+('01900', ' GroÃŸrÃ¶hrsdorf, Bretnig-Hauswalde'),
+('01904', ' Neukirch/Lausitz'),
+('01906', ' Burkau'),
+('01909', ' GroÃŸharthau, Frankenthal'),
+('01917', ' Kamenz'),
+('01920', ' Elstra, OÃŸling u.a.'),
+('01936', ' KÃ¶nigsbrÃ¼ck u.a.'),
+('01945', ' Ruhland'),
+('01968', ' Senftenberg'),
+('01979', ' Lauchhammer'),
+('01983', ' GroÃŸrÃ¤schen'),
+('01987', ' Schwarzheide N.L.'),
+('01990', ' Ortrand'),
+('01993', ' Schipkau'),
+('01994', ' Schipkau'),
+('01996', ' Senftenberg'),
+('01998', ' Schipkau'),
+('02625', ' Bautzen'),
+('02627', ' WeiÃŸenberg, Hochkirch u.a.'),
+('02633', ' GÃ¶da'),
+('02681', ' Wilthen'),
+('02689', ' Sohland a. d. Spree'),
+('02692', ' Doberschau-GauÃŸig, GroÃŸpostwitz, Obergurig'),
+('02694', ' GroÃŸdubrau, Malschwitz'),
+('02699', ' KÃ¶nigswartha'),
+('02708', ' LÃ¶bau, Kottmar u.a.'),
+('02727', ' Ebersbach-Neugersdorf'),
+('02730', ' Ebersbach-Neugersdorf'),
+('02733', ' Cunewalde'),
+('02736', ' Beiersdorf, Oppach'),
+('02739', ' Kottmar'),
+('02742', ' Neusalza-Spremberg'),
+('02747', ' Herrnhut'),
+('02748', ' Bernstadt'),
+('02763', ' Zittau u.a.'),
+('02779', ' GroÃŸschÃ¶nau'),
+('02782', ' Seifhennersdorf'),
+('02785', ' Olbersdorf'),
+('02788', ' Zittau'),
+('02791', ' Oderwitz'),
+('02794', ' Leutersdorf, Spitzkunnersdorf'),
+('02796', ' Jonsdorf'),
+('02797', ' Oybin'),
+('02799', ' GroÃŸschÃ¶nau'),
+('02826', ' GÃ¶rlitz'),
+('02827', ' GÃ¶rlitz'),
+('02828', ' GÃ¶rlitz'),
+('02829', ' Markersdorf, NeiÃŸeaue u.a.'),
+('02894', ' Reichenbach, Vierkirchen'),
+('02899', ' Ostritz, SchÃ¶nau-Berzdorf'),
+('02906', ' Niesky, Hohendubrau u.a.'),
+('02923', ' HÃ¤hnichen, Horka, Kodersdorf'),
+('02929', ' Rothenburg/O.L.'),
+('02943', ' WeiÃŸwasser, Boxberg'),
+('02953', ' Bad Muskau, GroÃŸ DÃ¼ben, Gablenz'),
+('02956', ' Rietschen'),
+('02957', ' Krauschwitz, WeiÃŸkeiÃŸel'),
+('02959', ' Schleife'),
+('02977', ' Hoyerswerda'),
+('02979', ' Spreetal, Elsterheide'),
+('02991', ' Lauta'),
+('02994', ' Bernsdorf'),
+('02997', ' Wittichenau'),
+('02999', ' Lohsa'),
+('03042', ' Cottbus'),
+('03044', ' Cottbus'),
+('03046', ' Cottbus'),
+('03048', ' Cottbus'),
+('03050', ' Cottbus'),
+('03051', ' Cottbus'),
+('03052', ' Cottbus'),
+('03053', ' Cottbus'),
+('03054', ' Cottbus'),
+('03055', ' Cottbus'),
+('03058', ' Neuhausen/Spree'),
+('03096', ' Burg/Spreewald u.a.'),
+('03099', ' Kolkwitz'),
+('03103', ' Neu-Seeland, Neupetershain'),
+('03116', ' Drebkau'),
+('03119', ' Welzow'),
+('03130', ' Spremberg, Tschernitz u.a.'),
+('03149', ' Forst/ Lausitz'),
+('03159', ' DÃ¶bern'),
+('03172', ' Guben, SchenkendÃ¶bern'),
+('03185', ' Peitz'),
+('03197', ' JÃ¤nschwalde'),
+('03205', ' Calau, Bronkow'),
+('03222', ' LÃ¼bbenau/ Spreewald'),
+('03226', ' Vetschau'),
+('03229', ' AltdÃ¶bern, Luckaitztal'),
+('03238', ' Finsterwalde'),
+('03246', ' Crinitz'),
+('03249', ' Sonnewalde'),
+('03253', ' Doberlug-Kirchhain'),
+('04103', ' Leipzig'),
+('04105', ' Leipzig'),
+('04107', ' Leipzig'),
+('04109', ' Leipzig'),
+('04129', ' Leipzig'),
+('04155', ' Leipzig'),
+('04157', ' Leipzig'),
+('04158', ' Leipzig'),
+('04159', ' Leipzig'),
+('04177', ' Leipzig'),
+('04178', ' Leipzig'),
+('04179', ' Leipzig'),
+('04205', ' Leipzig'),
+('04207', ' Leipzig'),
+('04209', ' Leipzig'),
+('04229', ' Leipzig'),
+('04249', ' Leipzig'),
+('04275', ' Leipzig'),
+('04277', ' Leipzig'),
+('04279', ' Leipzig'),
+('04288', ' Leipzig'),
+('04289', ' Leipzig'),
+('04299', ' Leipzig'),
+('04315', ' Leipzig'),
+('04316', ' Leipzig'),
+('04317', ' Leipzig'),
+('04318', ' Leipzig'),
+('04319', ' Leipzig'),
+('04328', ' Leipzig'),
+('04329', ' Leipzig'),
+('04347', ' Leipzig'),
+('04349', ' Leipzig'),
+('04356', ' Leipzig'),
+('04357', ' Leipzig'),
+('04416', ' Markkleeberg'),
+('04420', ' MarkranstÃ¤dt'),
+('04425', ' Taucha'),
+('04435', ' Schkeuditz'),
+('04442', ' Zwenkau'),
+('04451', ' Borsdorf'),
+('04463', ' GroÃŸpÃ¶sna'),
+('04509', ' Delitzsch, Krostitz u.a.'),
+('04519', ' Rackwitz'),
+('04523', ' Pegau, Elstertrebnitz'),
+('04539', ' Groitzsch'),
+('04552', ' Borna'),
+('04564', ' BÃ¶hlen'),
+('04565', ' Regis-Breitingen'),
+('04567', ' Kitzscher'),
+('04571', ' RÃ¶tha'),
+('04575', ' Neukieritzsch, Deutzen'),
+('04600', ' Altenburg'),
+('04603', ' Nobitz, GÃ¶hren, Windischleuba'),
+('04610', ' Meuselwitz'),
+('04613', ' Lucka'),
+('04617', ' Rositz, Starkenberg, Treben'),
+('04618', ' Langenleuba-Niederhain'),
+('04626', ' SchmÃ¶lln, Altkirchen, NÃ¶bdenitz u.a.'),
+('04639', ' GÃ¶ÃŸnitz'),
+('04643', ' Geithain'),
+('04651', ' Bad Lausick'),
+('04654', ' Frohburg'),
+('04668', ' Grimma'),
+('04680', ' Colditz'),
+('04683', ' Naunhof'),
+('04687', ' Trebsen/Mulde'),
+('04703', ' Leisnig'),
+('04720', ' DÃ¶beln, GroÃŸweitzschen u.a.'),
+('04736', ' Waldheim'),
+('04741', ' RoÃŸwein'),
+('04746', ' Hartha'),
+('04749', ' Ostrau'),
+('04758', ' Oschatz'),
+('04769', ' MÃ¼geln'),
+('04774', ' Dahlen'),
+('04779', ' Wermsdorf'),
+('04808', ' Wurzen'),
+('04821', ' Brandis'),
+('04824', ' Brandis'),
+('04827', ' Machern'),
+('04828', ' Bennewitz, Machern'),
+('04838', ' Eilenburg u.a.'),
+('04849', ' Bad DÃ¼ben'),
+('04860', ' Torgau, Dreiheide'),
+('04861', ' Torgau'),
+('04862', ' Mockrehna'),
+('04874', ' Belgern-Schildau'),
+('04880', ' Dommitzsch'),
+('04886', ' Arzberg, Beilrode'),
+('04889', ' Belgern-Schildau'),
+('04895', ' Falkenberg/ Elster'),
+('04910', ' Elsterwerda'),
+('04916', ' Herzberg/ Elster'),
+('04924', ' Bad Liebenwerda'),
+('04928', ' Plessa, Schraden'),
+('04931', ' MÃ¼hlberg, Bad Liebenwerda'),
+('04932', ' RÃ¶derland, GroÃŸthiemig u.a.'),
+('04934', ' Hohenleipisch'),
+('04936', ' Schlieben'),
+('04938', ' Uebigau-WahrenbrÃ¼ck'),
+('06108', ' Halle/ Saale'),
+('06110', ' Halle/ Saale'),
+('06112', ' Halle/ Saale'),
+('06114', ' Halle/ Saale'),
+('06116', ' Halle/ Saale'),
+('06118', ' Halle/ Saale'),
+('06120', ' Halle/ Saale'),
+('06122', ' Halle/ Saale'),
+('06124', ' Halle/ Saale'),
+('06126', ' Halle/ Saale'),
+('06128', ' Halle/ Saale'),
+('06130', ' Halle/ Saale'),
+('06132', ' Halle/ Saale'),
+('06179', ' Teutschenthal'),
+('06184', ' Kabelsketal'),
+('06188', ' Landsberg'),
+('06193', ' Petersberg'),
+('06198', ' Salzatal'),
+('06217', ' Merseburg'),
+('06231', ' Bad DÃ¼rrenberg'),
+('06237', ' Leuna'),
+('06242', ' Braunsbedra'),
+('06246', ' Bad LauchstÃ¤dt'),
+('06249', ' MÃ¼cheln/ Geiseltal'),
+('06255', ' MÃ¼cheln'),
+('06258', ' Schkopau'),
+('06259', ' Frankleben'),
+('06268', ' Querfurt, Obhausen, MÃ¼cheln u.a.'),
+('06279', ' Schraplau, FarnstÃ¤dt'),
+('06295', ' Eisleben'),
+('06308', ' Klostermansfeld, Benndorf'),
+('06311', ' Helbra'),
+('06313', ' Hergisdorf'),
+('06317', ' Seegebiet Mansfelder Land'),
+('06333', ' Hettstedt, Endorf'),
+('06343', ' Mansfeld'),
+('06347', ' Gerbstedt'),
+('06366', ' KÃ¶then'),
+('06369', ' SÃ¼dliches Anhalt u.a.'),
+('06385', ' Aken (Elbe)'),
+('06386', ' Aken, Osternienburger Land, SÃ¼dliches Anhalt'),
+('06388', ' SÃ¼dliches Anhalt, KÃ¶then'),
+('06406', ' Bernburg (Saale)'),
+('06408', ' Ilberstedt'),
+('06420', ' KÃ¶nnern'),
+('06425', ' Alsleben/Saale, PlÃ¶tzkau'),
+('06429', ' Nienburg (Saale)'),
+('06449', ' Aschersleben'),
+('06456', ' Arnstein'),
+('06458', ' Hedersleben'),
+('06463', ' Falkenstein'),
+('06464', ' Seeland'),
+('06466', ' Seeland'),
+('06467', ' Seeland'),
+('06469', ' Seeland'),
+('06484', ' Quedlinburg'),
+('06485', ' Quedlinburg, Ballenstedt'),
+('06493', ' Ballenstedt, Harzgerode'),
+('06502', ' Thale, Blankenburg'),
+('06526', ' Sangerhausen'),
+('06528', ' Wallhausen, Blankenheim'),
+('06536', ' SÃ¼dharz, Berga'),
+('06537', ' Kelbra (KyffhÃ¤user)'),
+('06542', ' Allstedt'),
+('06543', ' Falkenstein'),
+('06556', ' Artern/Unstrut u.a.'),
+('06567', ' Bad Frankenhausen/ KyffhÃ¤user'),
+('06571', ' RoÃŸleben, Wiehe, Donndorf, Nausitz, Gehofen'),
+('06577', ' Heldrungen'),
+('06578', ' Bilzingsleben Kannawurf Oldisleben'),
+('06618', ' Naumburg'),
+('06628', ' Lanitz-Hassel-Tal, Molauer Land'),
+('06632', ' Freyburg, BalgstÃ¤dt'),
+('06636', ' Laucha an der Unstrut'),
+('06638', ' Karsdorf'),
+('06642', ' Nebra, Kaiserpfalz'),
+('06647', ' Bad Bibra, Finne u.a.'),
+('06648', ' Eckartsberga'),
+('06667', ' WeiÃŸenfels, StÃ¶ÃŸen'),
+('06679', ' HohenmÃ¶lsen'),
+('06682', ' Teuchern'),
+('06686', ' LÃ¼tzen'),
+('06688', ' WeiÃŸenfels'),
+('06711', ' Zeitz'),
+('06712', ' Zeitz, Gutenborn u.a.'),
+('06721', ' Meineweh, Osterfeld'),
+('06722', ' DroyÃŸig, Wetterzeube'),
+('06729', ' Elsteraue'),
+('06749', ' Bitterfeld-Wolfen'),
+('06766', ' Bitterfeld-Wolfen'),
+('06772', ' GrÃ¤fenhainichen'),
+('06773', ' GrÃ¤fenhainichen'),
+('06774', ' Muldestausee'),
+('06779', ' Raguhn-JeÃŸnitz'),
+('06780', ' ZÃ¶rbig'),
+('06785', ' Oranienbaum-WÃ¶rlitz'),
+('06792', ' Sandersdorf-Brehna'),
+('06794', ' Sandersdorf-Brehna'),
+('06796', ' Sandersdorf-Brehna'),
+('06800', ' Raguhn-JeÃŸnitz'),
+('06803', ' Bitterfeld-Wolfen'),
+('06808', ' Bitterfeld-Wolfen'),
+('06809', ' Roitzsch, Petersroda'),
+('06842', ' Dessau-RoÃŸlau'),
+('06844', ' Dessau-RoÃŸlau'),
+('06846', ' Dessau-RoÃŸlau'),
+('06847', ' Dessau-RoÃŸlau'),
+('06849', ' Dessau-RoÃŸlau'),
+('06861', ' Dessau-RoÃŸlau'),
+('06862', ' Dessau-RoÃŸlau'),
+('06868', ' Coswig (Anhalt)'),
+('06869', ' Coswig (Anhalt)'),
+('06886', ' Wittenberg'),
+('06888', ' Wittenberg'),
+('06889', ' Wittenberg'),
+('06895', ' Zahna-Elster'),
+('06901', ' Kemberg'),
+('06905', ' Bad Schmiedeberg'),
+('06917', ' Jessen (Elster)'),
+('06925', ' Annaburg'),
+('07318', ' Saalfeld/Saale, Wittgendorf'),
+('07330', ' Probstzella'),
+('07333', ' Unterwellenborn'),
+('07334', ' Kamsdorf'),
+('07338', ' Kaulsdorf'),
+('07343', ' Wurzbach'),
+('07349', ' Lehesten'),
+('07356', ' Lobenstein, Neundorf'),
+('07366', ' Blankenstein, Blankenberg u.a.'),
+('07368', ' Remptendorf'),
+('07381', ' PÃ¶ÃŸneck'),
+('07387', ' KrÃ¶lpa'),
+('07389', ' Ranis'),
+('07407', ' Rudolstadt'),
+('07422', ' Bad Blankenburg, Saalfelder HÃ¶he'),
+('07426', ' KÃ¶nigsee-Rottenbach u.a.'),
+('07427', ' Schwarzburg'),
+('07429', ' DÃ¶schnitz, Sitzendorf, Rohrbach'),
+('07545', ' Gera'),
+('07546', ' Gera'),
+('07548', ' Gera'),
+('07549', ' Gera'),
+('07551', ' Gera'),
+('07552', ' Gera'),
+('07554', ' Brahmenau'),
+('07557', ' Gera, Zedlitz u.a.'),
+('07570', ' Weida, Harth-PÃ¶llnitz, WÃ¼nschendorf'),
+('07580', ' Ronneburg, Braunichswalde, GroÃŸenstein u.a.'),
+('07586', ' Bad KÃ¶stritz'),
+('07589', ' MÃ¼nchenbernsdorf, Schwarzbach, Bocka'),
+('07607', ' Eisenberg, GÃ¶sen, Hainspitz'),
+('07613', ' Crossen, Heideland u.a.'),
+('07616', ' BÃ¼rgel u.a.'),
+('07619', ' SchkÃ¶len'),
+('07629', ' Hermsdorf'),
+('07639', ' Bad Klosterlausnitz'),
+('07646', ' Stadtroda u.a.'),
+('07743', ' Jena'),
+('07745', ' Jena'),
+('07747', ' Jena'),
+('07749', ' Jena'),
+('07751', ' Jena, Bucha, GroÃŸpÃ¼rschÃ¼tz u.a.'),
+('07768', ' Kahla'),
+('07774', ' Dornburg-Camburg u.a.'),
+('07778', ' NeuengÃ¶nna u.a.'),
+('07806', ' Neustadt/ Orla'),
+('07819', ' Triptis'),
+('07907', ' Schleiz'),
+('07919', ' Kirschkau, Pausa-MÃ¼hltroff'),
+('07922', ' Tanna'),
+('07924', ' ZiegenrÃ¼ck'),
+('07926', ' Gefell'),
+('07927', ' Hirschberg'),
+('07929', ' Saalburg-Ebersdorf'),
+('07937', ' Zeulenroda-Triebes, Langenwolschendorf'),
+('07950', ' Zeulenroda-Triebes, WeiÃŸendorf'),
+('07952', ' Pausa-MÃ¼hltroff'),
+('07955', ' Auma-Weidatal'),
+('07957', ' Langenwetzendorf'),
+('07958', ' Hohenleuben'),
+('07973', ' Greiz'),
+('07980', ' Berga/Elster'),
+('07985', ' Elsterberg'),
+('07987', ' Mohlsdorf-Teichwolframsdorf'),
+('08056', ' Zwickau'),
+('08058', ' Zwickau'),
+('08060', ' Zwickau'),
+('08062', ' Zwickau'),
+('08064', ' Zwickau'),
+('08066', ' Zwickau'),
+('08107', ' Kirchberg'),
+('08112', ' Wilkau-HaÃŸlau'),
+('08115', ' Lichtentanne'),
+('08118', ' Hartenstein'),
+('08132', ' MÃ¼lsen'),
+('08134', ' LangenweiÃŸbach, Wildenfels'),
+('08141', ' Reinsdorf'),
+('08144', ' Hirschfeld'),
+('08147', ' Crinitzberg'),
+('08209', ' Auerbach/Vogtl.'),
+('08223', ' Falkenstein/Vogtl.'),
+('08228', ' Rodewisch'),
+('08233', ' Treuen'),
+('08236', ' Ellefeld'),
+('08237', ' Steinberg'),
+('08239', ' Bergen'),
+('08248', ' Klingenthal/Sa.'),
+('08258', ' Markneukirchen'),
+('08261', ' SchÃ¶neck/Vogtl.'),
+('08262', ' Muldenhammer'),
+('08267', ' Klingenthal'),
+('08280', ' Aue'),
+('08289', ' Schneeberg'),
+('08294', ' LÃ¶ÃŸnitz'),
+('08297', ' ZwÃ¶nitz'),
+('08301', ' Schlema'),
+('08304', ' SchÃ¶nheide'),
+('08309', ' Eibenstock'),
+('08315', ' Lauter-Bernsbach'),
+('08321', ' Zschorlau'),
+('08324', ' Bockau'),
+('08328', ' StÃ¼tzengrÃ¼n'),
+('08340', ' Schwarzenberg/Erzgeb.'),
+('08344', ' GrÃ¼nhain-Beierfeld'),
+('08349', ' Johanngeorgenstadt'),
+('08352', ' Raschau'),
+('08359', ' Breitenbrunn/Erzgeb.'),
+('08371', ' Glauchau'),
+('08373', ' Remse'),
+('08393', ' Meerane'),
+('08396', ' Waldenburg'),
+('08412', ' Werdau'),
+('08427', ' Fraureuth'),
+('08428', ' Langenbernsdorf'),
+('08451', ' Crimmitschau'),
+('08459', ' Neukirchen/PleiÃŸe'),
+('08468', ' Reichenbach/Vogtl.'),
+('08485', ' Lengenfeld'),
+('08491', ' Netzschkau, Limbach'),
+('08496', ' Neumark'),
+('08499', ' Mylau'),
+('08523', ' Plauen'),
+('08525', ' Plauen'),
+('08527', ' Plauen, RÃ¶ÃŸnitz'),
+('08529', ' Plauen'),
+('08538', ' Weischlitz u.a.'),
+('08539', ' Rosenbach'),
+('08541', ' Neuensalz'),
+('08543', ' PÃ¶hl'),
+('08547', ' JÃ¶ÃŸnitz'),
+('08548', ' Rosenbach'),
+('08606', ' Oelsnitz'),
+('08626', ' Adorf'),
+('08645', ' Bad Elster'),
+('08648', ' Bad Brambach'),
+('09111', ' Chemnitz'),
+('09112', ' Chemnitz'),
+('09113', ' Chemnitz'),
+('09114', ' Chemnitz'),
+('09116', ' Chemnitz'),
+('09117', ' Chemnitz'),
+('09119', ' Chemnitz'),
+('09120', ' Chemnitz'),
+('09122', ' Chemnitz'),
+('09123', ' Chemnitz'),
+('09125', ' Chemnitz'),
+('09126', ' Chemnitz'),
+('09127', ' Chemnitz'),
+('09128', ' Chemnitz'),
+('09130', ' Chemnitz'),
+('09131', ' Chemnitz'),
+('09212', ' Limbach-Oberfrohna'),
+('09217', ' BurgstÃ¤dt'),
+('09221', ' Neukirchen/Erzgeb.'),
+('09224', ' Chemnitz'),
+('09228', ' Chemnitz'),
+('09232', ' Hartmannsdorf'),
+('09235', ' Burkhardtsdorf'),
+('09236', ' ClauÃŸnitz'),
+('09241', ' MÃ¼hlau'),
+('09243', ' Niederfrohna'),
+('09244', ' Lichtenau'),
+('09247', ' RÃ¶hrsdorf'),
+('09249', ' Taura b. BurgstÃ¤dt'),
+('09306', ' Rochlitz'),
+('09322', ' Penig'),
+('09326', ' Geringswalde'),
+('09328', ' Lunzenau'),
+('09337', ' Callenberg, Hohenstein-Ernstthal, Bernsdorf'),
+('09350', ' Lichtenstein'),
+('09353', ' Oberlungwitz'),
+('09355', ' Gersdorf'),
+('09356', ' St. Egidien'),
+('09366', ' Stollberg/Erzgeb.'),
+('09376', ' Oelsnitz/Erzgebirge'),
+('09380', ' Thalheim/Erzgebirge'),
+('09385', ' Lugau/Erzgeb.'),
+('09387', ' Jahnsdorf'),
+('09390', ' Gornsdorf'),
+('09392', ' Auerbach'),
+('09394', ' Hohndorf'),
+('09399', ' NiederwÃ¼rschnitz'),
+('09405', ' Zschopau, Gornau'),
+('09419', ' Thum'),
+('09423', ' Gelenau/Erzgeb.'),
+('09427', ' Ehrenfriedersdorf'),
+('09429', ' Wolkenstein'),
+('09430', ' Drebach'),
+('09432', ' GroÃŸolbersdorf'),
+('09434', ' Zschopau'),
+('09437', ' BÃ¶rnichen, Gornau'),
+('09439', ' Amtsberg'),
+('09456', ' Annaberg-Buchholz, Mildenau'),
+('09465', ' Sehma'),
+('09468', ' Geyer'),
+('09471', ' BÃ¤renstein'),
+('09474', ' Crottendorf'),
+('09477', ' JÃ¶hstadt'),
+('09481', ' Scheibenberg'),
+('09484', ' Oberwiesenthal'),
+('09487', ' Schlettau'),
+('09488', ' Wiesa'),
+('09496', ' Marienberg'),
+('09509', ' Pockau-Lengefeld (Pockau)'),
+('09514', ' Pockau-Lengefeld (Lengefeld)'),
+('09518', ' GroÃŸrÃ¼ckerswalde'),
+('09526', ' Olbernhau, Pfaffroda, Heidersdorf'),
+('09544', ' Neuhausen/Erzgeb.'),
+('09548', ' Seiffen/Erzgeb.'),
+('09557', ' FlÃ¶ha'),
+('09569', ' Oederan'),
+('09573', ' Leubsdorf, Gornau, Augustusburg'),
+('09575', ' Eppendorf'),
+('09577', ' Niederwiesa'),
+('09579', ' GrÃ¼nhainichen'),
+('09599', ' Freiberg'),
+('09600', ' WeiÃŸenborn, OberschÃ¶na'),
+('09603', ' GroÃŸschirma'),
+('09618', ' Brand-Erbisdorf, GroÃŸhartmannsdorf'),
+('09619', ' Dorfchemnitz, Mulda, Sayda'),
+('09623', ' Frauenstein'),
+('09627', ' Bobritzsch'),
+('09629', ' Reinsberg'),
+('09633', ' HalsbrÃ¼cke'),
+('09634', ' Reinsberg'),
+('09638', ' Lichtenberg/Erzgeb.'),
+('09648', ' Mittweida, Kriebstein'),
+('09661', ' Hainichen, Rossau, Striegistal'),
+('09669', ' Frankenberg'),
+('1', '2'),
+('10115', ' Berlin Mitte'),
+('10117', ' Berlin Mitte'),
+('10119', ' Berlin Mitte'),
+('10178', ' Berlin Mitte'),
+('10179', ' Berlin Mitte'),
+('10243', ' Berlin Friedrichshain'),
+('10245', ' Berlin Friedrichshain'),
+('10247', ' Berlin Friedrichshain'),
+('10249', ' Berlin Friedrichshain'),
+('10315', ' Berlin Friedrichsfelde'),
+('10317', ' Berlin Rummelsburg'),
+('10318', ' Berlin Karlshorst'),
+('10319', ' Berlin'),
+('10365', ' Berlin Lichtenberg'),
+('10367', ' Berlin Lichtenberg'),
+('10369', ' Berlin Lichtenberg'),
+('10405', ' Berlin Prenzlauer Berg'),
+('10407', ' Berlin Prenzlauer Berg'),
+('10409', ' Berlin Prenzlauer Berg'),
+('10435', ' Berlin Prenzlauer Berg'),
+('10437', ' Berlin Prenzlauer Berg'),
+('10439', ' Berlin Prenzlauer Berg'),
+('10551', ' Berlin Moabit'),
+('10553', ' Berlin Moabit'),
+('10555', ' Berlin Moabit'),
+('10557', ' Berlin Moabit'),
+('10559', ' Berlin Moabit'),
+('10585', ' Berlin Charlottenburg'),
+('10587', ' Berlin Charlottenburg'),
+('10589', ' Berlin Charlottenburg'),
+('10623', ' Berlin Charlottenburg'),
+('10625', ' Berlin Charlottenburg'),
+('10627', ' Berlin Charlottenburg'),
+('10629', ' Berlin Charlottenburg'),
+('10707', ' Berlin Wilmersdorf'),
+('10709', ' Berlin Wilmersdorf'),
+('10711', ' Berlin Halensee'),
+('10713', ' Berlin Wilmersdorf'),
+('10715', ' Berlin Wilhelmsdorf'),
+('10717', ' Berlin Wilmersdorf'),
+('10719', ' Berlin Wilmersdorf'),
+('10777', ' Berlin Wilmersdorf'),
+('10779', ' Berlin SchÃ¶neberg'),
+('10781', ' Berlin SchÃ¶neberg'),
+('10783', ' Berlin SchÃ¶neberg'),
+('10785', ' Berlin Tiergarten'),
+('10787', ' Berlin Tiergarten'),
+('10789', ' Berlin SchÃ¶neberg'),
+('10823', ' Berlin-West'),
+('10825', ' Berlin'),
+('10827', ' Berlin'),
+('10829', ' Berlin SchÃ¶neberg'),
+('10961', ' Berlin Kreuzberg'),
+('10963', ' Berlin Kreuzberg'),
+('10965', ' Berlin Kreuzberg'),
+('10967', ' Berlin Kreuzberg'),
+('10969', ' Berlin Kreuzberg'),
+('10997', ' Berlin Kreuzberg'),
+('10999', ' Berlin Kreuzberg'),
+('12043', ' Berlin NeukÃ¶lln'),
+('12045', ' Berlin NeukÃ¶lln'),
+('12047', ' Berlin Kreuzberg'),
+('12049', ' Berlin NeukÃ¶lln'),
+('12051', ' Berlin NeukÃ¶lln'),
+('12053', ' Berlin NeukÃ¶lln'),
+('12055', ' Berlin NeukÃ¶lln'),
+('12057', ' Berlin NeukÃ¶lln'),
+('12059', ' Berlin NeukÃ¶lln'),
+('12099', ' Berlin Tempelhof'),
+('12101', ' Berlin Tempelhof'),
+('12103', ' Berlin Tempelhof'),
+('12105', ' Berlin Mariendorf'),
+('12107', ' Berlin Mariendorf'),
+('12109', ' Berlin Mariendorf'),
+('12157', ' Berlin SchÃ¶neberg'),
+('12159', ' Berlin Friedenau'),
+('12161', ' Berlin Friedenau'),
+('12163', ' Berlin Steglitz'),
+('12165', ' Berlin Steglitz'),
+('12167', ' Berlin Steglitz'),
+('12169', ' Berlin Steglitz'),
+('12203', ' Berlin Lichtenfelde'),
+('12205', ' Berlin Lichtenfelde'),
+('12207', ' Berlin Lichtenfelde'),
+('12209', ' Berlin-Lichterfelde'),
+('12247', ' Berlin Lankwitz'),
+('12249', ' Berlin Lankwitz'),
+('12277', ' Berlin'),
+('12279', ' Berlin'),
+('12305', ' Berlin'),
+('12307', ' Berlin'),
+('12309', ' Berlin'),
+('12347', ' Berlin Britz'),
+('12349', ' Berlin Buckow'),
+('12351', ' Berlin Buckow'),
+('12353', ' Berlin Gropiusstadt'),
+('12355', ' Berlin Rudow'),
+('12357', ' Berlin Rudow'),
+('12359', ' Berlin Britz'),
+('12435', ' Berlin Alt Treptow'),
+('12437', ' Berlin Baumschulenweg'),
+('12439', ' Berlin NiederschÃ¶neweide'),
+('12459', ' Berlin OberschÃ¶neweide'),
+('12487', ' Berlin'),
+('12489', ' Berlin Teltowkanal III'),
+('12524', ' Berlin Altglienicke'),
+('12526', ' Berlin Bohnsdorf'),
+('12527', ' Berlin SchmÃ¶ckwitz'),
+('12529', ' SchÃ¶nefeld'),
+('12555', ' Berlin KÃ¶penik'),
+('12557', ' Berlin'),
+('12559', ' Berlin KÃ¶penick'),
+('12587', ' Berlin Wiesengrund'),
+('12589', ' Berlin Rahnsdorf'),
+('12619', ' Berlin'),
+('12621', ' Berlin Kaulsdorf'),
+('12623', ' Berlin Mahlsdorf'),
+('12627', ' Berlin Hellersdorf'),
+('12629', ' Berlin'),
+('12679', ' Berlin'),
+('12681', ' Berlin'),
+('12683', ' Berlin Biesdorf'),
+('12685', ' Berlin'),
+('12687', ' Berlin'),
+('12689', ' Berlin'),
+('13051', ' Berlin Neu-SchÃ¶nhausen'),
+('13053', ' Berlin Alt-HohenschÃ¶nhausen'),
+('13055', ' Berlin Alt-HohenschÃ¶nhausen'),
+('13057', ' Berlin Falkenberg'),
+('13059', ' Berlin Wartenberg'),
+('13086', ' Berlin WeiÃŸensee'),
+('13088', ' Berlin WeiÃŸensee'),
+('13089', ' Berlin Heinelsdorf'),
+('13125', ' Berlin Buch'),
+('13127', ' Berlin FranzÃ¶sisch Buchholz'),
+('13129', ' Berlin Blankenburg'),
+('13156', ' Berlin NiederschÃ¶nhausen'),
+('13158', ' Berlin Rosenthal'),
+('13159', ' Berlin Blankenfelde'),
+('13187', ' Berlin Pankow'),
+('13189', ' Berlin Pankow'),
+('13347', ' Berlin Wedding'),
+('13349', ' Berlin Wedding'),
+('13351', ' Berlin Wedding'),
+('13353', ' Berlin Wedding'),
+('13355', ' Berlin Wedding'),
+('13357', ' Berlin Gesundbrunnen'),
+('13359', ' Berlin Gesundbrunnen'),
+('13403', ' Berlin Reinickendorf'),
+('13405', ' Berlin Wedding'),
+('13407', ' Berlin-West'),
+('13409', ' Berlin-West'),
+('13435', ' Berlin MÃ¤rkisches Viertel'),
+('13437', ' Berlin Reinickendorf'),
+('13439', ' Berlin MÃ¤rkisches Viertel'),
+('13465', ' Berlin Frohnau'),
+('13467', ' Berlin Hermsdorf'),
+('13469', ' Berlin LÃ¼bars'),
+('13503', ' Berlin Tegel'),
+('13505', ' Berlin Tegel'),
+('13507', ' Berlin Tegel'),
+('13509', ' Berlin Reinickendorf'),
+('13581', ' Berlin Spandau'),
+('13583', ' Berlin Spandau'),
+('13585', ' Berlin Spandau'),
+('13587', ' Berlin Hakenfelde'),
+('13589', ' Berlin Falkenhagener Feld'),
+('13591', ' Berlin Staaken'),
+('13593', ' Berlin Wilhelmstadt'),
+('13595', ' Berlin Wlhelmstadt'),
+('13597', ' Berlin Spandau'),
+('13599', ' Berlin Haselhorst'),
+('13627', ' Berlin Charlottenburg-Nord'),
+('13629', ' Berlin Siemensstadt'),
+('14050', ' Berlin Westend'),
+('14052', ' Berlin Westend'),
+('14053', ' Berlin Westend'),
+('14055', ' Berlin Westend'),
+('14057', ' Berlin Charlottenburg'),
+('14059', ' Berlin Charlottenburg'),
+('14089', ' Berlin Gatow'),
+('14109', ' Berlin Wannsee'),
+('14129', ' Berlin Nikolassee'),
+('14163', ' Berlin Zehlendorf'),
+('14165', ' Berlin Zehlendorf'),
+('14167', ' Berlin Zehlendorf'),
+('14169', ' Berlin Zehlendorf'),
+('14193', ' Berlin Grunewald'),
+('14195', ' Berlin Dahlem'),
+('14197', ' Berlin Wilmersdorf'),
+('14199', ' Berlin Schmargendorf'),
+('14467', ' Potsdam'),
+('14469', ' Potsdam'),
+('14471', ' Potsdam'),
+('14473', ' Potsdam'),
+('14476', ' Potsdam'),
+('14478', ' Potsdam'),
+('14480', ' Potsdam'),
+('14482', ' Potsdam'),
+('14513', ' Teltow'),
+('14532', ' Kleinmachnow'),
+('14542', ' Werder/ Havel'),
+('14547', ' Beelitz'),
+('14548', ' Schwielowswee'),
+('14550', ' GroÃŸ Kreutz'),
+('14552', ' Michendorf'),
+('14554', ' Seddinger See'),
+('14558', ' Nuthetal'),
+('14612', ' Falkensee'),
+('14621', ' SchÃ¶nwalde'),
+('14624', ' Dallgow-DÃ¶beritz'),
+('14641', ' Nauen'),
+('14656', ' Brieselang'),
+('14662', ' Friesack'),
+('14669', ' Ketzin'),
+('14712', ' Rathenow'),
+('14715', ' Milower Land, Schollene, Nennhausen u.a.'),
+('14727', ' Premnitz'),
+('14728', ' Rhinow'),
+('14770', ' Brandenburg/ Havel'),
+('14772', ' Brandenburg/ Havel'),
+('14774', ' Brandenburg/ Havel'),
+('14776', ' Brandenburg/Havel'),
+('14778', ' Beetzsee, Wollin, Wenzlow, Golzow u.a'),
+('14789', ' Wusterwitz, Rosenau, Bensdorf'),
+('14793', ' Ziesar'),
+('14797', ' Lehnin'),
+('14798', ' Havelsee'),
+('14806', ' Belzig'),
+('14822', ' BrÃ¼ck, Borkheide u.a'),
+('14823', ' Niemegk'),
+('14827', ' Wiesenburg'),
+('14828', ' GÃ¶rzke'),
+('14913', ' JÃ¼terbog'),
+('14929', ' Treuenbrietzen'),
+('14943', ' Luckenwalde'),
+('14947', ' Nuthe-Urstromtal'),
+('14959', ' Trebbin'),
+('14974', ' Ludwigsfelde'),
+('14979', ' GroÃŸbeeren'),
+('15230', ' Frankfurt/ Oder'),
+('15232', ' Frankfurt/ Oder'),
+('15234', ' Frankfurt/ Oder'),
+('15236', ' Treplin, Jacobsdorf, Frankfurt (Oder)'),
+('15295', ' Brieskow-Finkenheerd'),
+('15299', ' MÃ¼llrose'),
+('15306', ' Seelow, Lietzen u.a.'),
+('15320', ' Neutrebbin, Neuhardenberg'),
+('15324', ' Letschin'),
+('15326', ' Zeschdorf, Podelzig, Lebus'),
+('15328', ' Golzow, Zechin u.a.'),
+('15344', ' Strausberg'),
+('15345', ' Lichtenow, Altlandsberg u.a.'),
+('15366', ' Neuenhagen, Hoppegarten'),
+('15370', ' Fredersdorf-Vogelsdorf, Petershagen'),
+('15374', ' MÃ¼ncheberg'),
+('15377', ' Oberbarnim, MÃ¤rkische HÃ¶he u.a.'),
+('15378', ' RÃ¼dersdorf'),
+('15517', ' FÃ¼rstenwalde/ Spree'),
+('15518', ' Briesen, Rauen u.a.'),
+('15526', ' Bad Saarow-Pieskow'),
+('15528', ' Spreenhagen'),
+('15537', ' Erkner'),
+('15562', ' RÃ¼dersdorf'),
+('15566', ' SchÃ¶neiche bei Berlin'),
+('15569', ' Woltersdorf'),
+('15711', ' KÃ¶nigs Wusterhausen'),
+('15712', ' KÃ¶nigs Wusterhausen'),
+('15713', ' KÃ¶nigs Wusterhausen'),
+('15732', ' Schulzendorf b. Eichenwade'),
+('15738', ' Zeuthen'),
+('15741', ' Bestensee'),
+('15745', ' Wildau'),
+('15746', ' GroÃŸ KÃ¶ris'),
+('15748', ' MÃ¤rkisch Buchholz'),
+('15749', ' Mittenwalde'),
+('15754', ' Heidesee'),
+('15755', ' Teupitz'),
+('15757', ' Halbe'),
+('15806', ' Zossen'),
+('15827', ' Blankenfelde-Mahlow'),
+('15831', ' Blankenfelde-Mahlow'),
+('15834', ' Rangsdorf'),
+('15837', ' Baruth'),
+('15838', ' Am Mellensee'),
+('15848', ' Beeskow'),
+('15859', ' Storkow'),
+('15864', ' Wendisch Rietz'),
+('15868', ' Lieberose'),
+('15890', ' EisenhÃ¼ttenstadt'),
+('15898', ' Neuzelle'),
+('15907', ' LÃ¼bben (Spreewald)'),
+('15910', ' SchÃ¶nwalde'),
+('15913', ' Straupitz'),
+('15926', ' Luckau, Waldrehna, Heideblick, FÃ¼rstlich Drehna'),
+('15936', ' Dahme u.a.'),
+('15938', ' GolÃŸen'),
+('16225', ' Eberswalde'),
+('16227', ' Eberswalde'),
+('16230', ' Melchow, Chorin u.a.'),
+('16244', ' Schorfheide'),
+('16247', ' Joachimsthal u.a.'),
+('16248', ' Oderberg u.a.'),
+('16259', ' Bad Freienwalde u.a.'),
+('16269', ' Wriezen'),
+('16278', ' AngermÃ¼nde'),
+('16303', ' Schwedt'),
+('16306', ' Biesendahlshof, Berkholz-Meyenburg'),
+('16307', ' Gartz (Oder)'),
+('16321', ' Bernau'),
+('16341', ' Panketal'),
+('16348', ' Wandlitz'),
+('16356', ' Werneuchen'),
+('16359', ' Biesenthal'),
+('16515', ' Oranienburg, MÃ¼hlenbecker Land'),
+('16540', ' Hohen Neuendorf'),
+('16547', ' Birkenwerder'),
+('16548', ' Glienicke/Nordbahn'),
+('16552', ' MÃ¼hlenbecker Land'),
+('16556', ' Borgsdorf'),
+('16559', ' Liebenwalde'),
+('16562', ' Hohen Neuendorf OT Bergfelde'),
+('16567', ' MÃ¼hlenbecker Land'),
+('16727', ' Velten, OberkrÃ¤mer'),
+('16761', ' Hennigsdorf'),
+('16766', ' Kremmen'),
+('16767', ' Leegebruch'),
+('16775', ' Gransee, LÃ¶wenberg'),
+('16792', ' Zehdenick'),
+('16798', ' FÃ¼rstenberg'),
+('16816', ' Neuruppin'),
+('16818', ' Fehrbellin, Temnitzquell, MÃ¤rkisch Linden u.a.'),
+('16827', ' Neuruppin'),
+('16831', ' Rheinsberg'),
+('16833', ' Fehrbellin'),
+('16835', ' Lindow u.a.'),
+('16837', ' Rheinsberg'),
+('16845', ' Neustadt (Dosse) u.a.'),
+('16866', ' Gumtow, Kyritz u.a.'),
+('16868', ' Wusterhausen'),
+('16909', ' Wittstock/Dosse, Heiligengrabe'),
+('16928', ' Pritzwalk, GroÃŸ Pankow'),
+('16945', ' Meyenburg, KÃ¼mmernitztal u.a.'),
+('16949', ' Triglitz, Putlitz'),
+('17033', ' Neubrandenburg'),
+('17034', ' Neubrandenburg'),
+('17036', ' Neubrandenburg'),
+('17039', ' Sponholz, Neunkirchen u.a.'),
+('17087', ' Altentreptow'),
+('17089', ' Burow'),
+('17091', ' Rosenow'),
+('17094', ' CÃ¶lpin'),
+('17098', ' Friedland'),
+('17099', ' Friedland, Galenbeck, Datzetal'),
+('17109', ' Demmin'),
+('17111', ' Demmin u.a.'),
+('17121', ' Loitz'),
+('17126', ' Jarmen'),
+('17129', ' Bentzin'),
+('17139', ' Malchin'),
+('17153', ' Stavenhagen'),
+('17154', ' Neukalen'),
+('17159', ' Dargun'),
+('17166', ' Dahmen, GroÃŸ Wokern, Teterow'),
+('17168', ' JÃ¶rdenstorf, Prebberede u.a.'),
+('17179', ' Gnoien u.a.'),
+('17192', ' Waren/ MÃ¼ritz'),
+('17194', ' GrabowhÃ¶fe, Moltzow u.a.'),
+('17207', ' RÃ¶bel/ MÃ¼ritz'),
+('17209', ' Wredenhagen'),
+('17213', ' Malchow u.a.'),
+('17214', ' Nossentiner HÃ¼tte'),
+('17217', ' Penzlin'),
+('17219', ' MÃ¶llenhagen'),
+('17235', ' Neustrelitz'),
+('17237', ' MÃ¶llenbeck'),
+('17248', ' Rechlin'),
+('17252', ' Mirow'),
+('17255', ' Wesenberg'),
+('17258', ' Feldberger Seenlandschaft'),
+('17268', ' Templin, Boitzenburg u.a.'),
+('17279', ' Lychen'),
+('17291', ' Prenzlau u.a.'),
+('17309', ' Pasewalk u.a.'),
+('17321', ' LÃ¶cknitz, Rothenklempenow'),
+('17322', ' Blankensee, Grambow u.a.'),
+('17326', ' BrÃ¼ssow'),
+('17328', ' Penkun u.a.'),
+('17329', ' Krackow, Nadrensee'),
+('17335', ' Strasburg'),
+('17337', ' Uckerland, GroÃŸ Luckow, SchÃ¶nhausen'),
+('17348', ' Woldegk'),
+('17349', ' GroÃŸ Miltzow'),
+('17358', ' Torgelow'),
+('17367', ' Eggesin'),
+('17373', ' UeckermÃ¼nde'),
+('17375', ' Vogelsang-Warsin, Meiersberg, MÃ¶nkebude u.a.'),
+('17379', ' Ferdinandshof u.a.'),
+('17389', ' Anklam'),
+('17390', ' Klein BÃ¼nzow'),
+('17391', ' Krien u.a.'),
+('17392', ' Spantekow'),
+('17398', ' Ducherow'),
+('17406', ' Usedom u.a.'),
+('17419', ' Seebad Ahlbeck'),
+('17424', ' Ostseebad Heringsdorf'),
+('17429', ' Benz, Heringsdorf u.a.'),
+('17438', ' Wolgast'),
+('17440', ' KrÃ¶slin, Krummin, Lassan u.a.'),
+('17449', ' Karlshagen'),
+('17454', ' Zinnowitz'),
+('17459', ' Koserow'),
+('17489', ' Greifswald'),
+('17491', ' Greifswald'),
+('17493', ' Greifswald'),
+('17495', ' Karlsburg'),
+('17498', ' Neuenkirchen'),
+('17506', ' GÃ¼tzkow'),
+('17509', ' Lubmin'),
+('18055', ''),
+('18057', ''),
+('18059', ''),
+('18069', ''),
+('18106', ''),
+('18107', ' Elmenhorst/Lichtenhagen, Rostock'),
+('18109', ' Rostock'),
+('18119', ' Rostock'),
+('18146', ' Rostock'),
+('18147', ' Rostock'),
+('18181', ' Rostock, Graal-MÃ¼ritz'),
+('18182', ' Rostock, Gelbensande, RÃ¶vershagen u.a.'),
+('18184', ' Roggentin, Broderstorf u.a.'),
+('18190', ' Sanitz'),
+('18195', ' Tessin, Grammow u.a.'),
+('18196', ' Dummerstorf'),
+('18198', ''),
+('18209', ' Bad Doberan, Bartenshagen-Parkentin u.a.'),
+('18211', ' Retschow, Admannshagen-Bargeshagen u.a.'),
+('18225', ' KÃ¼hlungsborn'),
+('18230', ' Rerik, Bastorf, Biendorf'),
+('18233', ' Neubukow, Ravensberg, WestenbrÃ¼gge u.a.'),
+('18236', ' KrÃ¶pelin, Carinerland'),
+('18239', ' Satow'),
+('18246', ' BÃ¼tzow u.a.'),
+('18249', ' Bernitt, Qualitz, Warnow, Zernin u.a.'),
+('18258', ' Schwaan u.a.'),
+('18273', ' GÃ¼strow'),
+('18276', ' Reimershagen, Lohmen, Zehna, HÃ¤gerfelde u.a.'),
+('18279', ' Lalendorf, Langhagen'),
+('18292', ' Krakow, Dobbin-Linstow u.a.'),
+('18299', ' Laage, Wardow u.a.'),
+('18311', ' Ribnitz-Damgarten'),
+('18314', ' LÃ¶bnitz'),
+('18317', ' Saal'),
+('18320', ' Ahrenshagen-Daskow, Trinwillershagen u.a.'),
+('18334', ' Bad SÃ¼lze'),
+('18337', ' Marlow'),
+('18347', ' Dierhagen'),
+('18356', ' Barth'),
+('18374', ' Zingst a. DarÃŸ'),
+('18375', ' Prerow a. DarÃŸ'),
+('18435', ' Stralsund'),
+('18437', ' Stralsund'),
+('18439', ' Stralsund'),
+('18442', ' Niepars'),
+('18445', ' Prohn'),
+('18461', ' Franzburg, Richtenberg, u.a.'),
+('18465', ' Tribsees'),
+('18469', ' Velgast'),
+('18507', ' Grimmen'),
+('18510', ' Wittenhagen'),
+('18513', ' Glewitz'),
+('18516', ' Rakow'),
+('18519', ' Miltzow u.a.'),
+('18528', ' Bergen/ RÃ¼gen'),
+('18546', ' Sassnitz'),
+('18551', ' Sagard'),
+('18556', ' Dranske'),
+('18565', ' Hiddensee'),
+('18569', ' Gingst'),
+('18573', ' Samtens'),
+('18574', ' Garz/ RÃ¼gen'),
+('18581', ' Putbus'),
+('18586', ' Sellin'),
+('18609', ' Binz'),
+('19053', ' Schwerin'),
+('19055', ' Schwerin'),
+('19057', ' Schwerin'),
+('19059', ' Schwerin'),
+('19061', ' Schwerin'),
+('19063', ' Schwerin'),
+('19065', ' Pinnow'),
+('19067', ' Leezen'),
+('19069', ' LÃ¼bstorf'),
+('19071', ' BrÃ¼sewitz'),
+('19073', ' WittenfÃ¶rden u.a.'),
+('19075', ' Pampow'),
+('19077', ' Rastow'),
+('19079', ' Banzkow, Sukow'),
+('19086', ' Plate'),
+('19089', ' Crivitz, Friedrichsruhe u.a.'),
+('19205', ' Gadebusch'),
+('19209', ' LÃ¼tzow'),
+('19217', ' Rehna, Carlow u.a.'),
+('19230', ' Hagenow u.a.'),
+('19243', ' Wittenburg u.a.'),
+('19246', ' Zarrentin'),
+('19249', ' LÃ¼btheen'),
+('19258', ' Boizenburg, Gresse, Greven u.a.'),
+('19260', ' Vellahn'),
+('19273', ' Amt Neuhaus, Stapel'),
+('19288', ' Ludwigslust'),
+('19294', ' Neu KaliÃŸ'),
+('19300', ' Grabow u.a.'),
+('19303', ' DÃ¶mitz'),
+('19306', ' Neustadt-Glewe'),
+('19309', ' Lenzen'),
+('19322', ' Wittenberge, RÃ¼hstÃ¤dt'),
+('19336', ' Legde/QuitzÃ¶bel, Bad Wilsnack'),
+('19339', ' Plattenburg'),
+('19348', ' Perleberg, Berge u.a.'),
+('19357', ' KarstÃ¤dt, Dambeck, KlÃ¼ÃŸ'),
+('19370', ' Parchim'),
+('19372', ' Spornitz'),
+('19374', ' DomsÃ¼hl, Mestlin, Obere Warnow u.a.'),
+('19376', ' Marnitz, Siggelkow'),
+('19386', ' LÃ¼bz, Passow'),
+('19395', ' Plau am See'),
+('19399', ' Goldberg'),
+('19406', ' Sternberg'),
+('19412', ' BrÃ¼el'),
+('19417', ' Warin'),
+('20095', ' Hamburg'),
+('20097', ' Hamburg'),
+('20099', ' Hamburg'),
+('20144', ' Hamburg'),
+('20146', ' Hamburg'),
+('20148', ' Hamburg'),
+('20149', ' Hamburg'),
+('20249', ' Hamburg'),
+('20251', ' Hamburg'),
+('20253', ' Hamburg'),
+('20255', ' Hamburg'),
+('20257', ' Hamburg'),
+('20259', ' Hamburg'),
+('20354', ' Hamburg'),
+('20355', ' Hamburg'),
+('20357', ' Hamburg'),
+('20359', ' Hamburg'),
+('20457', ' Hamburg'),
+('20459', ' Hamburg'),
+('20535', ' Hamburg'),
+('20537', ' Hamburg'),
+('20539', ' Hamburg'),
+('21029', ' Hamburg'),
+('21031', ' Hamburg'),
+('21033', ' Hamburg'),
+('21035', ' Hamburg'),
+('21037', ' Hamburg'),
+('21039', ' Hamburg'),
+('21073', ' Hamburg'),
+('21075', ' Hamburg'),
+('21077', ' Hamburg'),
+('21079', ' Hamburg'),
+('21107', ' Hamburg'),
+('21109', ' Hamburg'),
+('21129', ' Hamburg'),
+('21147', ' Hamburg'),
+('21149', ' Hamburg'),
+('21217', ' Seevetal'),
+('21218', ' Seevetal'),
+('21220', ' Seevetal'),
+('21224', ' Rosengarten'),
+('21227', ' Bendestorf'),
+('21228', ' Harmstorf'),
+('21244', ' Buchholz in der Nordheide'),
+('21255', ' Tostedt, Kakenstorf u.a.'),
+('21256', ' Handeloh'),
+('21258', ' Heidenau'),
+('21259', ' Otter'),
+('21261', ' Welle'),
+('21266', ' Jesteburg'),
+('21271', ' Hanstedt, Asendorf'),
+('21272', ' Eggestorf'),
+('21274', ' Undeloh'),
+('21279', ' Hollenstedt, Drestedt u.a.'),
+('21335', ' LÃ¼neburg'),
+('21337', ' LÃ¼neburg'),
+('21339', ' LÃ¼neburg'),
+('21354', ' Bleckede'),
+('21357', ' Bardowick, Wittorf, Barum'),
+('21358', ' Mechtersen'),
+('21360', ' VÃ¶gelsen'),
+('21365', ' Adendorf'),
+('21368', ' Dahlenburg'),
+('21369', ' Nahrendorf'),
+('21371', ' Tosterglope'),
+('21376', ' Salzhausen'),
+('21379', ' Scharnebeck, Echem, LÃ¼dersburg, Rullstorf'),
+('21380', ' Artlenburg'),
+('21382', ' Brietlingen'),
+('21385', ' Oldendorf (Luhe), Amelinghausen, Rehlingen'),
+('21386', ' Betzendorf'),
+('21388', ' Soderstorf'),
+('21391', ' Reppenstedt, LÃ¼neburg'),
+('21394', ' Kirchgellersen, Westergellersen, SÃ¼dergellersen'),
+('21395', ' Tespe'),
+('21397', ' Barendorf, Vastorf'),
+('21398', ' Neetze'),
+('21400', ' Reinstorf'),
+('21401', ' Thomasburg'),
+('21403', ' Wendisch Evern'),
+('21406', ' Melbeck, Barnstedt'),
+('21407', ' Deutsch Evern'),
+('21409', ' Embsen'),
+('21423', ' Winsen'),
+('21435', ' Stelle'),
+('21436', ' Marschacht'),
+('21438', ' Brackel'),
+('21439', ' Marxen'),
+('21441', ' Garstedt'),
+('21442', ' Toppenstedt'),
+('21444', ' VierhÃ¶fen'),
+('21445', ' Wulfsen'),
+('21447', ' Handorf'),
+('21449', ' Radbruch'),
+('21465', ' Reinbek'),
+('21481', ' Lauenburg/Elbe'),
+('21483', ' GÃ¼lzow'),
+('21493', ' Fuhlenhagen'),
+('21502', ' Geesthacht'),
+('21509', ' Glinde'),
+('21514', ' BrÃ¶then'),
+('21516', ' Woltersdorf, MÃ¼ssen u.a.'),
+('21521', ' AumÃ¼hle'),
+('21522', ' Hohnstorf (Elbe), Hittbergen'),
+('21524', ' Brunstorf'),
+('21526', ' Hohenhorn'),
+('21527', ' Kollow'),
+('21529', ' KrÃ¶ppelshagen-Fahrendorf'),
+('21614', ' Buxtehude'),
+('21629', ' Neu Wulmstorf'),
+('21635', ' Jork'),
+('21640', ' Horneburg'),
+('21641', ' Apensen'),
+('21643', ' Beckdorf'),
+('21644', ' Sauensiek'),
+('21646', ' Halvesbostel'),
+('21647', ' Moisburg'),
+('21649', ' Regesbostel'),
+('21680', ' Stade'),
+('21682', ' Stade'),
+('21683', ' Stade'),
+('21684', ' Stade'),
+('21698', ' Harsefeld'),
+('21702', ' Ahlerstedt'),
+('21706', ' Drochtersen'),
+('21709', ' Himmelpforten'),
+('21710', ' Engelschoff'),
+('21712', ' GroÃŸenwÃ¶rden'),
+('21714', ' Hammah'),
+('21717', ' Fredenbeck'),
+('21720', ' GrÃ¼nendeich'),
+('21723', ' Hollern-Twielenfleth'),
+('21726', ' Oldendorf'),
+('21727', ' Estorf'),
+('21729', ' Freiburg (Elbe)'),
+('21730', ' Balje'),
+('21732', ' Krummendeich'),
+('21734', ' Oederquart'),
+('21737', ' Wischhafen'),
+('21739', ' Dollern'),
+('21745', ' Hemmoor'),
+('21755', ' Hechthausen'),
+('21756', ' Osten'),
+('21762', ' Otterndorf'),
+('21763', ' Neuenkirchen'),
+('21765', ' Nordleda'),
+('21769', ' Lamstedt'),
+('21770', ' Mittelstenahe'),
+('21772', ' Stinstedt'),
+('21775', ' Ihlienworth'),
+('21776', ' Wanna'),
+('21781', ' Cadenberge'),
+('21782', ' BÃ¼lkau'),
+('21785', ' Neuhaus (Oste)'),
+('21787', ' Oberndorf'),
+('21789', ' Wingst'),
+('22041', ' Hamburg'),
+('22043', ' Hamburg'),
+('22045', ' Hamburg'),
+('22047', ' Hamburg'),
+('22049', ' Hamburg'),
+('22081', ' Hamburg'),
+('22083', ' Hamburg'),
+('22085', ' Hamburg'),
+('22087', ' Hamburg'),
+('22089', ' Hamburg'),
+('22111', ' Hamburg'),
+('22113', ' Hamburg, Oststeinbek'),
+('22115', ' Hamburg'),
+('22117', ' Hamburg'),
+('22119', ' Hamburg'),
+('22143', ' Hamburg'),
+('22145', ' Hamburg'),
+('22147', ' Hamburg'),
+('22149', ' Hamburg'),
+('22159', ' Hamburg'),
+('22175', ' Hamburg'),
+('22177', ' Hamburg'),
+('22179', ' Hamburg'),
+('22297', ' Hamburg'),
+('22299', ' Hamburg'),
+('22301', ' Hamburg'),
+('22303', ' Hamburg'),
+('22305', ' Hamburg'),
+('22307', ' Hamburg'),
+('22309', ' Hamburg'),
+('22335', ' Hamburg'),
+('22337', ' Hamburg'),
+('22339', ' Hamburg'),
+('22359', ' Hamburg'),
+('22391', ' Hamburg'),
+('22393', ' Hamburg'),
+('22395', ' Hamburg'),
+('22397', ' Hamburg'),
+('22399', ' Hamburg'),
+('22415', ' Hamburg'),
+('22417', ' Hamburg'),
+('22419', ' Hamburg'),
+('22453', ' Hamburg'),
+('22455', ' Hamburg'),
+('22457', ' Hamburg'),
+('22459', ' Hamburg'),
+('22523', ' Hamburg'),
+('22525', ' Hamburg'),
+('22527', ' Hamburg'),
+('22529', ' Hamburg'),
+('22547', ' Hamburg'),
+('22549', ' Hamburg'),
+('22559', ' Hamburg'),
+('22587', ' Hamburg'),
+('22589', ' Hamburg'),
+('22605', ' Hamburg'),
+('22607', ' Hamburg'),
+('22609', ' Hamburg'),
+('22761', ' Hamburg'),
+('22763', ' Hamburg'),
+('22765', ' Hamburg'),
+('22767', ' Hamburg'),
+('22769', ' Hamburg'),
+('22844', ' Norderstedt'),
+('22846', ' Norderstedt'),
+('22848', ' Norderstedt'),
+('22850', ' Norderstedt'),
+('22851', ' Norderstedt'),
+('22869', ' Schenefeld'),
+('22880', ' Wedel'),
+('22885', ' BarsbÃ¼ttel'),
+('22889', ' Tangstedt'),
+('22926', ' Ahrensburg'),
+('22927', ' GroÃŸhansdorf'),
+('22929', ' Hamfelde, Kasseburg, KÃ¶thel, Rausdorf, SchÃ¶nber'),
+('22941', ' Bargteheide, Delingsdorf u.a.'),
+('22946', ' Trittau'),
+('22949', ' Ammersbek'),
+('22952', ' LÃ¼tjensee'),
+('22955', ' Hoisdorf'),
+('22956', ' GrÃ¶nwohld'),
+('22958', ' KuddewÃ¶rde'),
+('22959', ' Linau'),
+('22961', ' Hoisdorf'),
+('22962', ' Siek'),
+('22964', ' Steinburg'),
+('22965', ' Todendorf'),
+('22967', ' TremsbÃ¼ttel'),
+('22969', ' Witzhave'),
+('23552', ' LÃ¼beck'),
+('23554', ' LÃ¼beck St. Lorenz Nord'),
+('23556', ' LÃ¼beck'),
+('23558', ' LÃ¼beck'),
+('23560', ' LÃ¼beck'),
+('23562', ' LÃ¼beck'),
+('23564', ' LÃ¼beck'),
+('23566', ' LÃ¼beck'),
+('23568', ' LÃ¼beck Schlutup/St. Gertrud'),
+('23569', ' LÃ¼beck'),
+('23570', ' LÃ¼beck'),
+('23611', ' Bad Schwartau'),
+('23617', ' Stockelsdorf'),
+('23619', ' Zarpen'),
+('23623', ' AhrensbÃ¶k'),
+('23626', ' Ratekau'),
+('23627', ' GroÃŸ GrÃ¶nau'),
+('23628', ' Krummesse, Klempau'),
+('23629', ' Sarkwitz'),
+('23669', ' Timmendorfer Strand'),
+('23683', ' Scharbeutz'),
+('23684', ' Scharbeutz, SÃ¼sel'),
+('23689', ' Pansdorf'),
+('23701', ' Eutin, SÃ¼sel'),
+('23714', ' Malente, KirchnÃ¼chel'),
+('23715', ' Bosau'),
+('23717', ' Kasseedorf'),
+('23719', ' Glasau'),
+('23730', ' Neustadt'),
+('23738', ' Lensahn'),
+('23743', ' GrÃ¶mitz'),
+('23744', ' SchÃ¶nwalde am Bungsberg'),
+('23746', ' Kellenhusen'),
+('23747', ' Dahme'),
+('23749', ' Grube'),
+('23758', ' Oldenburg in Holstein'),
+('23769', ' Fehmarn'),
+('23774', ' Heiligenhafen'),
+('23775', ' GroÃŸenbrode'),
+('23777', ' Heringsdorf'),
+('23779', ' Neukirchen'),
+('23795', ' Bad Segeberg'),
+('23812', ' Wahlstedt'),
+('23813', ' Nehms'),
+('23815', ' Geschendorf'),
+('23816', ' Leezen'),
+('23818', ' NeuengÃ¶rs'),
+('23820', ' Pronstorf'),
+('23821', ' Rohlstorf'),
+('23823', ' Seedorf'),
+('23824', ' Tensfeld'),
+('23826', ' Bark'),
+('23827', ' Wensin'),
+('23829', ' Wittenborn'),
+('23843', ' Bad Oldesloe'),
+('23845', ' Seth'),
+('23847', ' Lasbek'),
+('23858', ' Reinfeld (Holstein)'),
+('23860', ' Klein Wesenberg'),
+('23863', ' Bargfeld-Stegen'),
+('23866', ' Nahe'),
+('23867', ' SÃ¼lfeld'),
+('23869', ' Elmenhorst'),
+('23879', ' MÃ¶lln'),
+('23881', ' Breitenfelde, Lankau'),
+('23883', ' Sterley'),
+('23896', ' Nusse'),
+('23898', ' Sandesneben u.a.'),
+('23899', ' Gudow'),
+('23909', ' Ratzeburg'),
+('23911', ' Ziethen'),
+('23919', ' Berkenthin'),
+('23923', ' SchÃ¶nberg'),
+('23936', ' GrevesmÃ¼hlen, Stepenitztal, Upahl u.a.'),
+('23942', ' Dassow'),
+('23946', ' Boltenhagen'),
+('23948', ' KlÃ¼tz'),
+('23966', ' Wismar, GroÃŸ Krankow u.a.'),
+('23968', ' Barnekow, GÃ¤gelow u.a.'),
+('23970', ' Wismar'),
+('23972', ' Dorf Mecklenburg, LÃ¼bow u.a.'),
+('23974', ' Neuburg-Steinhausen, Hornstorf'),
+('23992', ' Neukloster'),
+('23996', ' Bad Kleinen u.a.'),
+('23999', ' Insel Poel'),
+('24103', ' Kiel'),
+('24105', ' Kiel'),
+('24106', ' Kiel'),
+('24107', ' Kiel'),
+('24109', ' Melsdorf'),
+('24111', ' Kiel Russee'),
+('24113', ' Kiel'),
+('24114', ' Kiel'),
+('24116', ' Kiel'),
+('24118', ' Kiel'),
+('24119', ' Kronshagen'),
+('24143', ' Kiel'),
+('24145', ' Kiel'),
+('24146', ' Kiel'),
+('24147', ' Kiel'),
+('24148', ' Kiel'),
+('24149', ' Kiel'),
+('24159', ' Kiel'),
+('24161', ' Altenholz'),
+('24211', ' Preetz'),
+('24214', ' Gettorf u.a.'),
+('24217', ' SchÃ¶nberg (Holstein)'),
+('24220', ' Flintbek'),
+('24222', ' Schwentinental'),
+('24223', ' Schwentinetal'),
+('24226', ' Heikendorf'),
+('24229', ' DÃ¤nischenhagen'),
+('24232', ' SchÃ¶nkirchen'),
+('24235', ' Laboe'),
+('24238', ' Selent'),
+('24239', ' Achterwehr'),
+('24241', ' Blumenthal'),
+('24242', ' Felde'),
+('24244', ' Felm'),
+('24245', ' Kirchbarkau'),
+('24247', ' Mielkendorf'),
+('24248', ' MÃ¶nkeberg'),
+('24250', ' Nettelsee'),
+('24251', ' Osdorf'),
+('24253', ' Probsteierhagen'),
+('24254', ' Rumohr'),
+('24256', ' Fargau-Pratjau'),
+('24257', ' Hohenfelde'),
+('24259', ' Westensee'),
+('24306', ' PlÃ¶n'),
+('24321', ' LÃ¼tjenburg'),
+('24326', ' Ascheberg'),
+('24327', ' Blekendorf'),
+('24329', ' Grebin'),
+('24340', ' EckernfÃ¶rde'),
+('24351', ' Damp'),
+('24354', ' Kosel, Rieseby u.a.'),
+('24357', ' Fleckeby u.a.'),
+('24358', ' Ascheffel'),
+('24360', ' Barkelsby'),
+('24361', ' GroÃŸ Wittensee'),
+('24363', ' Holtsee'),
+('24364', ' Holzdorf'),
+('24366', ' Loose'),
+('24367', ' Osterby'),
+('24369', ' Waabs'),
+('24376', ' Kappeln'),
+('24392', ' SÃ¼derbrarup'),
+('24395', ' Gelting'),
+('24398', ' DÃ¶rphof'),
+('24399', ' Arnis, Marienhof'),
+('24401', ' BÃ¶el'),
+('24402', ' Esgrus, Schrepperie'),
+('24404', ' Maasholm, SchleimÃ¼nde'),
+('24405', ' Mohrkirch, RÃ¼gge'),
+('24407', ' Rabenkirchen-FaulÃ¼ck'),
+('24409', ' StoltebÃ¼ll'),
+('24534', ' NeumÃ¼nster'),
+('24536', ' NeumÃ¼nster'),
+('24537', ' NeumÃ¼nster'),
+('24539', ' NeumÃ¼nster'),
+('24558', ' Henstedt-Ulzburg'),
+('24568', ' Kaltenkirchen'),
+('24576', ' Bad Bramstedt'),
+('24582', ' Bordesholm'),
+('24589', ' Nortorf'),
+('24594', ' Hohenwestedt'),
+('24598', ' Boostedt'),
+('24601', ' Wankendorf'),
+('24610', ' Trappenkamp'),
+('24613', ' Aukrug, Wiedenborstel'),
+('24616', ' Brokstedt'),
+('24619', ' BÃ¶rnhÃ¶ved'),
+('24620', ' BÃ¶nebÃ¼ttel'),
+('24622', ' Gnutz'),
+('24623', ' GroÃŸenaspe'),
+('24625', ' GroÃŸharrie'),
+('24626', ' GroÃŸ Kummerfeld'),
+('24628', ' Hartenholm'),
+('24629', ' Kisdorf'),
+('24631', ' Langwedel'),
+('24632', ' LentfÃ¶hrden'),
+('24634', ' Padenstedt'),
+('24635', ' Rickling'),
+('24637', ' Schillsdorf'),
+('24638', ' Schmalensee'),
+('24640', ' Schmalfeld'),
+('24641', ' SievershÃ¼tten'),
+('24643', ' StruvenhÃ¼tten'),
+('24644', ' Timmaspe'),
+('24646', ' Warder'),
+('24647', ' Wasbek'),
+('24649', ' Wiemersdorf'),
+('24768', ' Rendsburg'),
+('24782', ' BÃ¼delsdorf, Rickert'),
+('24783', ' OsterrÃ¶nfeld'),
+('24784', ' WesterrÃ¶nfeld'),
+('24787', ' Fockbek'),
+('24790', ' Schacht-Audorf'),
+('24791', ' Alt Duvenstedt'),
+('24793', ' Bargstedt, Brammer, OldenbÃ¼ttel'),
+('24794', ' Borgstedt'),
+('24796', ' Bredenbek'),
+('24797', ' Breiholz, Tackesdorf'),
+('24799', ' Meggerdorf, Friedrichsholm, Friedrichsgraben u.a.'),
+('24800', ' Elsdorf-WestermÃ¼hlen'),
+('24802', ' Emkendorf'),
+('24803', ' Erfde'),
+('24805', ' Hamdorf'),
+('24806', ' Hohn'),
+('24808', ' Jevenstedt'),
+('24809', ' NÃ¼bbel'),
+('24811', ' Owschlag u.a.'),
+('24813', ' SchÃ¼lp bei Rendsburg'),
+('24814', ' Sehestedt'),
+('24816', ' Hamweddel'),
+('24817', ' Tetenhusen'),
+('24819', ' TodenbÃ¼ttel'),
+('24837', ' Schleswig'),
+('24848', ' Kropp u.a.'),
+('24850', ' Schuby'),
+('24852', ' Eggebek, Langstedt, Sollerup, SÃ¼derhackstedt'),
+('24855', ' Bollingstedt, JÃ¼bek'),
+('24857', ' Fahrdorf'),
+('24860', ' BÃ¶klund u.a.'),
+('24861', ' Bergenhusen'),
+('24863', ' BÃ¶rm'),
+('24864', ' Brodersby, Goltoft'),
+('24866', ' Busdorf'),
+('24867', ' Dannewerk'),
+('24869', ' DÃ¶rpstedt'),
+('24870', ' Ellingstedt'),
+('24872', ' GroÃŸ Rheide'),
+('24873', ' Havetoft'),
+('24876', ' Hollingstedt'),
+('24878', ' Jagel, Lottorf'),
+('24879', ' Idstedt'),
+('24881', ' NÃ¼bel'),
+('24882', ' Schaalby, Geelbek'),
+('24884', ' Selk, Geltdorf, Hahnekrug'),
+('24885', ' Sieverstedt'),
+('24887', ' Silberstedt, Schwittschau'),
+('24888', ' Steinfeld'),
+('24890', ' Stolk'),
+('24891', ' Struxdorf, Schnarup-Thumby'),
+('24893', ' Taarstedt'),
+('24894', ' Tolk, Twedt'),
+('24896', ' Treia, AhrenviÃ¶lfeld'),
+('24897', ' Ulsnis'),
+('24899', ' Wohlde'),
+('24937', ' Flensburg'),
+('24939', ' Flensburg'),
+('24941', ' Flensburg'),
+('24943', ' Flensburg, Tastrup'),
+('24944', ' Flensburg'),
+('24955', ' Harrislee'),
+('24960', ' GlÃ¼cksburg, Munkbrarup'),
+('24963', ' Tarp'),
+('24966', ' SÃ¶rup'),
+('24969', ' GroÃŸenwiehe, Lindewitt'),
+('24972', ' Steinberg, Steinbergkirche'),
+('24975', ' Husby'),
+('24976', ' Handewitt'),
+('24977', ' Langballig'),
+('24980', ' Schafflund, Meyn u.a'),
+('24983', ' Handewitt'),
+('24986', ' Mittelangeln'),
+('24988', ' Oeversee'),
+('24989', ' Dollerup'),
+('24991', ' GroÃŸsolt'),
+('24992', ' JÃ¶rl'),
+('24994', ' Medelby'),
+('24996', ' Sterup'),
+('24997', ' Wanderup'),
+('24999', ' Wees'),
+('25335', ' Elmshorn'),
+('25336', ' Elmshorn'),
+('25337', ' Elmshorn'),
+('25348', ' GlÃ¼ckstadt'),
+('25355', ' Barmstedt'),
+('25358', ' Horst'),
+('25361', ' Krempe, Grevenkop, SÃ¼derau, Muchelndorf'),
+('25364', ' Brande-HÃ¶rnerkirchen'),
+('25365', ' Klein Offenseth-Sparrieshoop'),
+('25368', ' Kiebitzreihe'),
+('25370', ' Seester'),
+('25371', ' SeestermÃ¼he'),
+('25373', ' Ellerhoop'),
+('25376', ' Borsfleth'),
+('25377', ' Kollmar, Pagensand'),
+('25379', ' Herzhorn, Kamerlanderdeich'),
+('25421', ' Pinneberg'),
+('25436', ' Uetersen'),
+('25451', ' Quickborn'),
+('25462', ' Rellingen'),
+('25469', ' Halstenbek'),
+('25474', ' Ellerbek'),
+('25479', ' Ellerau'),
+('25482', ' Appen'),
+('25485', ' Hemdingen'),
+('25486', ' Alveslohe'),
+('25488', ' Holm'),
+('25489', ' Haseldorf'),
+('25491', ' Hetlingen'),
+('25492', ' Heist'),
+('25494', ' Borstel-Hohenraden'),
+('25495', ' Kummerfeld'),
+('25497', ' Prisdorf'),
+('25499', ' Tangstedt'),
+('25524', ' Itzehoe'),
+('25541', ' BrunsbÃ¼ttel'),
+('25548', ' Kellinghusen'),
+('25551', ' Hohenlockstedt'),
+('25554', ' Wilster'),
+('25557', ' Hanerau-Hademarschen, Seefeld u.a.'),
+('25560', ' Schenefeld'),
+('25563', ' Wrist'),
+('25566', ' LÃ¤gerdorf'),
+('25569', ' Kremperheide'),
+('25572', ' Sankt Margarethen'),
+('25573', ' Beidenfleth, Klein Kampen'),
+('25575', ' Beringstedt'),
+('25576', ' Brokdorf'),
+('25578', ' DÃ¤geling, Neuenbrook'),
+('25579', ' Fitzbek'),
+('25581', ' Hennstedt'),
+('25582', ' Hohenaspe'),
+('25584', ' Holstenniendorf'),
+('25585', ' LÃ¼tjenwestedt, Tackesdorf'),
+('25587', ' MÃ¼nsterdorf'),
+('25588', ' Oldendorf'),
+('25590', ' Osterstedt'),
+('25591', ' OttenbÃ¼ttel'),
+('25593', ' Reher'),
+('25594', ' Vaale'),
+('25596', ' Wacken'),
+('25597', ' Westermoor'),
+('25599', ' Wewelsfleth'),
+('25693', ' Sankt Michaelisdonn,Gudendorf,Volsemenhusen,Trenn'),
+('25704', ' Meldorf'),
+('25709', ' Kronprinzenkoog, Marne u.a.'),
+('25712', ' Burg (Dithmarschen)'),
+('25715', ' Eddelak, Averlak, Dingen, Ramhusen'),
+('25718', ' Friedrichskoog'),
+('25719', ' Barlt, Busenwurth'),
+('25721', ' Eggstedt'),
+('25724', ' Neufeld, Schmedeswurth'),
+('25725', ' Schafstedt, Weidenhof, Bornholt'),
+('25727', ' SÃ¼derhastedt'),
+('25729', ' Windbergen'),
+('25746', ' Heide u.a.'),
+('25761', ' BÃ¼sum'),
+('25764', ' Wesselburen'),
+('25767', ' Albersdorf'),
+('25770', ' Hemmingstedt'),
+('25774', ' Lunden'),
+('25776', ' Sankt Annen, Rehm-Flehde-Bargen'),
+('25779', ' Hennstedt'),
+('25782', ' Tellingstedt'),
+('25785', ' Nordhastedt'),
+('25786', ' Dellstedt'),
+('25788', ' Delve'),
+('25791', ' Linden, Barkenholm'),
+('25792', ' Neuenkirchen'),
+('25794', ' Pahlen'),
+('25795', ' Weddingstedt'),
+('25797', ' WÃ¶hrden'),
+('25799', ' Wrohm'),
+('25813', ' Husum, Schwesing u.a.'),
+('25821', ' Bredstedt, Breklum u.a.'),
+('25826', ' Sankt Peter-Ording'),
+('25832', ' TÃ¶nning'),
+('25836', ' Garding, Osterhever, PoppenbÃ¼ll u.a.'),
+('25840', ' Friedrichstadt, KoldenbÃ¼ttel u.a.'),
+('25842', ' Langenhorn, Ockholm u.a.'),
+('25845', ' Nordstrand, Elisabeth-Sophien-Koog, SÃ¼dfall'),
+('25849', ' SÃ¼deroog, Pellworm'),
+('25850', ' Behrendorf, Bondelum'),
+('25852', ' Bordelum'),
+('25853', ' AhrenshÃ¶ft'),
+('25855', ' Haselund'),
+('25856', ' Hattstedt u.a.'),
+('25858', ' HÃ¶gel'),
+('25859', ' Hallig Hooge'),
+('25860', ' Horstedt'),
+('25862', ' Joldelund'),
+('25863', ' LangeneÃŸ'),
+('25864', ' LÃ¶wenstedt'),
+('25866', ' Mildstedt'),
+('25867', ' Oland'),
+('25869', ' Habel, GrÃ¶de'),
+('25870', ' Oldenswort'),
+('25872', ' Ostenfeld'),
+('25873', ' Rantrum'),
+('25876', ' Schwabstedt'),
+('25878', ' Drage, Seeth'),
+('25879', ' Stapel'),
+('25881', ' Tating, Westerhever, TÃ¼mlauer Koog'),
+('25882', ' TetenbÃ¼ll'),
+('25884', ' ViÃ¶l'),
+('25885', ' Wester-Ohrstedt'),
+('25887', ' Winnert'),
+('25889', ' UelvesbÃ¼ll, Witzwort'),
+('25899', ' NiebÃ¼ll'),
+('25917', ' Leck'),
+('25920', ' Risum-Lindholm, Stedesand'),
+('25923', ' SÃ¼derlÃ¼gum, Braderup u.a.'),
+('25924', ' RodenÃ¤s'),
+('25926', ' Ladelund'),
+('25927', ' Neukirchen, Aventoft'),
+('25938', ' FÃ¶hr'),
+('25946', ' Amrum'),
+('25980', ' Sylt'),
+('25992', ' List'),
+('25996', ' Wenningstedt-Braderup (Sylt)'),
+('25997', ' HÃ¶rnum (Sylt)'),
+('25999', ' Kampen (Sylt)'),
+('26121', ' Oldenburg (Oldenburg)'),
+('26122', ' Oldenburg'),
+('26123', ' Oldenburg (Oldenburg)'),
+('26125', ' Oldenburg (Oldenburg)'),
+('26127', ' Oldenburg (Oldenburg)'),
+('26129', ' Oldenburg (Oldenburg)'),
+('26131', ' Oldenburg (Oldenburg)'),
+('26133', ' Oldenburg (Oldenburg)'),
+('26135', ' Oldenburg (Oldenburg)'),
+('26160', ' Bad Zwischenahn'),
+('26169', ' Friesoythe'),
+('26180', ' Rastede'),
+('26188', ' Edewecht'),
+('26197', ' GroÃŸenkneten'),
+('26203', ' Wardenburg'),
+('26209', ' Hatten'),
+('26215', ' Wiefelstede'),
+('26219', ' BÃ¶sel'),
+('26316', ' Varel'),
+('26340', ' Zetel'),
+('26345', ' Bockhorn'),
+('26349', ' Jade'),
+('26382', ' Wilhelmshaven'),
+('26384', ' Wilhelmshaven'),
+('26386', ' Wilhelmshaven'),
+('26388', ' Wilhelmshaven'),
+('26389', ' Wilhelmshaven'),
+('26409', ' Wittmund'),
+('26419', ' Schortens'),
+('26427', ' Esens, Neuharlingersiel u.a.'),
+('26434', ' Wangerland'),
+('26441', ' Jever'),
+('26446', ' Friedeburg'),
+('26452', ' Sande'),
+('26465', ' Langeoog'),
+('26474', ' Spiekeroog'),
+('26486', ' Wangerooge'),
+('26487', ' Blomberg, Neuschoo'),
+('26489', ' Ochtersum'),
+('26506', ' Norden'),
+('26524', ' Hage, Halbemond u.a.'),
+('26529', ' Upgant-Schott, Osteel u.a.'),
+('26532', ' GroÃŸheide'),
+('26548', ' Norderney'),
+('26553', ' Dornum'),
+('26556', ' Westerholt, Schweindorf u.a.'),
+('26571', ' Juist, Memmert'),
+('26579', ' Baltrum'),
+('26603', ' Aurich'),
+('26605', ' Aurich'),
+('26607', ' Aurich'),
+('26624', ' SÃ¼dbrookmerland'),
+('26629', ' GroÃŸefehn'),
+('26632', ' Ihlow'),
+('26639', ' Wiesmoor'),
+('26655', ' Westerstede'),
+('26670', ' Uplengen'),
+('26676', ' BarÃŸel'),
+('26683', ' Saterland'),
+('26689', ' Apen'),
+('26721', ' Emden'),
+('26723', ' Emden'),
+('26725', ' Emden'),
+('26736', ' KrummhÃ¶rn'),
+('26757', ' Borkum');
+INSERT INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES
+('26759', ' Hinte'),
+('26789', ' Leer'),
+('26802', ' Moormerland'),
+('26810', ' Westoverledingen'),
+('26817', ' Rhauderfehn'),
+('26826', ' Weener'),
+('26831', ' Bunde'),
+('26835', ' Hesel, Neukamperfehn u.a.'),
+('26842', ' Ostrhauderfehn'),
+('26844', ' Jemgum'),
+('26845', ' Nortmoor'),
+('26847', ' Detern'),
+('26849', ' Filsum'),
+('26871', ' Papenburg'),
+('26892', ' DÃ¶rpen, Lehe, u.a.'),
+('26897', ' Esterwegen u.a.'),
+('26899', ' Rhede (Ems)'),
+('26901', ' Lorup, Rastdorf'),
+('26903', ' Surwold'),
+('26904', ' BÃ¶rger'),
+('26906', ' Dersum'),
+('26907', ' Walchum'),
+('26909', ' NeubÃ¶rger, Neulehe'),
+('26919', ' Brake'),
+('26931', ' Elsfleth'),
+('26935', ' Stadland'),
+('26936', ' Stadland'),
+('26937', ' Stadland'),
+('26939', ' OvelgÃ¶nne'),
+('26954', ' Nordenham'),
+('26969', ' Butjadingen'),
+('27211', ' Bassum'),
+('27232', ' Sulingen'),
+('27239', ' Twistringen'),
+('27243', ' Harpstedt, GroÃŸ Ippener, Colnrade u.a.'),
+('27245', ' Bahrenborstel, Barenburg, Kirchdorf'),
+('27246', ' Borstel'),
+('27248', ' Ehrenburg'),
+('27249', ' Maasen, Mellinghausen'),
+('27251', ' Neuenkirchen, Scholen'),
+('27252', ' SchwafÃ¶rden'),
+('27254', ' Siedenburg, Staffhorst'),
+('27257', ' Affinghausen und Sudwalde'),
+('27259', ' Freistatt, Varrel, Wehrbleck'),
+('27283', ' Verden'),
+('27299', ' Langwedel'),
+('27305', ' Bruchhausen-Vilsen, SÃ¼stedt'),
+('27308', ' Kirchlinteln'),
+('27313', ' DÃ¶rverden'),
+('27318', ' Hoya, Hoyerhagen, Hilgermissen'),
+('27321', ' Thedinghausen, Emtinghausen'),
+('27324', ' Eystrup, Hassel u.a.'),
+('27327', ' Martfeld, Schwarme'),
+('27330', ' Asendorf'),
+('27333', ' Schweringen, Warpe, BÃ¼cken'),
+('27336', ' Rethem (Aller), HÃ¤uslingen, Frankenfeld'),
+('27337', ' Blender'),
+('27339', ' Riede'),
+('27356', ' Rotenburg'),
+('27367', ' Sottrum, ReeÃŸum, BÃ¶tersen u.a.'),
+('27374', ' VisselhÃ¶vede'),
+('27383', ' ScheeÃŸel'),
+('27386', ' Bothel, Kirchwalsede u.a.'),
+('27389', ' Fintel, LauenbrÃ¼ck u.a.'),
+('27404', ' Zeven, Elsdorf'),
+('27412', ' Tarmstedt, Breddorf u.a.'),
+('27419', ' Sittensen u.a.'),
+('27432', ' BremervÃ¶rde'),
+('27442', ' Gnarrenburg'),
+('27446', ' Selsingen'),
+('27449', ' Kutenholz'),
+('27472', ' Cuxhaven'),
+('27474', ' Cuxhaven'),
+('27476', ' Cuxhaven'),
+('27478', ' Cuxhaven'),
+('27498', ' Helgoland'),
+('27499', ' Neuwerk'),
+('27568', ' Bremerhaven, Bremen'),
+('27570', ' Bremerhaven'),
+('27572', ' Bremerhaven'),
+('27574', ' Bremerhaven'),
+('27576', ' Bremerhaven'),
+('27578', ' Bremerhaven'),
+('27580', ' Bremerhaven'),
+('27607', ' Geestland'),
+('27612', ' Loxstedt'),
+('27616', ' Beverstedt'),
+('27619', ' Schiffdorf'),
+('27624', ' Geestland'),
+('27628', ' Hagen'),
+('27639', ' Wurster NordseekÃ¼ste'),
+('27711', ' Osterholz-Scharmbeck'),
+('27721', ' Ritterhude'),
+('27726', ' Worpswede'),
+('27729', ' Hambergen, Holste u.a.'),
+('27749', ' Delmenhorst'),
+('27751', ' Delmenhorst'),
+('27753', ' Delmenhorst'),
+('27755', ' Delmenhorst'),
+('27777', ' Ganderkesee'),
+('27793', ' Wildeshausen'),
+('27798', ' Hude (Oldenburg)'),
+('27801', ' DÃ¶tlingen'),
+('27804', ' Berne'),
+('27809', ' Lemwerder'),
+('28195', ' Bremen'),
+('28197', ' Bremen'),
+('28199', ' Bremen'),
+('28201', ' Bremen'),
+('28203', ' Bremen'),
+('28205', ' Bremen'),
+('28207', ' Bremen'),
+('28209', ' Bremen'),
+('28211', ' Bremen'),
+('28213', ' Bremen'),
+('28215', ' Bremen'),
+('28217', ' Bremen'),
+('28219', ' Bremen'),
+('28237', ' Bremen'),
+('28239', ' Bremen'),
+('28259', ' Bremen'),
+('28277', ' Bremen'),
+('28279', ' Bremen'),
+('28307', ' Bremen'),
+('28309', ' Bremen'),
+('28325', ' Bremen'),
+('28327', ' Bremen'),
+('28329', ' Bremen'),
+('28355', ' Bremen'),
+('28357', ' Bremen'),
+('28359', ' Bremen'),
+('28717', ' Bremen'),
+('28719', ' Bremen'),
+('28755', ' Bremen'),
+('28757', ' Bremen'),
+('28759', ' Bremen'),
+('28777', ' Bremen'),
+('28779', ' Bremen'),
+('28790', ' Schwanewede'),
+('28816', ' Stuhr'),
+('28832', ' Achim'),
+('28844', ' Weyhe'),
+('28857', ' Syke'),
+('28865', ' Lilienthal'),
+('28870', ' Ottersberg'),
+('28876', ' Oyten'),
+('28879', ' Grasberg'),
+('29221', ' Celle'),
+('29223', ' Celle'),
+('29225', ' Celle'),
+('29227', ' Celle'),
+('29229', ' Celle, Wittbeck'),
+('29303', ' Bergen, Lohheide u.a.'),
+('29308', ' Winsen (Aller)'),
+('29313', ' HambÃ¼hren'),
+('29320', ' Hermannsburg'),
+('29323', ' Wietze'),
+('29328', ' FaÃŸberg'),
+('29331', ' Lachendorf'),
+('29336', ' Nienhagen'),
+('29339', ' Wathlingen'),
+('29342', ' Wienhausen'),
+('29345', ' UnterlÃ¼ÃŸ'),
+('29348', ' Eschede'),
+('29351', ' Eldingen'),
+('29352', ' Adelheidsdorf'),
+('29353', ' Ahnsbeck'),
+('29355', ' Beedenbostel'),
+('29356', ' BrÃ¶ckel'),
+('29358', ' Eicklingen'),
+('29359', ' Habighorst'),
+('29361', ' HÃ¶fer'),
+('29362', ' Hohne'),
+('29364', ' Langlingen'),
+('29365', ' Sprakensehl'),
+('29367', ' Steinhorst'),
+('29369', ' Ummern'),
+('29378', ' Wittingen'),
+('29379', ' Wittingen'),
+('29386', ' HankensbÃ¼ttel, Obernholz, Dedelstorf'),
+('29389', ' Bad Bodenteich'),
+('29392', ' Wesendorf'),
+('29393', ' GroÃŸ Oesingen'),
+('29394', ' LÃ¼der'),
+('29396', ' SchÃ¶newÃ¶rde'),
+('29399', ' Wahrenholz'),
+('29410', ' Salzwedel'),
+('29413', ' DÃ¤hre, Diesdorf, Wallstawe'),
+('29416', ' Kuhfelde'),
+('29439', ' LÃ¼chow'),
+('29451', ' Dannenberg'),
+('29456', ' Hitzacker (Elbe)'),
+('29459', ' Clenze'),
+('29462', ' Wustrow'),
+('29465', ' Schnega'),
+('29468', ' Bergen'),
+('29471', ' Gartow'),
+('29472', ' Damnatz'),
+('29473', ' GÃ¶hrde'),
+('29475', ' Gorleben'),
+('29476', ' Gusborn'),
+('29478', ' HÃ¶hbeck'),
+('29479', ' Jameln'),
+('29481', ' Karwitz'),
+('29482', ' KÃ¼sten'),
+('29484', ' Langendorf'),
+('29485', ' Lemgow'),
+('29487', ' Luckau (Wendland)'),
+('29488', ' LÃ¼bbow'),
+('29490', ' Neu Darchau'),
+('29491', ' Prezelle'),
+('29493', ' Schnackenburg'),
+('29494', ' Trebel'),
+('29496', ' Waddeweitz'),
+('29497', ' Woltersdorf'),
+('29499', ' Zernien'),
+('29525', ' Uelzen'),
+('29549', ' Bad Bevensen'),
+('29553', ' BienenbÃ¼ttel'),
+('29556', ' Suderburg'),
+('29559', ' Wrestedt'),
+('29562', ' Suhlendorf'),
+('29565', ' Wriedel'),
+('29571', ' Rosche'),
+('29574', ' Ebstorf'),
+('29575', ' Altenmedingen'),
+('29576', ' Barum'),
+('29578', ' Eimke'),
+('29579', ' Emmendorf'),
+('29581', ' Gerdau'),
+('29582', ' Hanstedt'),
+('29584', ' Himbergen'),
+('29585', ' Jelmstorf'),
+('29587', ' Natendorf'),
+('29588', ' Oetzen'),
+('29590', ' RÃ¤tzlingen'),
+('29591', ' RÃ¶mstedt'),
+('29593', ' Schwienau'),
+('29594', ' Soltendiek'),
+('29597', ' Stoetze'),
+('29599', ' Weste'),
+('29614', ' Soltau'),
+('29633', ' Munster'),
+('29640', ' Schneverdingen, Heimbuch'),
+('29643', ' Neuenkirchen'),
+('29646', ' Bispingen'),
+('29649', ' Wietzendorf'),
+('29664', ' Walsrode, Ostenholz'),
+('29683', ' Bad Fallingbostel, Osterheide'),
+('29690', ' Schwarmstedt u.a.'),
+('29693', ' Hodenhagen u.a.'),
+('29699', ' Bomlitz'),
+('30159', ' Hannover'),
+('30161', ' Hannover'),
+('30163', ' Hannover'),
+('30165', ' Hannover'),
+('30167', ' Hannover'),
+('30169', ' Hannover'),
+('30171', ' Hannover'),
+('30173', ' Hannover'),
+('30175', ' Hannover'),
+('30177', ' Hannover'),
+('30179', ' Hannover'),
+('30419', ' Hannover'),
+('30449', ' Hannover'),
+('30451', ' Hannover'),
+('30453', ' Hannover'),
+('30455', ' Hannover'),
+('30457', ' Hannover'),
+('30459', ' Hannover'),
+('30519', ' Hannover'),
+('30521', ' Hannover'),
+('30539', ' Hannover'),
+('30559', ' Hannover'),
+('30625', ' Hannover'),
+('30627', ' Hannover'),
+('30629', ' Hannover'),
+('30655', ' Hannover'),
+('30657', ' Hannover'),
+('30659', ' Hannover'),
+('30669', ' Langenhagen (Flughafen)'),
+('30823', ' Garbsen'),
+('30826', ' Garbsen'),
+('30827', ' Garbsen'),
+('30851', ' Langenhagen'),
+('30853', ' Langenhagen'),
+('30855', ' Langenhagen'),
+('30880', ' Laatzen'),
+('30890', ' Barsinghausen'),
+('30900', ' Wedemark'),
+('30916', ' Isernhagen'),
+('30926', ' Seelze'),
+('30938', ' Burgwedel'),
+('30952', ' Ronnenberg'),
+('30966', ' Hemmingen'),
+('30974', ' Wennigsen (Deister)'),
+('30982', ' Pattensen'),
+('30989', ' Gehrden'),
+('31008', ' Elze'),
+('31020', ' Salzhemmendorf'),
+('31028', ' Gronau (Leine)'),
+('31036', ' Eime'),
+('31061', ' Alfeld (Leine)'),
+('31073', ' GrÃ¼nenplan, Delligsen'),
+('31079', ' Sibbesse'),
+('31084', ' Freden (Leine)'),
+('31089', ' Duingen'),
+('31134', ' Hildesheim'),
+('31135', ' Hildesheim'),
+('31137', ' Hildesheim'),
+('31139', ' Hildesheim'),
+('31141', ' Hildesheim'),
+('31157', ' Sarstedt'),
+('31162', ' Bad Salzdetfurth'),
+('31167', ' Bockenem'),
+('31171', ' Nordstemmen'),
+('31174', ' Schellerten'),
+('31177', ' Harsum'),
+('31180', ' Giesen'),
+('31185', ' SÃ¶hlde'),
+('31188', ' Holle'),
+('31191', ' Algermissen'),
+('31195', ' Lamspringe'),
+('31199', ' Diekholzen'),
+('31224', ' Peine'),
+('31226', ' Peine'),
+('31228', ' Peine'),
+('31234', ' Edemissen'),
+('31241', ' Ilsede'),
+('31246', ' Lahstedt'),
+('31249', ' Hohenhameln'),
+('31275', ' Lehrte'),
+('31303', ' Burgdorf'),
+('31311', ' Uetze'),
+('31319', ' Sehnde'),
+('31515', ' Wunstorf'),
+('31535', ' Neustadt am RÃ¼benberge'),
+('31542', ' Bad Nenndorf'),
+('31547', ' Rehburg-Loccum'),
+('31552', ' Apelern, Rodenberg'),
+('31553', ' Auhagen, Sachsenhagen'),
+('31555', ' Suthfeld'),
+('31556', ' WÃ¶lpinghausen'),
+('31558', ' Hagenburg'),
+('31559', ' Haste, Hohnhorst'),
+('31582', ' Nienburg/Weser'),
+('31592', ' Stolzenau'),
+('31595', ' Steyerberg'),
+('31600', ' Uchte'),
+('31603', ' Diepenau'),
+('31604', ' Raddestorf'),
+('31606', ' Warmsen'),
+('31608', ' Marklohe'),
+('31609', ' Balge'),
+('31613', ' Wietzen'),
+('31618', ' Liebenau'),
+('31619', ' Binnen'),
+('31621', ' Pennigsehl'),
+('31622', ' Heemsen'),
+('31623', ' Drakenburg'),
+('31626', ' HaÃŸbergen'),
+('31627', ' Rohrsen'),
+('31628', ' Landesbergen'),
+('31629', ' Estorf'),
+('31632', ' Husum'),
+('31633', ' Leese'),
+('31634', ' Steimbke'),
+('31636', ' Linsburg'),
+('31637', ' Rodewald'),
+('31638', ' StÃ¶ckse'),
+('31655', ' Stadthagen'),
+('31675', ' BÃ¼ckeburg'),
+('31683', ' Obernkirchen'),
+('31688', ' NienstÃ¤dt'),
+('31691', ' Helpsen, Seggebruch'),
+('31693', ' Hespe'),
+('31698', ' Lindhorst'),
+('31699', ' Beckedorf'),
+('31700', ' HeuerÃŸen'),
+('31702', ' LÃ¼dersfeld'),
+('31707', ' HeeÃŸen, Bad Eilsen'),
+('31708', ' Ahnsen'),
+('31710', ' Buchholz'),
+('31711', ' Luhden'),
+('31712', ' NiederwÃ¶hren'),
+('31714', ' Lauenhagen'),
+('31715', ' Meerbeck'),
+('31717', ' Nordsehl'),
+('31718', ' Pollhagen'),
+('31719', ' Wiedensahl'),
+('31737', ' Rinteln'),
+('31749', ' Auetal'),
+('31785', ' Hameln'),
+('31787', ' Hameln'),
+('31789', ' Hameln'),
+('31812', ' Bad Pyrmont'),
+('31832', ' Springe'),
+('31840', ' Hessisch Oldendorf'),
+('31848', ' Bad MÃ¼nder am Deister'),
+('31855', ' Aerzen'),
+('31860', ' Emmerthal'),
+('31863', ' CoppenbrÃ¼gge'),
+('31867', ' Pohle, Lauenau, Messenkamp, HÃ¼lsede etc'),
+('31868', ' Ottenstein'),
+('32049', ' Herford'),
+('32051', ' Herford'),
+('32052', ' Herford'),
+('32105', ' Bad Salzuflen'),
+('32107', ' Bad Salzuflen'),
+('32108', ' Bad Salzuflen'),
+('32120', ' Hiddenhausen'),
+('32130', ' Enger'),
+('32139', ' Spenge'),
+('32257', ' BÃ¼nde'),
+('32278', ' Kirchlengern'),
+('32289', ' RÃ¶dinghausen'),
+('32312', ' LÃ¼bbecke'),
+('32339', ' Espelkamp'),
+('32351', ' Stemwede'),
+('32361', ' PreuÃŸisch Oldendorf'),
+('32369', ' Rahden'),
+('32423', ' Minden'),
+('32425', ' Minden'),
+('32427', ' Minden'),
+('32429', ' Minden'),
+('32457', ' Porta Westfalica'),
+('32469', ' Petershagen'),
+('32479', ' Hille'),
+('32545', ' Bad Oeynhausen'),
+('32547', ' Bad Oeynhausen'),
+('32549', ' Bad Oeynhausen'),
+('32584', ' LÃ¶hne'),
+('32602', ' Vlotho'),
+('32609', ' HÃ¼llhorst'),
+('32657', ' Lemgo'),
+('32676', ' LÃ¼gde'),
+('32683', ' Barntrup'),
+('32689', ' Kalletal'),
+('32694', ' DÃ¶rentrup'),
+('32699', ' Extertal'),
+('32756', ' Detmold'),
+('32758', ' Detmold'),
+('32760', ' Detmold'),
+('32791', ' Lage'),
+('32805', ' Horn-Bad Meinberg'),
+('32816', ' Schieder-Schwalenberg'),
+('32825', ' Blomberg'),
+('32832', ' Augustdorf'),
+('32839', ' Steinheim'),
+('33014', ' Bad Driburg'),
+('33034', ' Brakel'),
+('33039', ' Nieheim'),
+('33098', ' Paderborn'),
+('33100', ' Paderborn'),
+('33102', ' Paderborn'),
+('33104', ' Paderborn'),
+('33106', ' Paderborn'),
+('33129', ' DelbrÃ¼ck'),
+('33142', ' BÃ¼ren'),
+('33154', ' Salzkotten'),
+('33161', ' HÃ¶velhof'),
+('33165', ' Lichtenau'),
+('33175', ' Bad Lippspringe'),
+('33178', ' Borchen'),
+('33181', ' WÃ¼nnenberg'),
+('33184', ' Altenbeken'),
+('33189', ' Schlangen'),
+('33330', ' GÃ¼tersloh'),
+('33332', ' GÃ¼tersloh'),
+('33333', ' Bertelsmann'),
+('33334', ' GÃ¼tersloh'),
+('33335', ' GÃ¼tersloh'),
+('33378', ' Rheda-WiedenbrÃ¼ck'),
+('33397', ' Rietberg'),
+('33415', ' Verl'),
+('33428', ' Harsewinkel'),
+('33442', ' Herzebrock-Clarholz'),
+('33449', ' Langenberg'),
+('33602', ' Bielefeld'),
+('33604', ' Bielefeld'),
+('33605', ' Bielefeld'),
+('33607', ' Bielefeld'),
+('33609', ' Bielefeld'),
+('33611', ' Bielefeld'),
+('33613', ' Bielefeld'),
+('33615', ' Bielefeld'),
+('33617', ' Bielefeld'),
+('33619', ' Bielefeld'),
+('33647', ' Bielefeld'),
+('33649', ' Bielefeld'),
+('33659', ' Bielefeld'),
+('33689', ' Bielefeld'),
+('33699', ' Bielefeld'),
+('33719', ' Bielefeld'),
+('33729', ' Bielefeld'),
+('33739', ' Bielefeld'),
+('33758', ' SchloÃŸ Holte-Stukenbrock'),
+('33775', ' Versmold'),
+('33790', ' Halle (Westfalen)'),
+('33803', ' Steinhagen'),
+('33813', ' Oerlinghausen'),
+('33818', ' LeopoldshÃ¶he'),
+('33824', ' Werther (Westf.)'),
+('33829', ' Borgholzhausen'),
+('34117', ' Kassel'),
+('34119', ' Kassel'),
+('34121', ' Kassel'),
+('34123', ' Kassel'),
+('34125', ' Kassel'),
+('34127', ' Kassel'),
+('34128', ' Kassel'),
+('34130', ' Kassel'),
+('34131', ' Kassel'),
+('34132', ' Kassel'),
+('34134', ' Kassel'),
+('34212', ' Melsungen'),
+('34225', ' Baunatal'),
+('34233', ' Kassel, Fuldatal'),
+('34246', ' Vellmar'),
+('34253', ' Lohfelden'),
+('34260', ' Kaufungen'),
+('34266', ' Niestetal'),
+('34270', ' Schauenburg'),
+('34277', ' FuldabrÃ¼ck'),
+('34281', ' Gudensberg'),
+('34286', ' Spangenberg'),
+('34289', ' Zierenberg'),
+('34292', ' Ahnatal'),
+('34295', ' EdermÃ¼nde'),
+('34298', ' Helsa'),
+('34302', ' Guxhagen'),
+('34305', ' Niedenstein'),
+('34308', ' Bad Emstal'),
+('34311', ' Naumburg'),
+('34314', ' Espenau'),
+('34317', ' Habichtswald'),
+('34320', ' SÃ¶hrewald'),
+('34323', ' Malsfeld'),
+('34326', ' Morschen'),
+('34327', ' KÃ¶rle'),
+('34329', ' Nieste'),
+('34346', ' Hann. MÃ¼nden, Gutsbezirk Reinhardswald'),
+('34355', ' Staufenberg'),
+('34359', ' Reinhardshagen'),
+('34369', ' Hofgeismar'),
+('34376', ' Immenhausen'),
+('34379', ' Calden'),
+('34385', ' Bad Karlshafen'),
+('34388', ' Trendelburg'),
+('34393', ' Grebenstein'),
+('34396', ' Liebenau (Hessen)'),
+('34399', ' Oberweser'),
+('34414', ' Warburg'),
+('34431', ' Marsberg'),
+('34434', ' Borgentreich'),
+('34439', ' Willebadessen'),
+('34454', ' Bad Arolsen'),
+('34466', ' Wolfhagen'),
+('34471', ' Volkmarsen'),
+('34474', ' Diemelstadt'),
+('34477', ' Twistetal'),
+('34479', ' Breuna'),
+('34497', ' Korbach'),
+('34508', ' Willingen (Upland)'),
+('34513', ' Waldeck'),
+('34516', ' VÃ¶hl'),
+('34519', ' Diemelsee'),
+('34537', ' Bad Wildungen'),
+('34549', ' Edertal'),
+('34560', ' Fritzlar'),
+('34576', ' Homberg'),
+('34582', ' Borken'),
+('34587', ' Felsberg'),
+('34590', ' Wabern'),
+('34593', ' KnÃ¼llwald'),
+('34596', ' Bad Zwesten'),
+('34599', ' Neuental'),
+('34613', ' Schwalmstadt'),
+('34621', ' Frielendorf'),
+('34626', ' Neukirchen (KnÃ¼ll)'),
+('34628', ' Willingshausen'),
+('34630', ' Gilserberg'),
+('34632', ' Jesberg'),
+('34633', ' Ottrau'),
+('34637', ' Schrecksbach'),
+('34639', ' Schwarzenborn'),
+('35037', ' Marburg'),
+('35039', ' Marburg'),
+('35041', ' Marburg'),
+('35043', ' Marburg'),
+('35066', ' Frankenberg'),
+('35075', ' Gladenbach'),
+('35080', ' Bad Endbach'),
+('35083', ' Wetter'),
+('35085', ' Ebsdorfergrund'),
+('35088', ' Battenberg'),
+('35091', ' CÃ¶lbe'),
+('35094', ' Lahntal'),
+('35096', ' Weimar (Lahn)'),
+('35099', ' Burgwald'),
+('35102', ' Lohra'),
+('35104', ' Lichtenfels'),
+('35108', ' Allendorf'),
+('35110', ' Frankenau'),
+('35112', ' Fronhausen'),
+('35114', ' Haina'),
+('35116', ' Hatzfeld'),
+('35117', ' MÃ¼nchhausen'),
+('35119', ' Rosenthal'),
+('35216', ' Biedenkopf'),
+('35232', ' Dautphetal'),
+('35236', ' Breidenbach'),
+('35239', ' Steffenberg'),
+('35260', ' Stadtallendorf'),
+('35274', ' Kirchhain'),
+('35279', ' Neustadt'),
+('35282', ' Rauschenberg'),
+('35285', ' GemÃ¼nden'),
+('35287', ' AmÃ¶neburg'),
+('35288', ' Wohratal'),
+('35305', ' GrÃ¼nberg'),
+('35315', ' Homberg (Ohm)'),
+('35321', ' Laubach'),
+('35325', ' MÃ¼cke'),
+('35327', ' Ulrichstein'),
+('35329', ' GemÃ¼nden (Felda)'),
+('35390', ' GieÃŸen'),
+('35392', ' GieÃŸen'),
+('35394', ' GieÃŸen'),
+('35396', ' GieÃŸen'),
+('35398', ' GieÃŸen'),
+('35410', ' Hungen'),
+('35415', ' Pohlheim'),
+('35418', ' Buseck'),
+('35423', ' Lich'),
+('35428', ' LanggÃ¶ns'),
+('35435', ' Wettenberg'),
+('35440', ' Linden'),
+('35444', ' Biebertal'),
+('35447', ' Reiskirchen'),
+('35452', ' Heuchelheim'),
+('35457', ' Lollar'),
+('35460', ' Staufenberg'),
+('35463', ' Fernwald'),
+('35466', ' Rabenau'),
+('35469', ' Allendorf'),
+('35510', ' Butzbach'),
+('35516', ' MÃ¼nzenberg'),
+('35519', ' Rockenberg'),
+('35576', ' Wetzlar'),
+('35578', ' Wetzlar'),
+('35579', ' Wetzlar'),
+('35580', ' Wetzlar'),
+('35581', ' Wetzlar'),
+('35582', ' Wetzlar'),
+('35583', ' Wetzlar Garbeinheim'),
+('35584', ' Wetzlar'),
+('35585', ' Wetzlar'),
+('35586', ' Wetzlar'),
+('35606', ' Solms'),
+('35614', ' AÃŸlar'),
+('35619', ' Braunfels'),
+('35625', ' HÃ¼ttenberg'),
+('35630', ' Ehringshausen'),
+('35633', ' Lahnau'),
+('35638', ' Leun'),
+('35641', ' SchÃ¶ffengrund'),
+('35644', ' Hohenahr'),
+('35647', ' Waldolms'),
+('35649', ' Bischoffen'),
+('35683', ' Dillenburg'),
+('35684', ' Dillenburg'),
+('35685', ' Dillenburg'),
+('35686', ' Dillenburg'),
+('35687', ' Dillenburg'),
+('35688', ' Dillenburg'),
+('35689', ' Dillenburg'),
+('35690', ' Dillenburg'),
+('35708', ' Haiger'),
+('35713', ' Eschenburg'),
+('35716', ' DietzhÃ¶lztal'),
+('35719', ' Angelburg'),
+('35745', ' Herborn'),
+('35753', ' Greifenstein'),
+('35756', ' Mittenaar'),
+('35759', ' Driedorf'),
+('35764', ' Sinn'),
+('35767', ' Breitscheid'),
+('35768', ' Siegbach'),
+('35781', ' Weilburg'),
+('35789', ' WeilmÃ¼nster'),
+('35792', ' LÃ¶hnberg'),
+('35794', ' Mengerskirchen'),
+('35796', ' Weinbach'),
+('35799', ' Merenberg'),
+('36037', ' Fulda'),
+('36039', ' Fulda'),
+('36041', ' Fulda'),
+('36043', ' Fulda'),
+('36088', ' HÃ¼nfeld'),
+('36093', ' KÃ¼nzell'),
+('36100', ' Petersberg'),
+('36103', ' Flieden'),
+('36110', ' Schlitz'),
+('36115', ' Hilders, Ehrenberg'),
+('36119', ' Neuhof'),
+('36124', ' Eichenzell'),
+('36129', ' Gersfeld'),
+('36132', ' Eiterfeld'),
+('36137', ' GroÃŸenlÃ¼der'),
+('36142', ' Tann'),
+('36145', ' Hofbieber'),
+('36148', ' Kalbach'),
+('36151', ' Burghaun'),
+('36154', ' Hosenfeld'),
+('36157', ' Ebersburg'),
+('36160', ' Dipperz'),
+('36163', ' Poppenhausen'),
+('36166', ' Haunetal'),
+('36167', ' NÃ¼sttal'),
+('36169', ' Rasdorf'),
+('36179', ' Bebra'),
+('36199', ' Rotenburg an der Fulda'),
+('36205', ' Sontra'),
+('36208', ' Wildeck'),
+('36211', ' Alheim'),
+('36214', ' Nentershausen'),
+('36217', ' Ronshausen'),
+('36219', ' Cornberg'),
+('36251', ' Bad Hersfeld, Ludwigsau'),
+('36266', ' Heringen'),
+('36269', ' Philippsthal'),
+('36272', ' Niederaula'),
+('36275', ' Kirchheim (Hessen)'),
+('36277', ' Schenklengsfeld'),
+('36280', ' Oberaula'),
+('36282', ' Hauneck'),
+('36284', ' Hohenroda'),
+('36286', ' Neuenstein (Hessen)'),
+('36287', ' Breitenbach am Herzberg'),
+('36289', ' Friedewald'),
+('36304', ' Alsfeld'),
+('36318', ' Schwalmtal'),
+('36320', ' Kirtorf'),
+('36323', ' Grebenau'),
+('36325', ' Feldatal'),
+('36326', ' Antrifttal'),
+('36329', ' Romrod'),
+('36341', ' Lauterbach'),
+('36355', ' Grebenhain'),
+('36358', ' Herbstein'),
+('36364', ' Bad Salzschlirf'),
+('36367', ' Wartenberg'),
+('36369', ' Lautertal'),
+('36381', ' SchlÃ¼chtern'),
+('36391', ' Sinntal'),
+('36396', ' Steinau an der StraÃŸe'),
+('36399', ' Freiensteinau'),
+('36404', ' Vacha, Unterbreizbach'),
+('36414', ' Unterbreizbach'),
+('36419', ' Geisa'),
+('36433', ' Bad Salzungen'),
+('36448', ' Bad Liebenstein'),
+('36452', ' Kaltennordheim'),
+('36456', ' Barchfeld-Immelborn'),
+('36457', ' Stadtlengsfeld, Weilar, Urnshausen'),
+('36460', ' Krayenberggemeinde, Frauensee'),
+('36466', ' Dermbach, Wiesenthal'),
+('36469', ' Tiefenort'),
+('37073', ' GÃ¶ttingen'),
+('37075', ' GÃ¶ttingen'),
+('37077', ' GÃ¶ttingen'),
+('37079', ' GÃ¶ttingen'),
+('37081', ' GÃ¶ttingen'),
+('37083', ' GÃ¶ttingen'),
+('37085', ' GÃ¶ttingen'),
+('37115', ' Duderstadt'),
+('37120', ' Bovenden'),
+('37124', ' Rosdorf'),
+('37127', ' Dransfeld u.a.'),
+('37130', ' Gleichen'),
+('37133', ' Friedland'),
+('37136', ' Seulingen, Waake u.a.'),
+('37139', ' Adelebsen'),
+('37154', ' Northeim'),
+('37170', ' Uslar'),
+('37176', ' NÃ¶rten-Hardenberg'),
+('37181', ' Hardegsen'),
+('37186', ' Moringen'),
+('37191', ' Katlenburg-Lindau'),
+('37194', ' Bodenfelde, Wahlsburg'),
+('37197', ' Hattorf'),
+('37199', ' Wulften'),
+('37213', ' Witzenhausen'),
+('37214', ' Witzenhausen'),
+('37215', ' Witzenhausen'),
+('37216', ' Witzenhausen, Gutsbezirk'),
+('37217', ' Witzenhausen'),
+('37218', ' Witzenhausen'),
+('37235', ' Hessisch Lichtenau'),
+('37242', ' Bad Sooden-Allendorf'),
+('37247', ' GroÃŸalmerode'),
+('37249', ' Neu-Eichenberg'),
+('37269', ' Eschwege'),
+('37276', ' Meinhard'),
+('37281', ' Wanfried'),
+('37284', ' Waldkappel'),
+('37287', ' Wehretal'),
+('37290', ' MeiÃŸner'),
+('37293', ' Herleshausen'),
+('37296', ' Ringgau'),
+('37297', ' Berkatal'),
+('37299', ' WeiÃŸenborn'),
+('37308', ' Heiligenstadt'),
+('37318', ' Arenshausen, Uder u.a.'),
+('37327', ' Leinefelde-Worbis, Wingerode, Hausen'),
+('37339', ' Worbis'),
+('37345', ' Am Ohmberg, Sonnenstein'),
+('37351', ' DingelstÃ¤dt'),
+('37355', ' Niederorschel u.a.'),
+('37359', ' KÃ¼llstedt'),
+('37412', ' Herzberg, Elbingerode, HÃ¶rden'),
+('37431', ' Bad Lauterberg'),
+('37434', ' Gieboldehausen, Rhumequelle'),
+('37441', ' Bad Sachsa'),
+('37444', ' Braunlage'),
+('37445', ' Walkenried'),
+('37447', ' Wieda'),
+('37449', ' Zorge'),
+('37520', ' Osterode am Harz'),
+('37539', ' Bad Grund'),
+('37574', ' Einbeck, Kreiensen'),
+('37581', ' Bad Gandersheim'),
+('37586', ' Dassel'),
+('37589', ' Kalefeld'),
+('37603', ' Holzminden'),
+('37619', ' Bodenwerder, Pegestorf, Kirchbrak, Hehlen'),
+('37620', ' Halle'),
+('37627', ' Stadtoldendorf u.a.'),
+('37632', ' Holzen, Eschershausen, Eimen'),
+('37633', ' Dielmissen'),
+('37635', ' LÃ¼erdissen'),
+('37639', ' Bevern'),
+('37640', ' Golmbach'),
+('37642', ' Holenberg'),
+('37643', ' Negenborn'),
+('37647', ' BrevÃ¶rde, Polle, Vahlbruch'),
+('37649', ' Heinsen'),
+('37671', ' HÃ¶xter'),
+('37688', ' Beverungen'),
+('37691', ' Boffzen, Derental'),
+('37696', ' MarienmÃ¼nster'),
+('37697', ' LauenfÃ¶rde'),
+('37699', ' FÃ¼rstenberg'),
+('38100', ' Braunschweig'),
+('38102', ' Braunschweig'),
+('38104', ' Braunschweig'),
+('38106', ' Braunschweig'),
+('38108', ' Braunschweig'),
+('38110', ' Braunschweig'),
+('38112', ' Braunschweig'),
+('38114', ' Braunschweig'),
+('38116', ' Braunschweig'),
+('38118', ' Braunschweig'),
+('38120', ' Braunschweig'),
+('38122', ' Braunschweig'),
+('38124', ' Braunschweig'),
+('38126', ' Braunschweig'),
+('38154', ' KÃ¶nigslutter am Elm'),
+('38159', ' Vechelde'),
+('38162', ' Cremlingen'),
+('38165', ' Lehre'),
+('38170', ' SchÃ¶ppenstedt'),
+('38173', ' Sickte, Dettum u.a.'),
+('38176', ' Wendeburg'),
+('38179', ' SchwÃ¼lper'),
+('38226', ' Salzgitter'),
+('38228', ' Salzgitter'),
+('38229', ' Salzgitter'),
+('38239', ' Salzgitter'),
+('38259', ' Salzgitter'),
+('38268', ' Lengede'),
+('38271', ' Baddeckenstedt'),
+('38272', ' Burgdorf'),
+('38274', ' Elbe'),
+('38275', ' Haverlah'),
+('38277', ' Heere'),
+('38279', ' Sehlde'),
+('38300', ' WolfenbÃ¼ttel'),
+('38302', ' WolfenbÃ¼ttel'),
+('38304', ' WolfenbÃ¼ttel'),
+('38312', ' Dorstadt, FlÃ¶the, BÃ¶rÃŸum u.a.'),
+('38315', ' Schladen-Werla'),
+('38319', ' Remlingen'),
+('38321', ' Denkte'),
+('38322', ' Hedeper'),
+('38324', ' KissenbrÃ¼ck'),
+('38325', ' Roklum'),
+('38327', ' Semmenstedt'),
+('38329', ' Wittmar'),
+('38350', ' Helmstedt'),
+('38364', ' SchÃ¶ningen'),
+('38368', ' Rennau, Querenhorst, Mariental, Grasleben'),
+('38372', ' BÃ¼ddenstedt'),
+('38373', ' SÃ¼pplingen, Frellstedt'),
+('38375', ' RÃ¤bke'),
+('38376', ' SÃ¼pplingenburg'),
+('38378', ' Warberg'),
+('38379', ' Wolsdorf'),
+('38381', ' Jerxheim'),
+('38382', ' Beierstedt'),
+('38384', ' Gevensleben'),
+('38387', ' SÃ¶llingen'),
+('38440', ' Wolfsburg'),
+('38442', ' Wolfsburg'),
+('38444', ' Wolfsburg'),
+('38446', ' Wolfsburg'),
+('38448', ' Wolfsburg'),
+('38458', ' Velpke'),
+('38459', ' Bahrdorf'),
+('38461', ' Danndorf'),
+('38462', ' Grafhorst'),
+('38464', ' GroÃŸ TwÃ¼lpstedt'),
+('38465', ' Brome'),
+('38467', ' Bergfeld'),
+('38468', ' Ehra-Lessien'),
+('38470', ' Parsau'),
+('38471', ' RÃ¼hen'),
+('38473', ' Tiddische'),
+('38474', ' TÃ¼lau'),
+('38476', ' Barwedel'),
+('38477', ' Jembke'),
+('38479', ' Tappenbeck'),
+('38486', ' KlÃ¶tze, Apenburg-Winterfeld'),
+('38489', ' Beetzendorf, Rohrberg, JÃ¼bar'),
+('38518', ' Gifhorn'),
+('38524', ' Sassenburg'),
+('38527', ' Meine'),
+('38528', ' AdenbÃ¼ttel'),
+('38530', ' Didderse'),
+('38531', ' RÃ¶tgesbÃ¼ttel'),
+('38533', ' Vordorf'),
+('38536', ' Meinersen'),
+('38539', ' MÃ¼den (Aller)'),
+('38542', ' Leiferde'),
+('38543', ' Hillerse'),
+('38547', ' Calberlah'),
+('38550', ' IsenbÃ¼ttel'),
+('38551', ' RibbesbÃ¼ttel'),
+('38553', ' WasbÃ¼ttel'),
+('38554', ' Weyhausen'),
+('38556', ' Bokensdorf'),
+('38557', ' OsloÃŸ'),
+('38559', ' Wagenhoff, Ringelah'),
+('38640', ' Goslar'),
+('38642', ' Goslar'),
+('38644', ' Goslar'),
+('38667', ' Bad Harzburg, Torfhaus'),
+('38678', ' Clausthal-Zellerfeld, Oberschulenberg'),
+('38685', ' Langelsheim'),
+('38690', ' Goslar'),
+('38700', ' Braunlage'),
+('38704', ' Liebenburg'),
+('38707', ' Altenau, Schulenberg'),
+('38709', ' Wildemann'),
+('38723', ' Seesen'),
+('38729', ' Hahausen, Lutter, Wallmoden'),
+('38820', ' Halberstadt'),
+('38822', ' Halberstadt, GroÃŸ Quenstedt'),
+('38828', ' Wegeleben'),
+('38829', ' Harsleben'),
+('38835', ' Osterwieck'),
+('38836', ' Badersleben u.a.'),
+('38838', ' Huy'),
+('38855', ' Wernigerode, Nordharz'),
+('38871', ' Ilsenburg, Nordharz'),
+('38875', ' Oberharz am Brocken'),
+('38877', ' Oberharz am Brocken'),
+('38879', ' Wernigerode'),
+('38889', ' Blankenburg, Oberharz am Brocken'),
+('38895', ' Langenstein, Derenburg'),
+('38899', ' Oberharz am Brocken'),
+('39104', ' Magdeburg'),
+('39106', ' Magdeburg'),
+('39108', ' Magdeburg'),
+('39110', ' Magdeburg'),
+('39112', ' Magdeburg'),
+('39114', ' Magdeburg'),
+('39116', ' Magdeburg'),
+('39118', ' Magdeburg'),
+('39120', ' Magdeburg'),
+('39122', ' Magdeburg'),
+('39124', ' Magdeburg'),
+('39126', ' Magdeburg'),
+('39128', ' Magdeburg'),
+('39130', ' Magdeburg'),
+('39164', ' Wanzleben-BÃ¶rde'),
+('39167', ' Eichenbarleben, Ochtmersleben, Irxleben, Schnarsl'),
+('39171', ' SÃ¼lzetal'),
+('39175', ' Gerwisch, Biederitz, Menz, KÃ¶rbelitz etc'),
+('39179', ' Barleben'),
+('39217', ' SchÃ¶nebeck (Elbe)'),
+('39218', ' SchÃ¶nebeck'),
+('39221', ' Welsleben, Biere, Eickendorf, Eggersdorf, GroÃŸmÃ'),
+('39240', ' Calbe, Rosenburg, LÃ¶dderitz etc'),
+('39245', ' Gommern, Dannigkow'),
+('39249', ' Barby'),
+('39261', ' Zerbst/Anhalt'),
+('39264', ' GÃ¼terglÃ¼ck, LÃ¼bs, Deetz, JÃ¼trichau etc'),
+('39279', ' Loburg, Leitzkau'),
+('39288', ' Burg'),
+('39291', ' MÃ¶ckern, Schermen, Nedlitz etc'),
+('39307', ' Genthin, Hohenseeden, Zabakuck u.a.'),
+('39317', ' Elbe-Parey'),
+('39319', ' Jerichow'),
+('39326', ' Wolmirstedt u.a.'),
+('39340', ' Haldensleben'),
+('39343', ' Erxleben, Nordgermersleben u.a.'),
+('39345', ' Haldensleben, Flechtingen, BÃ¼lstringen u.a.'),
+('39356', ' Weferlingen, Behnsdorf, Belsdorf etc'),
+('39359', ' RÃ¤tzlingen, Wegenstedt, CalvÃ¶rde, BÃ¶ddensell e'),
+('39365', ' Harbke, Sommersdorf, Wefensleben, Ummendorf, Eils'),
+('39387', ' Oschersleben (Bode)'),
+('39393', ' HÃ¶tensleben, VÃ¶lpke, Ottleben, Hamersleben etc'),
+('39397', ' Schwanebeck, GrÃ¶ningen, Kroppenstedt'),
+('39418', ' StaÃŸfurt'),
+('39435', ' Egeln, Unseburg, Wolmirsleben, Borne etc'),
+('39439', ' GÃ¼sten'),
+('39443', ' StaÃŸfurt'),
+('39444', ' Hecklingen'),
+('39446', ' StaÃŸfurt'),
+('39448', ' BÃ¶rde-Hakel'),
+('39517', ' TangerhÃ¼tte u.a.'),
+('39524', ' Sandau'),
+('39539', ' Havelberg'),
+('39576', ' Stendal'),
+('39579', ' Bismark, Rochau'),
+('39590', ' TangermÃ¼nde'),
+('39596', ' Goldbeck, Arneburg u.a.'),
+('39599', ' Bismark'),
+('39606', ' Osterburg, AltmÃ¤rkische HÃ¶he'),
+('39615', ' Seehausen, Werben, Leppin, Wahrenberg etc'),
+('39619', ' Arendsee'),
+('39624', ' Kalbe, Bismark'),
+('39629', ' Bismark'),
+('39638', ' Gardelegen'),
+('39646', ' Oebisfelde'),
+('39649', ' Gardelegen'),
+('40210', ' DÃ¼sseldorf'),
+('40211', ' DÃ¼sseldorf'),
+('40212', ' DÃ¼sseldorf'),
+('40213', ' DÃ¼sseldorf'),
+('40215', ' DÃ¼sseldorf'),
+('40217', ' DÃ¼sseldorf'),
+('40219', ' DÃ¼sseldorf'),
+('40221', ' DÃ¼sseldorf'),
+('40223', ' DÃ¼sseldorf'),
+('40225', ' DÃ¼sseldorf'),
+('40227', ' DÃ¼sseldorf'),
+('40229', ' DÃ¼sseldorf'),
+('40231', ' DÃ¼sseldorf'),
+('40233', ' DÃ¼sseldorf'),
+('40235', ' DÃ¼sseldorf'),
+('40237', ' DÃ¼sseldorf'),
+('40239', ' DÃ¼sseldorf'),
+('40468', ' DÃ¼sseldorf'),
+('40470', ' DÃ¼sseldorf'),
+('40472', ' DÃ¼sseldorf'),
+('40474', ' DÃ¼sseldorf'),
+('40476', ' DÃ¼sseldorf'),
+('40477', ' DÃ¼sseldorf'),
+('40479', ' DÃ¼sseldorf'),
+('40489', ' DÃ¼sseldorf'),
+('40545', ' DÃ¼sseldorf'),
+('40547', ' DÃ¼sseldorf'),
+('40549', ' DÃ¼sseldorf'),
+('40589', ' DÃ¼sseldorf'),
+('40591', ' DÃ¼sseldorf'),
+('40593', ' DÃ¼sseldorf'),
+('40595', ' DÃ¼sseldorf'),
+('40597', ' DÃ¼sseldorf'),
+('40599', ' DÃ¼sseldorf'),
+('40625', ' DÃ¼sseldorf'),
+('40627', ' DÃ¼sseldorf'),
+('40629', ' DÃ¼sseldorf'),
+('40667', ' Meerbusch'),
+('40668', ' Meerbusch'),
+('40670', ' Meerbusch'),
+('40699', ' Erkrath'),
+('40721', ' Hilden, DÃ¼sseldorf'),
+('40723', ' Hilden'),
+('40724', ' Hilden'),
+('40764', ' Langenfeld'),
+('40789', ' Monheim am Rhein'),
+('40822', ' Mettmann'),
+('40878', ' Ratingen'),
+('40880', ' Ratingen'),
+('40882', ' Ratingen'),
+('40883', ' Ratingen'),
+('40885', ' Ratingen'),
+('41061', ' MÃ¶nchengladbach'),
+('41063', ' MÃ¶nchengladbach'),
+('41065', ' MÃ¶nchengladbach'),
+('41066', ' MÃ¶nchengladbach'),
+('41068', ' MÃ¶nchengladbach'),
+('41069', ' MÃ¶nchengladbach'),
+('41169', ' MÃ¶nchengladbach'),
+('41179', ' MÃ¶nchengladbach'),
+('41189', ' MÃ¶nchengladbach'),
+('41199', ' MÃ¶nchengladbach'),
+('41236', ' MÃ¶nchengladbach'),
+('41238', ' MÃ¶nchengladbach'),
+('41239', ' MÃ¶nchengladbach'),
+('41334', ' Nettetal'),
+('41352', ' Korschenbroich'),
+('41363', ' JÃ¼chen'),
+('41366', ' Schwalmtal'),
+('41372', ' NiederkrÃ¼chten'),
+('41379', ' BrÃ¼ggen'),
+('41460', ' Neuss'),
+('41462', ' Neuss'),
+('41464', ' Neuss'),
+('41466', ' Neuss'),
+('41468', ' Neuss'),
+('41469', ' Neuss'),
+('41470', ' Neuss'),
+('41472', ' Neuss'),
+('41515', ' Grevenbroich'),
+('41516', ' Grevenbroich'),
+('41517', ' Grevenbroich'),
+('41539', ' Dormagen'),
+('41540', ' Dormagen'),
+('41541', ' Dormagen'),
+('41542', ' Dormagen'),
+('41564', ' Kaarst'),
+('41569', ' Rommerskirchen'),
+('41747', ' Viersen'),
+('41748', ' Viersen'),
+('41749', ' Viersen'),
+('41751', ' Viersen'),
+('41812', ' Erkelenz'),
+('41836', ' HÃ¼ckelhoven'),
+('41844', ' Wegberg'),
+('41849', ' Wassenberg'),
+('42103', ' Wuppertal'),
+('42105', ' Wuppertal'),
+('42107', ' Wuppertal'),
+('42109', ' Wuppertal'),
+('42111', ' Wuppertal'),
+('42113', ' Wuppertal'),
+('42115', ' Wuppertal'),
+('42117', ' Wuppertal'),
+('42119', ' Wuppertal'),
+('42275', ' Wuppertal'),
+('42277', ' Wuppertal'),
+('42279', ' Wuppertal'),
+('42281', ' Wuppertal'),
+('42283', ' Wuppertal'),
+('42285', ' Wuppertal'),
+('42287', ' Wuppertal'),
+('42289', ' Wuppertal'),
+('42327', ' Wuppertal'),
+('42329', ' Wuppertal'),
+('42349', ' Wuppertal'),
+('42369', ' Wuppertal'),
+('42389', ' Wuppertal'),
+('42399', ' Wuppertal'),
+('42477', ' Radevormwald'),
+('42489', ' WÃ¼lfrath'),
+('42499', ' HÃ¼ckeswagen'),
+('42549', ' Velbert'),
+('42551', ' Velbert'),
+('42553', ' Velbert'),
+('42555', ' Velbert'),
+('42579', ' Heiligenhaus'),
+('42651', ' Solingen'),
+('42653', ' Solingen'),
+('42655', ' Solingen'),
+('42657', ' Solingen'),
+('42659', ' Solingen'),
+('42697', ' Solingen'),
+('42699', ' Solingen'),
+('42719', ' Solingen'),
+('42781', ' Haan'),
+('42799', ' Leichlingen'),
+('42853', ' Remscheid'),
+('42855', ' Remscheid'),
+('42857', ' Remscheid'),
+('42859', ' Remscheid'),
+('42897', ' Remscheid'),
+('42899', ' Remscheid'),
+('42929', ' Wermelskirchen'),
+('44135', ' Dortmund'),
+('44137', ' Dortmund'),
+('44139', ' Dortmund'),
+('44141', ' Dortmund'),
+('44143', ' Dortmund'),
+('44145', ' Dortmund'),
+('44147', ' Dortmund'),
+('44149', ' Dortmund'),
+('44225', ' Dortmund'),
+('44227', ' Dortmund'),
+('44229', ' Dortmund'),
+('44263', ' Dortmund'),
+('44265', ' Dortmund'),
+('44267', ' Dortmund'),
+('44269', ' Dortmund'),
+('44287', ' Dortmund'),
+('44289', ' Dortmund'),
+('44309', ' Dortmund'),
+('44319', ' Dortmund'),
+('44328', ' Dortmund'),
+('44329', ' Dortmund'),
+('44339', ' Dortmund'),
+('44357', ' Dortmund'),
+('44359', ' Dortmund'),
+('44369', ' Dortmund'),
+('44379', ' Dortmund'),
+('44388', ' Dortmund'),
+('44532', ' LÃ¼nen'),
+('44534', ' LÃ¼nen'),
+('44536', ' LÃ¼nen'),
+('44575', ' Castrop-Rauxel'),
+('44577', ' Castrop-Rauxel'),
+('44579', ' Castrop-Rauxel'),
+('44581', ' Castrop-Rauxel'),
+('44623', ' Herne'),
+('44625', ' Herne'),
+('44627', ' Herne'),
+('44628', ' Herne'),
+('44629', ' Herne'),
+('44649', ' Herne'),
+('44651', ' Herne'),
+('44652', ' Herne'),
+('44653', ' Herne'),
+('44787', ' Bochum'),
+('44789', ' Bochum'),
+('44791', ' Bochum'),
+('44793', ' Bochum'),
+('44795', ' Bochum'),
+('44797', ' Bochum'),
+('44799', ' Bochum'),
+('44801', ' Bochum'),
+('44803', ' Bochum'),
+('44805', ' Bochum'),
+('44807', ' Bochum'),
+('44809', ' Bochum'),
+('44866', ' Bochum'),
+('44867', ' Bochum'),
+('44869', ' Bochum'),
+('44879', ' Bochum'),
+('44892', ' Bochum'),
+('44894', ' Bochum'),
+('45127', ' Essen'),
+('45128', ' Essen'),
+('45130', ' Essen'),
+('45131', ' Essen'),
+('45133', ' Essen'),
+('45134', ' Essen'),
+('45136', ' Essen'),
+('45138', ' Essen'),
+('45139', ' Essen'),
+('45141', ' Essen'),
+('45143', ' Essen'),
+('45144', ' Essen'),
+('45145', ' Essen'),
+('45147', ' Essen'),
+('45149', ' Essen'),
+('45219', ' Essen'),
+('45239', ' Essen'),
+('45257', ' Essen'),
+('45259', ' Essen'),
+('45276', ' Essen'),
+('45277', ' Essen'),
+('45279', ' Essen'),
+('45289', ' Essen'),
+('45307', ' Essen'),
+('45309', ' Essen'),
+('45326', ' Essen'),
+('45327', ' Essen'),
+('45329', ' Essen'),
+('45355', ' Essen'),
+('45356', ' Essen'),
+('45357', ' Essen'),
+('45359', ' Essen'),
+('45468', ' MÃ¼lheim an der Ruhr'),
+('45470', ' MÃ¼lheim an der Ruhr'),
+('45472', ' MÃ¼lheim an der Ruhr'),
+('45473', ' MÃ¼lheim an der Ruhr'),
+('45475', ' MÃ¼lheim an der Ruhr'),
+('45476', ' MÃ¼lheim an der Ruhr'),
+('45478', ' MÃ¼lheim an der Ruhr'),
+('45479', ' MÃ¼lheim an der Ruhr'),
+('45481', ' MÃ¼lheim an der Ruhr'),
+('45525', ' Hattingen'),
+('45527', ' Hattingen'),
+('45529', ' Hattingen'),
+('45549', ' SprockhÃ¶vel'),
+('45657', ' Recklinghausen'),
+('45659', ' Recklinghausen'),
+('45661', ' Recklinghausen'),
+('45663', ' Recklinghausen'),
+('45665', ' Recklinghausen'),
+('45699', ' Herten'),
+('45701', ' Herten'),
+('45711', ' Datteln'),
+('45721', ' Haltern am See'),
+('45731', ' Waltrop'),
+('45739', ' Oer-Erkenschwick'),
+('45768', ' Marl'),
+('45770', ' Marl'),
+('45772', ' Marl'),
+('45879', ' Gelsenkirchen'),
+('45881', ' Gelsenkirchen'),
+('45883', ' Gelsenkirchen'),
+('45884', ' Gelsenkirchen Rotthausen'),
+('45886', ' Gelsenkirchen'),
+('45888', ' Gelsenkirchen'),
+('45889', ' Gelsenkirchen'),
+('45891', ' Gelsenkirchen'),
+('45892', ' Gelsenkirchen'),
+('45894', ' Gelsenkirchen'),
+('45896', ' Gelsenkirchen'),
+('45897', ' Gelsenkirchen'),
+('45899', ' Gelsenkirchen'),
+('45964', ' Gladbeck'),
+('45966', ' Gladbeck'),
+('45968', ' Gladbeck'),
+('46045', ' Oberhausen'),
+('46047', ' Oberhausen'),
+('46049', ' Oberhausen'),
+('46117', ' Oberhausen'),
+('46119', ' Oberhausen'),
+('46145', ' Oberhausen'),
+('46147', ' Oberhausen'),
+('46149', ' Oberhausen'),
+('46236', ' Bottrop'),
+('46238', ' Bottrop'),
+('46240', ' Bottrop'),
+('46242', ' Bottrop'),
+('46244', ' Bottrop'),
+('46282', ' Dorsten'),
+('46284', ' Dorsten'),
+('46286', ' Dorsten'),
+('46325', ' Borken'),
+('46342', ' Velen'),
+('46348', ' Raesfeld'),
+('46354', ' SÃ¼dlohn'),
+('46359', ' Heiden'),
+('46395', ' Bocholt'),
+('46397', ' Bocholt'),
+('46399', ' Bocholt'),
+('46414', ' Rhede'),
+('46419', ' Isselburg'),
+('46446', ' Emmerich am Rhein'),
+('46459', ' Rees'),
+('46483', ' Wesel'),
+('46485', ' Wesel'),
+('46487', ' Wesel'),
+('46499', ' Hamminkeln'),
+('46509', ' Xanten'),
+('46514', ' Schermbeck'),
+('46519', ' Alpen'),
+('46535', ' Dinslaken'),
+('46537', ' Dinslaken'),
+('46539', ' Dinslaken'),
+('46562', ' Voerde (Niederrhein)'),
+('46569', ' HÃ¼nxe'),
+('47051', ' Duisburg'),
+('47053', ' Duisburg'),
+('47055', ' Duisburg'),
+('47057', ' Duisburg'),
+('47058', ' Duisburg'),
+('47059', ' Duisburg'),
+('47119', ' Duisburg'),
+('47137', ' Duisburg'),
+('47138', ' Duisburg'),
+('47139', ' Duisburg'),
+('47166', ' Duisburg'),
+('47167', ' Duisburg'),
+('47169', ' Duisburg'),
+('47178', ' Duisburg'),
+('47179', ' Duisburg'),
+('47198', ' Duisburg'),
+('47199', ' Duisburg'),
+('47226', ' Duisburg'),
+('47228', ' Duisburg'),
+('47229', ' Duisburg'),
+('47239', ' Duisburg'),
+('47249', ' Duisburg'),
+('47259', ' Duisburg'),
+('47269', ' Duisburg'),
+('47279', ' Duisburg'),
+('47441', ' Moers'),
+('47443', ' Moers'),
+('47445', ' Moers'),
+('47447', ' Moers'),
+('47475', ' Kamp-Lintfort'),
+('47495', ' Rheinberg'),
+('47506', ' Neukirchen-Vluyn'),
+('47509', ' Rheurdt'),
+('47533', ' Kleve'),
+('47546', ' Kalkar'),
+('47551', ' Bedburg-Hau'),
+('47559', ' Kranenburg'),
+('47574', ' Goch'),
+('47589', ' Uedem'),
+('47608', ' Geldern'),
+('47623', ' Kevelaer-Mitte'),
+('47624', ' Kevelaer-Twisteden'),
+('47625', ' Kevelaer-Wetten'),
+('47626', ' Kevelaer-Winnekendonk'),
+('47627', ' Kevelaer-Kervenheim'),
+('47638', ' Straelen'),
+('47647', ' Kerken'),
+('47652', ' Weeze'),
+('47661', ' Issum'),
+('47665', ' Sonsbeck'),
+('47669', ' Wachtendonk'),
+('47798', ' Krefeld'),
+('47799', ' Krefeld'),
+('47800', ' Krefeld'),
+('47802', ' Krefeld'),
+('47803', ' Krefeld'),
+('47804', ' Krefeld'),
+('47805', ' Krefeld'),
+('47807', ' Krefeld'),
+('47809', ' Krefeld'),
+('47829', ' Krefeld'),
+('47839', ' Krefeld'),
+('47877', ' Willich'),
+('47906', ' Kempen'),
+('47918', ' TÃ¶nisvorst'),
+('47929', ' Grefrath'),
+('48143', ' MÃ¼nster'),
+('48145', ' MÃ¼nster'),
+('48147', ' MÃ¼nster'),
+('48149', ' MÃ¼nster'),
+('48151', ' MÃ¼nster'),
+('48153', ' MÃ¼nster'),
+('48155', ' MÃ¼nster'),
+('48157', ' MÃ¼nster'),
+('48159', ' MÃ¼nster'),
+('48161', ' MÃ¼nster'),
+('48163', ' MÃ¼nster'),
+('48165', ' MÃ¼nster'),
+('48167', ' MÃ¼nster'),
+('48231', ' Warendorf'),
+('48249', ' DÃ¼lmen'),
+('48268', ' Greven'),
+('48282', ' Emsdetten'),
+('48291', ' Telgte'),
+('48301', ' Nottuln'),
+('48308', ' Senden'),
+('48317', ' Drensteinfurt'),
+('48324', ' Sendenhorst'),
+('48329', ' Havixbeck'),
+('48336', ' Sassenberg'),
+('48341', ' Altenberge'),
+('48346', ' Ostbevern'),
+('48351', ' Everswinkel'),
+('48356', ' Nordwalde'),
+('48361', ' Beelen'),
+('48366', ' Laer'),
+('48369', ' Saerbeck'),
+('48429', ' Rheine'),
+('48431', ' Rheine'),
+('48432', ' Rheine'),
+('48455', ' Bad Bentheim'),
+('48465', ' Engden, Isterberg, SchÃ¼ttorf u.a.'),
+('48477', ' HÃ¶rstel'),
+('48480', ' LÃ¼nne, Schapen, Spelle'),
+('48485', ' Neuenkirchen'),
+('48488', ' EmsbÃ¼ren'),
+('48493', ' Wettringen'),
+('48496', ' Hopsten'),
+('48499', ' Salzbergen'),
+('48527', ' Nordhorn'),
+('48529', ' Nordhorn'),
+('48531', ' Nordhorn'),
+('48565', ' Steinfurt'),
+('48599', ' Gronau'),
+('48607', ' Ochtrup'),
+('48612', ' Horstmar'),
+('48619', ' Heek'),
+('48624', ' SchÃ¶ppingen'),
+('48629', ' Metelen'),
+('48653', ' Coesfeld'),
+('48683', ' Ahaus'),
+('48691', ' Vreden'),
+('48703', ' Stadtlohn'),
+('48712', ' Gescher'),
+('48720', ' Rosendahl'),
+('48727', ' Billerbeck'),
+('48734', ' Reken'),
+('48739', ' Legden'),
+('49074', ' OsnabrÃ¼ck'),
+('49076', ' OsnabrÃ¼ck'),
+('49078', ' OsnabrÃ¼ck'),
+('49080', ' OsnabrÃ¼ck'),
+('49082', ' OsnabrÃ¼ck'),
+('49084', ' OsnabrÃ¼ck'),
+('49086', ' OsnabrÃ¼ck'),
+('49088', ' OsnabrÃ¼ck'),
+('49090', ' OsnabrÃ¼ck'),
+('49124', ' GeorgsmarienhÃ¼tte'),
+('49134', ' Wallenhorst'),
+('49143', ' Bissendorf'),
+('49152', ' Bad Essen'),
+('49163', ' Bohmte'),
+('49170', ' Hagen am Teutoburger Wald'),
+('49176', ' Hilter'),
+('49179', ' Ostercappeln'),
+('49186', ' Bad Iburg'),
+('49191', ' Belm'),
+('49196', ' Bad Laer'),
+('49201', ' Dissen'),
+('49205', ' Hasbergen'),
+('49214', ' Bad Rothenfelde'),
+('49219', ' Glandorf'),
+('49324', ' Melle'),
+('49326', ' Melle'),
+('49328', ' Melle'),
+('49356', ' Diepholz'),
+('49377', ' Vechta'),
+('49393', ' Lohne'),
+('49401', ' Damme'),
+('49406', ' Barnstorf, Eydelstedt, Drentwede'),
+('49413', ' Dinklage'),
+('49419', ' Wagenfeld'),
+('49424', ' Goldenstedt'),
+('49429', ' Visbek'),
+('49434', ' Neuenkirchen-VÃ¶rden'),
+('49439', ' Steinfeld'),
+('49448', ' LemfÃ¶rde u.a.'),
+('49451', ' Holdorf'),
+('49453', ' Barver, Dickel, Hemsloh, Rehden, Wetschen, Wehrbl'),
+('49456', ' Bakum'),
+('49457', ' Drebber'),
+('49459', ' Lembruch'),
+('49477', ' IbbenbÃ¼ren'),
+('49479', ' IbbenbÃ¼ren'),
+('49492', ' Westerkappeln'),
+('49497', ' Mettingen'),
+('49504', ' Lotte'),
+('49509', ' Recke'),
+('49525', ' Lengerich'),
+('49536', ' Lienen'),
+('49545', ' Tecklenburg'),
+('49549', ' Ladbergen'),
+('49565', ' Bramsche'),
+('49577', ' Kettenkamp, EggermÃ¼hlen, Ankum'),
+('49584', ' FÃ¼rstenau'),
+('49586', ' Merzen, Neuenkirchen'),
+('49593', ' BersenbrÃ¼ck'),
+('49594', ' Alfhausen'),
+('49596', ' Gehrde'),
+('49597', ' Rieste'),
+('49599', ' Voltlage'),
+('49610', ' QuakenbrÃ¼ck'),
+('49624', ' LÃ¶ningen'),
+('49626', ' Berge, Bippen'),
+('49632', ' Essen (Oldenburg)'),
+('49635', ' Badbergen'),
+('49637', ' Menslage'),
+('49638', ' Nortrup'),
+('49661', ' Cloppenburg'),
+('49681', ' Garrel'),
+('49685', ' Emstek'),
+('49688', ' Lastrup'),
+('49692', ' Cappeln (Oldenburg)'),
+('49696', ' Molbergen'),
+('49699', ' Lindern (Oldenburg)'),
+('49716', ' Meppen'),
+('49733', ' Haren'),
+('49740', ' HaselÃ¼nne'),
+('49744', ' Geeste'),
+('49751', ' SÃ¶gel u.a.'),
+('49757', ' Werlte, Vrees, Lahn'),
+('49762', ' Sustrum, Lathen u.a.'),
+('49767', ' Twist'),
+('49770', ' Herzlake, Dohren'),
+('49774', ' LÃ¤hden'),
+('49777', ' Stavern'),
+('49779', ' Oberlangen, Niederlangen'),
+('49808', ' Lingen'),
+('49809', ' Lingen'),
+('49811', ' Lingen'),
+('49824', ' Ringe, Laar, Emlichheim'),
+('49828', ' Esche, Georgsdorf, Lage, Neuenhaus, Osterwald'),
+('49832', ' Andervenne, Beesten, Freren, Messingen, Thuine'),
+('49835', ' Wietmarschen'),
+('49838', ' Lengerich u.a.'),
+('49843', ' Uelsen, Halle, GÃ¶lenkamp, Getelo'),
+('49844', ' Bawinkel'),
+('49846', ' Hoogstede'),
+('49847', ' Itterbeck/Wielen'),
+('49849', ' Wilsum'),
+('50126', ' Bergheim'),
+('50127', ' Bergheim'),
+('50129', ' Bergheim'),
+('50169', ' Kerpen'),
+('50170', ' Kerpen'),
+('50171', ' Kerpen'),
+('50181', ' Bedburg'),
+('50189', ' Elsdorf'),
+('50226', ' Frechen'),
+('50259', ' Pulheim'),
+('50321', ' BrÃ¼hl'),
+('50354', ' HÃ¼rth'),
+('50374', ' Erftstadt'),
+('50389', ' Wesseling'),
+('50667', ' KÃ¶ln'),
+('50668', ' KÃ¶ln'),
+('50670', ' KÃ¶ln'),
+('50672', ' KÃ¶ln'),
+('50674', ' KÃ¶ln'),
+('50676', ' KÃ¶ln'),
+('50677', ' KÃ¶ln'),
+('50678', ' KÃ¶ln'),
+('50679', ' KÃ¶ln'),
+('50733', ' KÃ¶ln'),
+('50735', ' KÃ¶ln'),
+('50737', ' KÃ¶ln'),
+('50739', ' KÃ¶ln'),
+('50765', ' KÃ¶ln'),
+('50767', ' KÃ¶ln'),
+('50769', ' KÃ¶ln'),
+('50823', ' KÃ¶ln'),
+('50825', ' KÃ¶ln'),
+('50827', ' KÃ¶ln'),
+('50829', ' KÃ¶ln'),
+('50858', ' KÃ¶ln'),
+('50859', ' KÃ¶ln'),
+('50931', ' KÃ¶ln'),
+('50933', ' KÃ¶ln'),
+('50935', ' KÃ¶ln'),
+('50937', ' KÃ¶ln'),
+('50939', ' KÃ¶ln'),
+('50968', ' KÃ¶ln'),
+('50969', ' KÃ¶ln'),
+('50996', ' KÃ¶ln'),
+('50997', ' KÃ¶ln'),
+('50999', ' KÃ¶ln'),
+('51061', ' KÃ¶ln'),
+('51063', ' KÃ¶ln'),
+('51065', ' KÃ¶ln'),
+('51067', ' KÃ¶ln'),
+('51069', ' KÃ¶ln'),
+('51103', ' KÃ¶ln'),
+('51105', ' KÃ¶ln'),
+('51107', ' KÃ¶ln'),
+('51109', ' KÃ¶ln'),
+('51143', ' KÃ¶ln'),
+('51145', ' KÃ¶ln'),
+('51147', ' KÃ¶ln'),
+('51149', ' KÃ¶ln'),
+('51371', ' Leverkusen'),
+('51373', ' Leverkusen'),
+('51375', ' Leverkusen'),
+('51377', ' Leverkusen'),
+('51379', ' Leverkusen'),
+('51381', ' Leverkusen'),
+('51399', ' Burscheid'),
+('51427', ' Bergisch Gladbach'),
+('51429', ' Bergisch Gladbach'),
+('51465', ' Bergisch Gladbach'),
+('51467', ' Bergisch Gladbach'),
+('51469', ' Bergisch Gladbach'),
+('51491', ' Overath'),
+('51503', ' RÃ¶srath'),
+('51515', ' KÃ¼rten'),
+('51519', ' Odenthal'),
+('51545', ' WaldbrÃ¶l'),
+('51570', ' Windeck'),
+('51580', ' Reichshof'),
+('51588', ' NÃ¼mbrecht'),
+('51597', ' Morsbach'),
+('51598', ' Friesenhagen'),
+('51643', ' Gummersbach'),
+('51645', ' Gummersbach'),
+('51647', ' Gummersbach'),
+('51674', ' Wiehl'),
+('51688', ' WipperfÃ¼rth'),
+('51702', ' Bergneustadt'),
+('51709', ' Marienheide'),
+('51766', ' Engelskirchen'),
+('51789', ' Lindlar'),
+('52062', ' Aachen'),
+('52064', ' Aachen'),
+('52066', ' Aachen'),
+('52068', ' Aachen'),
+('52070', ' Aachen'),
+('52072', ' Aachen'),
+('52074', ' Aachen'),
+('52076', ' Aachen'),
+('52078', ' Aachen'),
+('52080', ' Aachen'),
+('52134', ' Herzogenrath'),
+('52146', ' WÃ¼rselen'),
+('52152', ' Simmerath'),
+('52156', ' Monschau'),
+('52159', ' Roetgen'),
+('52222', ' Stolberg (Rhld.)'),
+('52223', ' Stolberg (Rhld.)'),
+('52224', ' Stolberg'),
+('52249', ' Eschweiler'),
+('52349', ' DÃ¼ren'),
+('52351', ' DÃ¼ren'),
+('52353', ' DÃ¼ren'),
+('52355', ' DÃ¼ren'),
+('52372', ' Kreuzau'),
+('52379', ' Langerwehe'),
+('52382', ' Niederzier'),
+('52385', ' Nideggen'),
+('52388', ' NÃ¶rvenich'),
+('52391', ' VettweiÃŸ'),
+('52393', ' HÃ¼rtgenwald'),
+('52396', ' Heimbach'),
+('52399', ' Merzenich'),
+('52428', ' JÃ¼lich'),
+('52441', ' Linnich'),
+('52445', ' Titz'),
+('52457', ' Aldenhoven'),
+('52459', ' Inden'),
+('52477', ' Alsdorf'),
+('52499', ' Baesweiler'),
+('52511', ' Geilenkirchen'),
+('52525', ' Waldfeucht, Heinsberg'),
+('52531', ' Ãœbach-Palenberg'),
+('52538', ' Gangelt, Selfkant'),
+('53111', ' Bonn'),
+('53113', ' Bonn'),
+('53115', ' Bonn'),
+('53117', ' Bonn'),
+('53119', ' Bonn'),
+('53121', ' Bonn'),
+('53123', ' Bonn'),
+('53125', ' Bonn'),
+('53127', ' Bonn'),
+('53129', ' Bonn'),
+('53173', ' Bonn'),
+('53175', ' Bonn'),
+('53177', ' Bonn'),
+('53179', ' Bonn'),
+('53225', ' Bonn'),
+('53227', ' Bonn'),
+('53229', ' Bonn'),
+('53332', ' Bornheim'),
+('53340', ' Meckenheim'),
+('53343', ' Wachtberg'),
+('53347', ' Alfter'),
+('53359', ' Rheinbach'),
+('53424', ' Remagen'),
+('53426', ' Schalkenbach, KÃ¶nigsfeld, Dedenbach'),
+('53474', ' Bad Neuenahr-Ahrweiler'),
+('53489', ' Sinzig'),
+('53498', ' Bad Breisig, Waldorf, GÃ¶nnersdorf'),
+('53501', ' Grafschaft'),
+('53505', ' Altenahr, Berg, Kalenborn, Kirchsahr'),
+('53506', ' AhrbrÃ¼ck, Heckenbach, HÃ¶nningen, Kesseling, Rec'),
+('53507', ' Dernau'),
+('53508', ' MayschoÃŸ'),
+('53518', ' Adenau, Kottenborn u.a.'),
+('53520', ' Reifferscheid, Kaltenborn, Wershofen u.a.'),
+('53533', ' Antweiler, Aremberg, Dorsel, Eichenbach, Aremberg'),
+('53534', ' Barweiler, Bauler, Hoffeld, Pomster, Wiesemscheid'),
+('53539', ' Bodenbach, Kelberg, Kirsbach u.a.'),
+('53545', ' Linz am Rhein, Ockenfels'),
+('53547', ' Breitscheid, Dattenberg, Hausen, HÃ¼mmerich, Kasb'),
+('53557', ' Bad HÃ¶nningen'),
+('53560', ' VettelschloÃŸ, Kretzhaus (Linz am Rhein)'),
+('53562', ' Sankt Katharinen (Landkreis Neuwied)'),
+('53567', ' Asbach, Buchholz'),
+('53572', ' Bruchhausen, Unkel'),
+('53577', ' Neustadt (Wied)'),
+('53578', ' Windhagen'),
+('53579', ' Erpel'),
+('53604', ' Bad Honnef'),
+('53619', ' Rheinbreitbach'),
+('53639', ' KÃ¶nigswinter'),
+('53721', ' Siegburg'),
+('53757', ' Sankt Augustin'),
+('53773', ' Hennef (Sieg)'),
+('53783', ' Eitorf'),
+('53797', ' Lohmar'),
+('53804', ' Much'),
+('53809', ' Ruppichteroth'),
+('53819', ' Neunkirchen-Seelscheid'),
+('53840', ' Troisdorf'),
+('53842', ' Troisdorf'),
+('53844', ' Troisdorf'),
+('53859', ' Niederkassel'),
+('53879', ' Euskirchen'),
+('53881', ' Euskirchen'),
+('53894', ' Mechernich'),
+('53902', ' Bad MÃ¼nstereifel'),
+('53909', ' ZÃ¼lpich'),
+('53913', ' Swisttal'),
+('53919', ' Weilerswist'),
+('53925', ' Kall'),
+('53937', ' Schleiden'),
+('53940', ' Hellenthal'),
+('53945', ' Blankenheim'),
+('53947', ' Nettersheim'),
+('53949', ' Dahlem'),
+('54290', ' Trier'),
+('54292', ' Trier'),
+('54293', ' Trier'),
+('54294', ' Trier'),
+('54295', ' Trier'),
+('54296', ' Trier'),
+('54298', ' Welschbillig, Igel, Aach'),
+('54306', ' Kordel'),
+('54308', ' Langsur'),
+('54309', ' Newel'),
+('54310', ' Ralingen'),
+('54311', ' Trierweiler'),
+('54313', ' Zemmer'),
+('54314', ' Zerf'),
+('54316', ' Pluwig'),
+('54317', ' Osburg, Gusterath, Farschweiler, Kasel u.a.'),
+('54318', ' Mertesdorf'),
+('54320', ' Waldrach'),
+('54329', ' Konz'),
+('54331', ' Pellingen'),
+('54332', ' Wasserliesch'),
+('54338', ' Schweich'),
+('54340', ' Leiwen u.a.'),
+('54341', ' Fell'),
+('54343', ' FÃ¶hren'),
+('54344', ' Kenn'),
+('54346', ' Mehring'),
+('54347', ' Neumagen-Dhron'),
+('54349', ' Trittenheim'),
+('54411', ' Deuselbach, Hermeskeil, Rorodt'),
+('54413', ' Gusenburg'),
+('54421', ' Reinsfeld'),
+('54422', ' NeuhÃ¼tten'),
+('54424', ' Thalfang'),
+('54426', ' Malborn'),
+('54427', ' Kell am See'),
+('54429', ' Schillingen'),
+('54439', ' Saarburg'),
+('54441', ' Ayl, Trassem u.a.'),
+('54450', ' Freudenburg'),
+('54451', ' Irsch'),
+('54453', ' Nittel'),
+('54455', ' Serrig'),
+('54456', ' Tawern'),
+('54457', ' Wincheringen'),
+('54459', ' Wiltingen'),
+('54470', ' Bernkastel-Kues u.a.'),
+('54472', ' Monzelfeld, Hochscheid u.a.'),
+('54483', ' Kleinich'),
+('54484', ' Maring-Noviand'),
+('54486', ' MÃ¼lheim (Mosel)'),
+('54487', ' Wintrich'),
+('54492', ' Zeltingen-Rachtig, Erden, LÃ¶snich u.a.'),
+('54497', ' Morbach'),
+('54498', ' Piesport'),
+('54516', ' Wittlich'),
+('54518', ' Binsfeld, HeckenmÃ¼nster'),
+('54523', ' Hetzerath, Dierscheid, HeckenmÃ¼nster'),
+('54524', ' Klausen'),
+('54526', ' Landscheid'),
+('54528', ' Salmtal'),
+('54529', ' Spangdahlem'),
+('54531', ' Manderscheid'),
+('54533', ' Bettenfeld, NiederÃ¶fflingen u.a.'),
+('54534', ' GroÃŸlittgen'),
+('54536', ' KrÃ¶v'),
+('54538', ' Bausendorf'),
+('54539', ' Ãœrzig'),
+('54550', ' Daun'),
+('54552', ' Mehren u.a.'),
+('54558', ' Gillenfeld'),
+('54568', ' Gerolstein'),
+('54570', ' Pelm, Neroth u.a.'),
+('54574', ' Birresborn'),
+('54576', ' Hillesheim'),
+('54578', ' Walsdorf, Nohn u.a.'),
+('54579', ' Ãœxheim'),
+('54584', ' JÃ¼nkerath'),
+('54585', ' Esch'),
+('54586', ' SchÃ¼ller'),
+('54587', ' Lissendorf'),
+('54589', ' Stadtkyll'),
+('54595', ' PrÃ¼m'),
+('54597', ' Pronsfeld'),
+('54608', ' Bleialf'),
+('54610', ' BÃ¼desheim'),
+('54611', ' Hallschlag'),
+('54612', ' Lasel'),
+('54614', ' SchÃ¶necken'),
+('54616', ' Winterspelt'),
+('54617', ' LÃ¼tzkampen'),
+('54619', ' Ãœttfeld'),
+('54634', ' Bitburg'),
+('54636', ' Rittersdorf u.a.'),
+('54646', ' Bettingen'),
+('54647', ' Dudeldorf'),
+('54649', ' Waxweiler'),
+('54655', ' Kyllburg'),
+('54657', ' Badem, Gindorf, Neidenbach'),
+('54662', ' Speicher'),
+('54664', ' Preist'),
+('54666', ' Irrel'),
+('54668', ' Ferschweiler'),
+('54669', ' Bollendorf'),
+('54673', ' Neuerburg u.a.'),
+('54675', ' KÃ¶rperich u.a.'),
+('54687', ' Arzfeld'),
+('54689', ' Daleiden, Preischeid u.a.'),
+('55116', ' Mainz'),
+('55118', ' Mainz'),
+('55120', ' Mainz'),
+('55122', ' Mainz'),
+('55124', ' Mainz'),
+('55126', ' Mainz'),
+('55127', ' Mainz'),
+('55128', ' Mainz'),
+('55129', ' Mainz Ebersheim, Hechtsheim'),
+('55130', ' Mainz'),
+('55131', ' Mainz'),
+('55218', ' Ingelheim am Rhein'),
+('55232', ' Alzey'),
+('55234', ' Albig'),
+('55237', ' Flonheim'),
+('55239', ' Gau-Odernheim'),
+('55246', ' Wiesbaden'),
+('55252', ' Mainz-Kastel'),
+('55257', ' Budenheim'),
+('55262', ' Heidesheim am Rhein'),
+('55263', ' Wackernheim'),
+('55268', ' Nieder-Olm'),
+('55270', ' Ober-Olm'),
+('55271', ' Stadecken-Elsheim'),
+('55276', ' Oppenheim'),
+('55278', ' Mommenheim'),
+('55283', ' Nierstein'),
+('55286', ' WÃ¶rrstadt'),
+('55288', ' Armsheim'),
+('55291', ' Saulheim'),
+('55294', ' Bodenheim'),
+('55296', ' Harxheim'),
+('55299', ' Nackenheim'),
+('55411', ' Bingen am Rhein'),
+('55413', ' Weiler bei Bingen'),
+('55422', ' Bacharach, Breitscheid'),
+('55424', ' MÃ¼nster-Sarmsheim'),
+('55425', ' Waldalgesheim'),
+('55430', ' Oberwesel'),
+('55432', ' Niederburg'),
+('55435', ' Gau-Algesheim'),
+('55437', ' Ockenheim'),
+('55442', ' Stromberg'),
+('55444', ' Seibersbach'),
+('55450', ' Langenlonsheim'),
+('55452', ' Guldental'),
+('55457', ' Gensingen'),
+('55459', ' Aspisheim, Grolsheim'),
+('55469', ' Simmern/HunsrÃ¼ck u.a.'),
+('55471', ' Tiefenbach u.a.'),
+('55481', ' Kirchberg u.a.'),
+('55483', ' Dickenschied u.a.'),
+('55487', ' Sohren'),
+('55490', ' GemÃ¼nden'),
+('55491', ' BÃ¼chenbeuren'),
+('55494', ' RheinbÃ¶llen'),
+('55496', ' Argenthal'),
+('55497', ' Ellern (HunsrÃ¼ck), Schnorbach'),
+('55499', ' Riesweiler'),
+('55543', ' Bad Kreuznach'),
+('55545', ' Bad Kreuznach'),
+('55546', ' Hackenheim'),
+('55559', ' Bretzenheim'),
+('55566', ' Sobernheim'),
+('55568', ' Staudernheim'),
+('55569', ' Monzingen'),
+('55571', ' Odernheim am Glan'),
+('55576', ' Sprendlingen'),
+('55578', ' Wallertheim'),
+('55583', ' Bad Kreuznach'),
+('55585', ' Norheim u.a.'),
+('55590', ' Meisenheim'),
+('55592', ' Rehborn'),
+('55593', ' RÃ¼desheim'),
+('55595', ' Hargesheim'),
+('55596', ' WaldbÃ¶ckelheim'),
+('55597', ' WÃ¶llstein'),
+('55599', ' Gau-Bickelheim'),
+('55606', ' Kirn'),
+('55608', ' Bergen'),
+('55618', ' Simmertal'),
+('55619', ' Hennweiler'),
+('55621', ' Hundsbach'),
+('55624', ' Rhaunen'),
+('55626', ' Bundenbach'),
+('55627', ' Merxheim'),
+('55629', ' Seesbach'),
+('55743', ' Idar-Oberstein'),
+('55756', ' Herrstein'),
+('55758', ' NiederwÃ¶rresbach'),
+('55765', ' Birkenfeld u.a.'),
+('55767', ' BrÃ¼cken, Oberbrombach u.a.'),
+('55768', ' HoppstÃ¤dten-Weiersbach'),
+('55774', ' Baumholder'),
+('55776', ' Berglangenbach, Ruschberg u.a.'),
+('55777', ' Berschweiler bei Baumholder'),
+('55779', ' Heimbach'),
+('56068', ' Koblenz'),
+('56070', ' Koblenz'),
+('56072', ' Koblenz'),
+('56073', ' Koblenz'),
+('56075', ' Koblenz'),
+('56076', ' Koblenz'),
+('56077', ' Koblenz'),
+('56112', ' Lahnstein'),
+('56130', ' Bad Ems'),
+('56132', ' Dausenau, Nievern'),
+('56133', ' Fachbach, Exklave Lahnstein'),
+('56154', ' Boppard'),
+('56170', ' Bendorf'),
+('56179', ' Vallendar'),
+('56182', ' Urbar (bei Koblenz)'),
+('56191', ' Weitersburg'),
+('56203', ' HÃ¶hr-Grenzhausen'),
+('56204', ' Hillscheid'),
+('56206', ' Hilgert'),
+('56218', ' MÃ¼lheim-KÃ¤rlich'),
+('56220', ' Urmitz'),
+('56235', ' Ransbach-Baumbach'),
+('56237', ' Nauort'),
+('56242', ' Selters (Westerwald)'),
+('56244', ' Freilingen, Freirachdorf u.a.'),
+('56249', ' Herschbach'),
+('56253', ' Treis-Karden'),
+('56254', ' MÃ¼den'),
+('56269', ' Dierdorf');
+INSERT INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES
+('56271', ' Kleinmaischeid'),
+('56276', ' GroÃŸmaischeid'),
+('56281', ' Emmelshausen'),
+('56283', ' Wildenbungert, Gondershausen, NÃ¶rtershausen u.a.'),
+('56288', ' Kastellaun'),
+('56290', ' Beltheim'),
+('56291', ' Leiningen'),
+('56294', ' MÃ¼nstermaifeld'),
+('56295', ' Lonnig'),
+('56299', ' Ochtendung'),
+('56305', ' Puderbach'),
+('56307', ' DÃ¼rrholz'),
+('56316', ' Raubach'),
+('56317', ' Urbach'),
+('56321', ' Rhens'),
+('56322', ' Spay'),
+('56323', ' Waldesch, HÃ¼nenfeld'),
+('56329', ' Sankt Goar'),
+('56330', ' Kobern-Gondorf'),
+('56332', ' Lehmen, Niederfell, Oberfell, Wolken u.a.'),
+('56333', ' Winningen'),
+('56335', ' NeuhÃ¤usel'),
+('56337', ' Eitelborn'),
+('56338', ' Braubach'),
+('56340', ' Osterspai'),
+('56341', ' Kamp-Bornhofen-Filsen'),
+('56346', ' Sankt Goarshausen'),
+('56348', ' Bornich, Patersberg'),
+('56349', ' Kaub'),
+('56355', ' NastÃ¤tten u.a.'),
+('56357', ' Miehlen u.a.'),
+('56368', ' Katzenelnbogen'),
+('56370', ' SchÃ¶nborn'),
+('56377', ' Nassau'),
+('56379', ' Singhofen'),
+('56410', ' Montabaur'),
+('56412', ' Nentershausen, HÃ¼bingen, Niederelbert u.a.'),
+('56414', ' Meudt, Molsberg, Hundsangen, Niederahr u.a.'),
+('56422', ' Wirges, Stadt'),
+('56424', ' Mogendorf, Ebernhahn, Staudt u.a.'),
+('56427', ' Siershahn'),
+('56428', ' Dernbach (Westerwald)'),
+('56457', ' Westerburg'),
+('56459', ' Bellingen, KÃ¶lbingen, GemÃ¼nden etc'),
+('56462', ' HÃ¶hn'),
+('56470', ' Bad Marienberg (Westerwald)'),
+('56472', ' Nisterau u.a.'),
+('56477', ' Rennerod, Zehnhausen, Nister-MÃ¶hrendorf, Waigand'),
+('56479', ' Oberrod u.a.'),
+('56564', ' Neuwied'),
+('56566', ' Neuwied'),
+('56567', ' Neuwied'),
+('56575', ' WeiÃŸenthurm'),
+('56579', ' Rengsdorf'),
+('56581', ' Melsbach'),
+('56584', ' Anhausen'),
+('56587', ' StraÃŸenhaus'),
+('56588', ' Waldbreitbach, Hasuen'),
+('56589', ' Niederbreitbach'),
+('56593', ' Horhausen (Westerwald)'),
+('56594', ' Willroth'),
+('56598', ' Rheinbrohl'),
+('56599', ' Leutesdorf'),
+('56626', ' Andernach'),
+('56630', ' Kretz'),
+('56637', ' Plaidt'),
+('56642', ' Kruft'),
+('56645', ' Nickenich'),
+('56648', ' Saffig'),
+('56651', ' Niederzissen'),
+('56653', ' Wehr'),
+('56656', ' Brohl-LÃ¼tzing'),
+('56659', ' Burgbrohl'),
+('56727', ' Mayen'),
+('56729', ' Ettringen'),
+('56736', ' Kottenheim'),
+('56743', ' Mendig'),
+('56745', ' Bell'),
+('56746', ' Kempenich'),
+('56751', ' Polch'),
+('56753', ' Mertloch, Welling u.a.'),
+('56754', ' Binningen'),
+('56759', ' Kaisersesch'),
+('56761', ' DÃ¼ngenheim'),
+('56766', ' Ulmen'),
+('56767', ' Uersfeld'),
+('56769', ' Retterath'),
+('56812', ' Cochem'),
+('56814', ' Ediger-Eller'),
+('56818', ' Klotten'),
+('56820', ' Senheim'),
+('56821', ' Ellenz-Poltersdorf'),
+('56823', ' BÃ¼chel'),
+('56825', ' Gevenich'),
+('56826', ' Lutzerath'),
+('56828', ' Alflen'),
+('56829', ' Pommern'),
+('56841', ' Traben-Trarbach'),
+('56843', ' Irmenach'),
+('56850', ' Enkirch u.a.'),
+('56856', ' Zell (Mosel)'),
+('56858', ' Peterswald-LÃ¶ffelscheid u.a.'),
+('56859', ' Bullay, Alf, Zell'),
+('56861', ' Reil'),
+('56862', ' PÃ¼nderich'),
+('56864', ' Bad Bertrich'),
+('56865', ' Blankenrath u.a.'),
+('56867', ' Briedel'),
+('56869', ' Mastershausen'),
+('57072', ' Siegen'),
+('57074', ' Siegen'),
+('57076', ' Siegen'),
+('57078', ' Siegen'),
+('57080', ' Siegen'),
+('57223', ' Kreuztal'),
+('57234', ' Wilnsdorf'),
+('57250', ' Netphen'),
+('57258', ' Freudenberg'),
+('57271', ' Hilchenbach'),
+('57290', ' Neunkirchen'),
+('57299', ' Burbach'),
+('57319', ' Bad Berleburg'),
+('57334', ' Bad Laasphe'),
+('57339', ' ErndtebrÃ¼ck'),
+('57368', ' Lennestadt'),
+('57392', ' Schmallenberg'),
+('57399', ' Kirchhundem'),
+('57413', ' Finnentrop'),
+('57439', ' Attendorn'),
+('57462', ' Olpe'),
+('57482', ' Wenden'),
+('57489', ' Drolshagen'),
+('57518', ' Betzdorf'),
+('57520', ' Emmerzhausen, Niederdreisbach, Steinebach'),
+('57537', ' Wissen, HÃ¶vels u.a.'),
+('57539', ' FÃ¼rthen'),
+('57548', ' Kirchen (Sieg)'),
+('57555', ' Mudersbach'),
+('57562', ' Herdorf'),
+('57567', ' Daaden'),
+('57572', ' Niederfischbach'),
+('57577', ' Hamm (Sieg)'),
+('57578', ' Elkenroth'),
+('57580', ' Gebhardshain'),
+('57581', ' Katzwinkel (Sieg)'),
+('57583', ' Nauroth'),
+('57584', ' Scheuerfeld'),
+('57586', ' Weitefeld'),
+('57587', ' Birken-Honigsessen'),
+('57589', ' Pracht'),
+('57610', ' Altenkirchen (Westerwald)'),
+('57612', ' Birnbach'),
+('57614', ' Steimel'),
+('57627', ' Hachenburg'),
+('57629', ' Malberg, Norken, HÃ¶chstenbach u.a.'),
+('57632', ' Flammersfeld'),
+('57635', ' Weyerbusch'),
+('57636', ' Mammelzen'),
+('57638', ' Neitersen'),
+('57639', ' Oberdreis'),
+('57641', ' Oberlahr'),
+('57642', ' Alpenrod'),
+('57644', ' Hattert'),
+('57645', ' Nister'),
+('57647', ' Nistertal, Enspel'),
+('57648', ' Unnau'),
+('58089', ' Hagen'),
+('58091', ' Hagen'),
+('58093', ' Hagen'),
+('58095', ' Hagen'),
+('58097', ' Hagen'),
+('58099', ' Hagen'),
+('58119', ' Hagen'),
+('58135', ' Hagen'),
+('58239', ' Schwerte'),
+('58256', ' Ennepetal'),
+('58285', ' Gevelsberg'),
+('58300', ' Wetter (Ruhr)'),
+('58313', ' Herdecke'),
+('58332', ' Schwelm'),
+('58339', ' Breckerfeld'),
+('58452', ' Witten'),
+('58453', ' Witten'),
+('58454', ' Witten'),
+('58455', ' Witten'),
+('58456', ' Witten'),
+('58507', ' LÃ¼denscheid'),
+('58509', ' LÃ¼denscheid'),
+('58511', ' LÃ¼denscheid'),
+('58513', ' LÃ¼denscheid'),
+('58515', ' LÃ¼denscheid'),
+('58540', ' Meinerzhagen'),
+('58553', ' Halver'),
+('58566', ' Kierspe'),
+('58579', ' SchalksmÃ¼hle'),
+('58636', ' Iserlohn'),
+('58638', ' Iserlohn'),
+('58640', ' Iserlohn'),
+('58642', ' Iserlohn'),
+('58644', ' Iserlohn'),
+('58675', ' Hemer'),
+('58706', ' Menden'),
+('58708', ' Menden'),
+('58710', ' Menden'),
+('58730', ' FrÃ¶ndenberg/Ruhr'),
+('58739', ' Wickede (Ruhr)'),
+('58762', ' Altena'),
+('58769', ' Nachrodt-Wiblingwerde'),
+('58791', ' Werdohl'),
+('58802', ' Balve'),
+('58809', ' Neuenrade'),
+('58840', ' Plettenberg'),
+('58849', ' Herscheid'),
+('59063', ' Hamm'),
+('59065', ' Hamm'),
+('59067', ' Hamm'),
+('59069', ' Hamm'),
+('59071', ' Hamm'),
+('59073', ' Hamm'),
+('59075', ' Hamm'),
+('59077', ' Hamm'),
+('59174', ' Kamen'),
+('59192', ' Bergkamen'),
+('59199', ' BÃ¶nen'),
+('59227', ' Ahlen'),
+('59229', ' Ahlen'),
+('59269', ' Beckum'),
+('59302', ' Oelde'),
+('59320', ' Ennigerloh'),
+('59329', ' Wadersloh'),
+('59348', ' LÃ¼dinghausen'),
+('59368', ' Werne'),
+('59379', ' Selm'),
+('59387', ' Ascheberg'),
+('59394', ' Nordkirchen'),
+('59399', ' Olfen'),
+('59423', ' Unna'),
+('59425', ' Unna'),
+('59427', ' Unna'),
+('59439', ' Holzwickede'),
+('59457', ' Werl'),
+('59469', ' Ense'),
+('59494', ' Soest'),
+('59505', ' Bad Sassendorf'),
+('59510', ' Lippetal'),
+('59514', ' Welver'),
+('59519', ' MÃ¶hnesee'),
+('59555', ' Lippstadt'),
+('59556', ' Lippstadt'),
+('59557', ' Lippstadt'),
+('59558', ' Lippstadt'),
+('59581', ' Warstein'),
+('59590', ' Geseke'),
+('59597', ' Erwitte'),
+('59602', ' RÃ¼then'),
+('59609', ' AnrÃ¶chte'),
+('59755', ' Arnsberg'),
+('59757', ' Arnsberg'),
+('59759', ' Arnsberg'),
+('59821', ' Arnsberg'),
+('59823', ' Arnsberg'),
+('59846', ' Sundern'),
+('59872', ' Meschede'),
+('59889', ' Eslohe'),
+('59909', ' Bestwig'),
+('59929', ' Brilon'),
+('59939', ' Olsberg'),
+('59955', ' Winterberg'),
+('59964', ' Medebach'),
+('59969', ' Bromskirchen, Hallenberg'),
+('60306', ' Frankfurt am Main, Opernturm'),
+('60308', ' Frankfurt'),
+('60310', ' Frankfurt am Main (Taunusturm)'),
+('60311', ' Frankfurt am Main'),
+('60313', ' Frankfurt am Main'),
+('60314', ' Frankfurt am Main'),
+('60316', ' Frankfurt am Main'),
+('60318', ' Frankfurt am Main'),
+('60320', ' Frankfurt am Main'),
+('60322', ' Frankfurt am Main'),
+('60323', ' Frankfurt am Main'),
+('60325', ' Frankfurt am Main'),
+('60326', ' Frankfurt am Main'),
+('60327', ' Frankfurt am Main'),
+('60329', ' Frankfurt am Main'),
+('60385', ' Frankfurt am Main'),
+('60386', ' Frankfurt am Main'),
+('60388', ' Frankfurt am Main'),
+('60389', ' Frankfurt am Main'),
+('60431', ' Frankfurt am Main'),
+('60433', ' Frankfurt am Main'),
+('60435', ' Frankfurt am Main'),
+('60437', ' Frankfurt am Main'),
+('60438', ' Frankfurt am Main'),
+('60439', ' Frankfurt am Main'),
+('60486', ' Frankfurt am Main'),
+('60487', ' Frankfurt am Main'),
+('60488', ' Frankfurt am Main'),
+('60489', ' Frankfurt am Main'),
+('60528', ' Frankfurt am Main'),
+('60529', ' Frankfurt am Main'),
+('60549', ' Frankfurt am Main'),
+('60594', ' Frankfurt am Main'),
+('60596', ' Frankfurt am Main'),
+('60598', ' Frankfurt am Main'),
+('60599', ' Frankfurt am Main'),
+('61118', ' Bad Vilbel'),
+('61130', ' Nidderau'),
+('61137', ' SchÃ¶neck'),
+('61138', ' Niederdorfelden'),
+('61169', ' Friedberg (Hessen)'),
+('61184', ' Karben'),
+('61191', ' Rosbach v.d. HÃ¶he'),
+('61194', ' Niddatal'),
+('61197', ' Florstadt'),
+('61200', ' WÃ¶lfersheim'),
+('61203', ' Reichelsheim (Wetterau)'),
+('61206', ' WÃ¶llstadt'),
+('61209', ' Echzell'),
+('61231', ' Bad Nauheim'),
+('61239', ' Ober-MÃ¶rlen'),
+('61250', ' Usingen'),
+('61267', ' Neu-Anspach'),
+('61273', ' Wehrheim'),
+('61276', ' Weilrod'),
+('61279', ' GrÃ¤venwiesbach'),
+('61348', ' Bad Homburg v.d. HÃ¶he'),
+('61350', ' Bad Homburg v.d. HÃ¶he'),
+('61352', ' Bad Homburg v.d. HÃ¶he'),
+('61381', ' Friedrichsdorf'),
+('61389', ' Schmitten'),
+('61440', ' Oberursel (Taunus)'),
+('61449', ' Steinbach (Taunus)'),
+('61462', ' KÃ¶nigstein im Taunus'),
+('61476', ' Kronberg im Taunus'),
+('61479', ' GlashÃ¼tten'),
+('63065', ' Offenbach am Main'),
+('63067', ' Offenbach am Main'),
+('63069', ' Offenbach am Main'),
+('63071', ' Offenbach am Main'),
+('63073', ' Offenbach am Main'),
+('63075', ' Offenbach am Main'),
+('63110', ' Rodgau'),
+('63128', ' Dietzenbach'),
+('63150', ' Heusenstamm'),
+('63165', ' MÃ¼hlheim am Main'),
+('63179', ' Obertshausen'),
+('63225', ' Langen'),
+('63263', ' Neu-Isenburg'),
+('63303', ' Dreieich'),
+('63322', ' RÃ¶dermark'),
+('63329', ' Egelsbach'),
+('63450', ' Hanau'),
+('63452', ' Hanau'),
+('63454', ' Hanau'),
+('63456', ' Hanau'),
+('63457', ' Hanau'),
+('63477', ' Maintal'),
+('63486', ' BruchkÃ¶bel'),
+('63500', ' Seligenstadt'),
+('63505', ' Langenselbold'),
+('63512', ' Hainburg'),
+('63517', ' Rodenbach'),
+('63526', ' Erlensee'),
+('63533', ' Mainhausen'),
+('63538', ' GroÃŸkrotzenburg'),
+('63543', ' Neuberg'),
+('63546', ' Hammersbach'),
+('63549', ' Ronneburg'),
+('63571', ' Gelnhausen'),
+('63579', ' Freigericht'),
+('63584', ' GrÃ¼ndau'),
+('63589', ' Linsengericht'),
+('63594', ' Hasselroth'),
+('63599', ' BiebergemÃ¼nd'),
+('63607', ' WÃ¤chtersbach'),
+('63619', ' Bad Orb'),
+('63628', ' Bad Soden-SalmÃ¼nster'),
+('63633', ' Birstein'),
+('63636', ' Brachttal'),
+('63637', ' Jossgrund'),
+('63639', ' FlÃ¶rsbachtal'),
+('63654', ' BÃ¼dingen'),
+('63667', ' Nidda'),
+('63674', ' Altenstadt'),
+('63679', ' Schotten'),
+('63683', ' Ortenberg'),
+('63688', ' Gedern'),
+('63691', ' Ranstadt'),
+('63694', ' Limeshain'),
+('63695', ' Glauburg'),
+('63697', ' Hirzenhain'),
+('63699', ' Kefenrod'),
+('63739', ' Aschaffenburg'),
+('63741', ' Aschaffenburg'),
+('63743', ' Aschaffenburg'),
+('63755', ' Alzenau'),
+('63762', ' GroÃŸostheim'),
+('63768', ' HÃ¶sbach'),
+('63773', ' Goldbach'),
+('63776', ' MÃ¶mbris'),
+('63785', ' Obernburg a.Main'),
+('63791', ' Karlstein am Main'),
+('63796', ' Kahl am Main'),
+('63801', ' Kleinostheim'),
+('63808', ' Haibach'),
+('63811', ' Stockstadt am Main'),
+('63814', ' Mainaschaff'),
+('63820', ' Elsenfeld'),
+('63825', ' SchÃ¶llkrippen, Blankenbach'),
+('63826', ' Geiselbach'),
+('63828', ' Kleinkahl'),
+('63829', ' Krombach'),
+('63831', ' Wiesen, Wiesener Forst'),
+('63834', ' Sulzbach am Main'),
+('63839', ' Kleinwallstadt'),
+('63840', ' Hausen'),
+('63843', ' Niedernberg'),
+('63846', ' Laufach'),
+('63849', ' Leidersbach'),
+('63853', ' MÃ¶mlingen'),
+('63856', ' Bessenbach'),
+('63857', ' Waldaschaff, Waldaschaffer Forst'),
+('63860', ' Rothenbuch, Rothenbucher Forst'),
+('63863', ' Eschau'),
+('63864', ' Glattbach'),
+('63867', ' Johannesberg'),
+('63868', ' GroÃŸwallstadt'),
+('63869', ' HeigenbrÃ¼cken'),
+('63871', ' Heinrichsthal'),
+('63872', ' Heimbuchenthal'),
+('63874', ' Dammbach'),
+('63875', ' Mespelbrunn'),
+('63877', ' Sailauf'),
+('63879', ' Weibersbrunn, Rohrbrunner Forst'),
+('63897', ' Miltenberg'),
+('63906', ' Erlenbach a.Main'),
+('63911', ' Klingenberg a. Main'),
+('63916', ' Amorbach'),
+('63920', ' GroÃŸheubach'),
+('63924', ' Kleinheubach, RÃ¼denau'),
+('63925', ' Laudenbach'),
+('63927', ' BÃ¼rgstadt'),
+('63928', ' EichenbÃ¼hl'),
+('63930', ' Neunkirchen'),
+('63931', ' Kirchzell'),
+('63933', ' MÃ¶nchberg'),
+('63934', ' RÃ¶llbach'),
+('63936', ' Schneeberg'),
+('63937', ' Weilbach'),
+('63939', ' WÃ¶rth a.Main'),
+('64283', ' Darmstadt'),
+('64285', ' Darmstadt'),
+('64287', ' Darmstadt'),
+('64289', ' Darmstadt'),
+('64291', ' Darmstadt'),
+('64293', ' Darmstadt'),
+('64295', ' Darmstadt'),
+('64297', ' Darmstadt'),
+('64319', ' Pfungstadt'),
+('64331', ' Weiterstadt'),
+('64342', ' Seeheim-Jugenheim'),
+('64347', ' Griesheim'),
+('64354', ' Reinheim'),
+('64367', ' MÃ¼hltal'),
+('64372', ' Ober-Ramstadt'),
+('64380', ' RoÃŸdorf'),
+('64385', ' Reichelsheim (Odenwald)'),
+('64390', ' Erzhausen'),
+('64395', ' Brensbach'),
+('64397', ' Modautal'),
+('64401', ' GroÃŸ-Bieberau'),
+('64404', ' Bickenbach'),
+('64405', ' Fischbachtal'),
+('64407', ' FrÃ¤nkisch-Crumbach'),
+('64409', ' Messel'),
+('64521', ' GroÃŸ-Gerau'),
+('64546', ' MÃ¶rfelden-Walldorf'),
+('64560', ' Riedstadt'),
+('64569', ' Nauheim'),
+('64572', ' BÃ¼ttelborn'),
+('64579', ' Gernsheim'),
+('64584', ' Biebesheim am Rhein'),
+('64589', ' Stockstadt am Rhein'),
+('64625', ' Bensheim'),
+('64646', ' Heppenheim (BergstraÃŸe)'),
+('64653', ' Lorsch'),
+('64658', ' FÃ¼rth'),
+('64665', ' Alsbach-HÃ¤hnlein'),
+('64668', ' Rimbach'),
+('64673', ' Zwingenberg'),
+('64678', ' Lindenfels'),
+('64683', ' Einhausen'),
+('64686', ' Lautertal (Odenwald)'),
+('64689', ' Grasellenbach'),
+('64711', ' Erbach'),
+('64720', ' Michelstadt'),
+('64732', ' Bad KÃ¶nig'),
+('64739', ' HÃ¶chst i. Odw.'),
+('64747', ' Breuberg'),
+('64750', ' LÃ¼tzelbach'),
+('64753', ' Brombachtal'),
+('64754', ' Badisch SchÃ¶llenbach'),
+('64756', ' Mossautal'),
+('64757', ' Unter-Hainbrunn'),
+('64760', ' Oberzent'),
+('64807', ' Dieburg'),
+('64823', ' GroÃŸ-Umstadt'),
+('64832', ' Babenhausen'),
+('64839', ' MÃ¼nster'),
+('64846', ' GroÃŸ-Zimmern'),
+('64850', ' Schaafheim'),
+('64853', ' Otzberg'),
+('64859', ' Eppertshausen'),
+('65183', ' Wiesbaden'),
+('65185', ' Wiesbaden'),
+('65187', ' Wiesbaden'),
+('65189', ' Wiesbaden'),
+('65191', ' Wiesbaden'),
+('65193', ' Wiesbaden'),
+('65195', ' Wiesbaden'),
+('65197', ' Wiesbaden'),
+('65199', ' Wiesbaden'),
+('65201', ' Wiesbaden'),
+('65203', ' Wiesbaden'),
+('65205', ' Wiesbaden'),
+('65207', ' Wiesbaden'),
+('65232', ' Taunusstein'),
+('65239', ' Hochheim am Main'),
+('65307', ' Bad Schwalbach'),
+('65321', ' Heidenrod'),
+('65326', ' Aarbergen'),
+('65329', ' Hohenstein'),
+('65343', ' Eltville am Rhein'),
+('65344', ' Eltville am Rhein'),
+('65345', ' Eltville am Rhein'),
+('65346', ' Eltville am Rhein'),
+('65347', ' Eltville am Rhein'),
+('65366', ' Geisenheim'),
+('65375', ' Oestrich-Winkel'),
+('65385', ' RÃ¼desheim am Rhein'),
+('65388', ' Schlangenbad'),
+('65391', ' Lorch'),
+('65396', ' Walluf'),
+('65399', ' Kiedrich'),
+('65428', ' RÃ¼sselsheim'),
+('65439', ' FlÃ¶rsheim am Main'),
+('65451', ' Kelsterbach'),
+('65462', ' Ginsheim-Gustavsburg'),
+('65468', ' Trebur'),
+('65474', ' Bischofsheim'),
+('65479', ' Raunheim'),
+('65510', ' HÃ¼nstetten, Idstein'),
+('65520', ' Bad Camberg'),
+('65527', ' Niedernhausen'),
+('65529', ' Waldems'),
+('65549', ' Limburg'),
+('65550', ' Limburg'),
+('65551', ' Limburg'),
+('65552', ' Limburg'),
+('65553', ' Limburg'),
+('65554', ' Limburg'),
+('65555', ' Limburg'),
+('65556', ' Limburg');
 
 -- --------------------------------------------------------
 
@@ -4850,8 +4886,8 @@ INSERT DELAYED INTO `tbort` (`vaPLZ`, `vaStadt`) VALUES('65556', ' Limburg');
 --
 
 DROP TABLE IF EXISTS `tbunternehmen`;
-CREATE TABLE `tbunternehmen` (
-  `biUnternehmensID` bigint(20) NOT NULL,
+CREATE TABLE IF NOT EXISTS `tbunternehmen` (
+  `biUnternehmensID` bigint(20) NOT NULL AUTO_INCREMENT,
   `vaName` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
   `vaAdresse` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
   `vaPLZ` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
@@ -4859,29 +4895,18 @@ CREATE TABLE `tbunternehmen` (
   `tText` text COLLATE utf8_croatian_ci,
   `vaBranche` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
   `vaTelefonnummer` varchar(25) COLLATE utf8_croatian_ci NOT NULL,
-  `vaWeblinke` varchar(256) COLLATE utf8_croatian_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+  `vaWeblinke` varchar(256) COLLATE utf8_croatian_ci NOT NULL,
+  PRIMARY KEY (`biUnternehmensID`),
+  KEY `vaPLZ` (`vaPLZ`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
---
--- RELATIONEN DER TABELLE `tbunternehmen`:
---
-
---
--- TRUNCATE Tabelle vor dem Einfügen `tbunternehmen`
---
-
-TRUNCATE TABLE `tbunternehmen`;
 --
 -- Daten für Tabelle `tbunternehmen`
 --
 
-INSERT DELAYED INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`, `vaTelefonnummer`, `vaWeblinke`) VALUES(1, 'EP', 'Die Strasssss', '01067', '', NULL, 'ET', '', '');
-INSERT DELAYED INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`, `vaTelefonnummer`, `vaWeblinke`) VALUES(2, '', 'Frings Frings', '01067', 'Frings@Frings', NULL, 'IT', '', '');
-INSERT DELAYED INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`, `vaTelefonnummer`, `vaWeblinke`) VALUES(3, ' USA', 'UpdateStatusUnternehmen UpdateStatusUnternehmen', '0', 'UpdateStatusUnternehmen@UpdateStatusUnternehmen', NULL, 'UpdateStatusUnternehmen', '', '');
-INSERT DELAYED INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`, `vaTelefonnummer`, `vaWeblinke`) VALUES(6, ' Frima', 'Frima Frima', '0', 'Frima@Frima', NULL, 'Frima', '', '');
-INSERT DELAYED INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`, `vaTelefonnummer`, `vaWeblinke`) VALUES(7, ' Ger', 'Ger v', '0', 'Ger@Ger', NULL, 'Ger', '', '');
-INSERT DELAYED INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`, `vaTelefonnummer`, `vaWeblinke`) VALUES(8, 'deactivated Sebastian Hauscheid', 'Karnaper StraÃŸe, 6 6', '0', 'sebastian.hauscfffheid@arcor.de', NULL, 'IT', '', '');
-INSERT DELAYED INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`, `vaTelefonnummer`, `vaWeblinke`) VALUES(9, 'deactivated ', ' ', '0', '', NULL, '', '', '');
+INSERT INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, `vaPLZ`, `vaEmail`, `tText`, `vaBranche`, `vaTelefonnummer`, `vaWeblinke`) VALUES
+(1, 'EP', 'Die Strasssss', '01067', '', NULL, 'ET', '', ''),
+(2, '', 'Frings Frings', '01067', 'Frings@Frings', NULL, 'IT', '', '');
 
 -- --------------------------------------------------------
 
@@ -4890,8 +4915,8 @@ INSERT DELAYED INTO `tbunternehmen` (`biUnternehmensID`, `vaName`, `vaAdresse`, 
 --
 
 DROP TABLE IF EXISTS `tbuser`;
-CREATE TABLE `tbuser` (
-  `biUserID` bigint(20) NOT NULL,
+CREATE TABLE IF NOT EXISTS `tbuser` (
+  `biUserID` bigint(20) NOT NULL AUTO_INCREMENT,
   `vaUsername` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
   `vaUserRole` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
   `vaEmail` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
@@ -4902,30 +4927,21 @@ CREATE TABLE `tbuser` (
   `vaKlasse` varchar(50) COLLATE utf8_croatian_ci DEFAULT NULL,
   `dGeburtsjahr` date DEFAULT NULL,
   `vaPasswort` varchar(256) COLLATE utf8_croatian_ci NOT NULL,
-  `tText` text COLLATE utf8_croatian_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+  `tText` text COLLATE utf8_croatian_ci NOT NULL,
+  PRIMARY KEY (`biUserID`),
+  UNIQUE KEY `vaUsername` (`vaUsername`),
+  UNIQUE KEY `vaEmail` (`vaEmail`),
+  KEY `vaPLZ` (`vaPLZ`)
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
---
--- RELATIONEN DER TABELLE `tbuser`:
---
-
---
--- TRUNCATE Tabelle vor dem Einfügen `tbuser`
---
-
-TRUNCATE TABLE `tbuser`;
 --
 -- Daten für Tabelle `tbuser`
 --
 
-INSERT DELAYED INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(1, '0', '0', 'Tom', 'Tom', 'Tom', 'TIM', 'Tom', 'Tom', '2018-02-28', 'TIM', 'Tom');
-INSERT DELAYED INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(2, 'TIM', 'student', 'TIM@TIM', 'TIM', 'TIM', 'TIM v', '0', 'TIM', NULL, '6ea50202636d798337a6c4ea885cbbd47772795a3257c309451ab27686c4dd92', '');
-INSERT DELAYED INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(3, 'TOM', 'student', 'TOM@TOM', 'TOM', 'TOM', 'TOM TOM', '0', 'TOM', '0000-00-00', 'c8435b00e294b7b0ad44311d8d816b8eb1f52ce6abecf1008d4ee715f3c4f1e2', '');
-INSERT DELAYED INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(6, 'Deine', 'student', 'Deine@Deine', 'Deine', 'Mutter', 'ist ein', '0', 'Sonic', '0000-00-00', '230df56de4e0e1e57cf207848f995a4c3e1e17823aece47ec004daa565148ba3', '');
-INSERT DELAYED INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(7, 'maggiduscher', 'student', 'maggiduscher@maggiduscher.com', 'maggiduscher', 'maggiduscher', 'maggiduscher 12', '0', 'ITA51', '0000-00-00', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', '');
-INSERT DELAYED INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(10, 'Name', 'teacher', 'Name@Name', 'Name', 'Name', 'Name Name', '0', NULL, '0000-00-00', 'dcd1d5223f73b3a965c07e3ff5dbee3eedcfedb806686a05b9b3868a2c3d6d50', '');
-INSERT DELAYED INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(15, 'Lehrer', 'teacher', 'Lehrer@Lehrer', 'Lehrer', 'Lehrer', 'Lehrer Lehrer', '0', NULL, '0000-00-00', '2c0004247db2e335c34565cdb82bb431da76b68dc409164c2b0dcbc499052892', '');
-INSERT DELAYED INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(26, 'TheChesterist', 'teacher', 'sebasdddtian.hauscheid@arcor.de', 'Sebastiand', 'Hauscheid', 'Karnaper StraÃŸe, 6 6', '01067', NULL, '0000-00-00', 'a0720e377789635154041b91e9bedadb092cb83d8bfed785df8e6b42a29cd5aa', '');
+INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES
+(1, '0', '0', 'Tom', 'Tom', 'Tom', 'TIM', 'Tom', 'Tom', '2018-02-28', 'TIM', 'Tom'),
+(7, 'maggiduscher', 'student', 'maggiduscher@maggiduscher.com', 'maggiduscher', 'maggiduscher', 'maggiduscher 12', '0', 'ITA51', '0000-00-00', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', ''),
+(26, 'TheChesterist', 'teacher', 'sebasdddtian.hauscheid@arcor.de', 'Sebastiand', 'Hauscheid', 'Karnaper StraÃŸe, 6 6', '01067', NULL, '0000-00-00', 'a0720e377789635154041b91e9bedadb092cb83d8bfed785df8e6b42a29cd5aa', '');
 
 -- --------------------------------------------------------
 
@@ -4934,26 +4950,20 @@ INSERT DELAYED INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`,
 --
 
 DROP TABLE IF EXISTS `tbuser_bewerbungen`;
-CREATE TABLE `tbuser_bewerbungen` (
+CREATE TABLE IF NOT EXISTS `tbuser_bewerbungen` (
   `biAngebotsID` bigint(20) DEFAULT NULL,
   `biUserID` bigint(20) DEFAULT NULL,
-  `dBewerbung` date NOT NULL
+  `dBewerbung` date NOT NULL,
+  KEY `biAngebotesID` (`biAngebotsID`),
+  KEY `biUserID` (`biUserID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
---
--- RELATIONEN DER TABELLE `tbuser_bewerbungen`:
---
-
---
--- TRUNCATE Tabelle vor dem Einfügen `tbuser_bewerbungen`
---
-
-TRUNCATE TABLE `tbuser_bewerbungen`;
 --
 -- Daten für Tabelle `tbuser_bewerbungen`
 --
 
-INSERT DELAYED INTO `tbuser_bewerbungen` (`biAngebotsID`, `biUserID`, `dBewerbung`) VALUES(2, 1, '2018-02-23');
+INSERT INTO `tbuser_bewerbungen` (`biAngebotsID`, `biUserID`, `dBewerbung`) VALUES
+(2, 1, '2018-02-23');
 
 -- --------------------------------------------------------
 
@@ -4962,94 +4972,32 @@ INSERT DELAYED INTO `tbuser_bewerbungen` (`biAngebotsID`, `biUserID`, `dBewerbun
 --
 
 DROP TABLE IF EXISTS `tbuser_bewertung`;
-CREATE TABLE `tbuser_bewertung` (
+CREATE TABLE IF NOT EXISTS `tbuser_bewertung` (
   `biUnternehmensID` bigint(20) DEFAULT NULL,
   `biUserID` bigint(20) DEFAULT NULL,
   `iPunkte` int(11) NOT NULL,
-  `vaText` varchar(50) COLLATE utf8_croatian_ci NOT NULL
+  `vaText` varchar(50) COLLATE utf8_croatian_ci NOT NULL,
+  KEY `biAngebotesID` (`biUnternehmensID`),
+  KEY `biUserID` (`biUserID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
---
--- RELATIONEN DER TABELLE `tbuser_bewertung`:
---
-
---
--- TRUNCATE Tabelle vor dem Einfügen `tbuser_bewertung`
---
-
-TRUNCATE TABLE `tbuser_bewertung`;
 --
 -- Daten für Tabelle `tbuser_bewertung`
 --
 
-INSERT DELAYED INTO `tbuser_bewertung` (`biUnternehmensID`, `biUserID`, `iPunkte`, `vaText`) VALUES(1, 1, 10, 'Super duper');
+INSERT INTO `tbuser_bewertung` (`biUnternehmensID`, `biUserID`, `iPunkte`, `vaText`) VALUES
+(1, 1, 10, 'Super duper');
 
 --
--- Indizes der exportierten Tabellen
---
-
---
--- Indizes für die Tabelle `tbangebote`
---
-ALTER TABLE `tbangebote`
-  ADD PRIMARY KEY (`biAngebotsID`),
-  ADD KEY `biUnternehmensID` (`biUnternehmensID`);
-
---
--- Indizes für die Tabelle `tbort`
---
-ALTER TABLE `tbort`
-  ADD PRIMARY KEY (`vaPLZ`);
-
---
--- Indizes für die Tabelle `tbunternehmen`
---
-ALTER TABLE `tbunternehmen`
-  ADD PRIMARY KEY (`biUnternehmensID`),
-  ADD KEY `vaPLZ` (`vaPLZ`);
-
---
--- Indizes für die Tabelle `tbuser`
---
-ALTER TABLE `tbuser`
-  ADD PRIMARY KEY (`biUserID`),
-  ADD UNIQUE KEY `vaUsername` (`vaUsername`),
-  ADD UNIQUE KEY `vaEmail` (`vaEmail`),
-  ADD KEY `vaPLZ` (`vaPLZ`);
-
---
--- Indizes für die Tabelle `tbuser_bewerbungen`
---
-ALTER TABLE `tbuser_bewerbungen`
-  ADD KEY `biAngebotesID` (`biAngebotsID`),
-  ADD KEY `biUserID` (`biUserID`);
-
---
--- Indizes für die Tabelle `tbuser_bewertung`
---
-ALTER TABLE `tbuser_bewertung`
-  ADD KEY `biAngebotesID` (`biUnternehmensID`),
-  ADD KEY `biUserID` (`biUserID`);
-
---
--- AUTO_INCREMENT für exportierte Tabellen
+-- Constraints der exportierten Tabellen
 --
 
 --
--- AUTO_INCREMENT für Tabelle `tbangebote`
+-- Constraints der Tabelle `tbangenommene`
 --
-ALTER TABLE `tbangebote`
-  MODIFY `biAngebotsID` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
---
--- AUTO_INCREMENT für Tabelle `tbunternehmen`
---
-ALTER TABLE `tbunternehmen`
-  MODIFY `biUnternehmensID` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
---
--- AUTO_INCREMENT für Tabelle `tbuser`
---
-ALTER TABLE `tbuser`
-  MODIFY `biUserID` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;COMMIT;
+ALTER TABLE `tbangenommene`
+  ADD CONSTRAINT `tbangenommene_ibfk_1` FOREIGN KEY (`biUserID`) REFERENCES `tbuser` (`biUserID`),
+  ADD CONSTRAINT `tbangenommene_ibfk_2` FOREIGN KEY (`biAngebotsID`) REFERENCES `tbangebote` (`biAngebotsID`);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
