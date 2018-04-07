@@ -3,7 +3,7 @@
     include_once "admin_utils.php";
     include_once "../utils/database.php";
     IsLoggedIn();
-    AllowedRolesOnly(array("admin"));
+    AllowedRolesOnly(array("admin","teacher"));
 
     if(isset($_POST['submitEdit']))
     {

@@ -19,13 +19,12 @@
 		
 	}
 	
-        $sqlresult2 = databaseQuery("SELECT *,AVG(IFNULL(iPunkte,0)) FROM tbangebote "
-
+        $sqlresult2 = databaseQuery("SELECT *,AVG(IFNULL(iPunkte,0)) AS \"Punkte\" FROM tbangebote "
                 . "JOIN tbunternehmen USING(biUnternehmensID) "
                 . "JOIN tbort USING(vaPLZ)"
                 . "LEFT OUTER JOIN tbuser_bewertung USING(biUnternehmensID) "
                 . $sqlextention
-                . "GROUP BY biUnternehmensID"
+                . "GROUP BY biAngebotsID"
                 . $sqlextention2
                 .";");
         $counter = 0;
@@ -35,15 +34,16 @@
             $start = new DateTime($value['dAnfangsdatum']);
             $end = new DateTime($value['dEnddatum']);
             $heute = new DateTime("now");
-            if($end > $heute && $start <= $heute){
+            if($end > $heute && $start <= $heute && ($value['iGesuchte_Bewerber']-$value['iAngenommene_Bewerber']) > 0){
                 $data[$counter]['id'] = $value['biUnternehmensID'];
+                $data[$counter]['angebot'] = $value['biAngebotsID'];
                 $data[$counter]['name'] = $value['vaName'];
                 $data[$counter]['branche'] = $value['vaAngebots_Art'];
                 $data[$counter]['zeitraum'] = "Vom ".($start->format("d.m.Y"))." bis ".($end->format("d.m.Y"));
                 $data[$counter]['frei'] = ($value['iGesuchte_Bewerber']-$value['iAngenommene_Bewerber']);
                 $data[$counter]['email'] = $value['vaEmail'];
                 $data[$counter]['entfernung'] = (GetDistanceFromGoogleAPI(GetAddressFromUser($_SESSION['id']),$value['vaAdresse']." ".$value['vaPLZ']." ".$value['vaStadt']));
-                $data[$counter]['punkte'] = $value['iPunkte'];
+                $data[$counter]['punkte'] = round($value['Punkte']);
                 $counter = $counter+1;
             }else if($end <= $heute){
                 $remove[$counter2]['id'] = $value['biAngebotsID'];
@@ -157,7 +157,7 @@
                         $output=preg_replace('/\s+/','',$output);
                         if((!isset($_POST['ok']))||($_POST['entfernung']=="default")||(isset($_POST['ok'])&&($_POST['entfernung']!="default")&&$output<=$_POST['entfernung']))
                         {
-                            echo "<tr><td><a href='../profiles/company/?id=".$value['id']."'>".$value['name']."</a></td><td>".$value['branche']."</td><td>".$value['zeitraum']."</td><td>".$value['frei']."</td><td>".$value['entfernung']."</td><td>".$value['punkte']."</td><td><a href='mailto:".$value['email']."?Subject=Bewerbung'>Bewerben</a></td></tr>";
+                            echo "<tr><td><a href='../profiles/company/?id=".$value['id']."'>".$value['name']."</a></td><td>".$value['branche']."</td><td>".$value['zeitraum']."</td><td>".$value['frei']."</td><td>".$value['entfernung']."</td><td>".$value['punkte']."</td><td><a href='mail.php?id=".$value['angebot']."'  target='_blank' rel='noopner'>Bewerben</a></td></tr>";
                         }
                         
                     }

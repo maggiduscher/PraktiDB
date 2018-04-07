@@ -3,10 +3,10 @@
     include_once "admin_utils.php";
     include_once "../utils/database.php";
     IsLoggedIn();
-    AllowedRolesOnly(array("admin"));
+    AllowedRolesOnly(array("admin","teacher"));
     if(isset($_POST['submitEdit']))
     {
-        $sqlresult = databaseQuery("CALL UpdateUser(STR_TO_DATE('".$_POST['geburtstag']."','%Y-%m-%d'), '".$_POST['desc']."', '".$_POST['address']."', '".$_POST['email']."', '".$_POST['klasse']."', '".$_POST['nachname']."', '".$_POST['ort']."', '".$_POST['username']."', '".$_POST['role']."', '".$_POST['vorname']."', ".$_POST['userID'].", ".$_POST['angenommen'].");");
+        $sqlresult = databaseQuery("CALL UpdateUser(STR_TO_DATE('".$_POST['geburtstag']."','%Y-%m-%d'), '".$_POST['desc']."', '".$_POST['address']."', '".$_POST['email']."', '".$_POST['klasse']."', '".$_POST['nachname']."', '".$_POST['ort']."', '".$_POST['username']."', '".$_POST['role']."', '".$_POST['vorname']."', ".$_POST['userID'].");");
         if($sqlresult != null)
         {
             header("location: ../adminTool/userList.php?succ");
@@ -37,6 +37,7 @@
     }else if(isset($_POST['submitAccept']))
     {
         $sqlresult = databaseQuery("CALL AddAngenommene(".$_POST['user'].", ".$_POST['offer'].");");
+        $angenommen = databaseQuery("CALL IncrementAngebotsAngenommene(".$_POST['offer'].")");
         if($sqlresult != null)
         {
             header("location: ../adminTool?succ");

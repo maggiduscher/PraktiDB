@@ -62,7 +62,7 @@
         }
         if($allowed === false)
         {
-            CreateError("Du nix Zugriff opfa!");
+            CreateError("Sie haben keine Zugriffsrechte auf diese Seite!");
             die();
         }
     }

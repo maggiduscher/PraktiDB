@@ -153,16 +153,6 @@
             ."<label for='student'>Leherer/in</label><br/>"
             ."<input type='radio' name='role' id='admin' value='admin'";if($userdata['vaUserRole']=="admin")echo "checked"; echo"/>"
             ."<label for='student'>Admin</label><br/>"
-        ."<label for='angenommen'>Wurde der Schüler angnommen?</label><br/>";
-        if($userdata['bAngenommen'] == 1){
-            $angenommen1 = "checked";
-            $angenommen2 = "";
-        }else{
-            $angenommen1 = "";
-            $angenommen2 = "checked";
-        }
-        echo "<label for='ja'>Ja</label><input type='radio' name='angenommen' id='angenommen' value='1' ".$angenommen1."/><br/>"
-        ."<label for='nein'>Nein</label><input type='radio' name='angenommen' id='angenommen' value='0' ".$angenommen2."/><br/>"
         ."<input id='submitEdit' name='submitEdit' type='submit' value='Speichern'/>"
         ."<input id='userID' name='userID' type='hidden' value='".$_GET['edit']."'/>"
         ."</form>";

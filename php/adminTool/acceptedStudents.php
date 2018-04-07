@@ -3,8 +3,13 @@
 	include_once "admin_utils.php";
         IsLoggedIn();
         AllowedRolesOnly(array("teacher","admin"));
-        if(isset($_GET['id'])){
+        if(isset($_GET['id']))
+        {
+            $sqlresult2 = databaseQuery("CALL GetAngebotFromAngenommene(".$_GET['id'].")");
+            $id = $sqlresult2->fetch_array()['biAngebotsID'];
+            $sqlresult1 = databaseQuery("CALL DecrementAngebotsAngenommene(".$id.")");
             $sqlresult = databaseQuery("CALL DeleteAngenommene(".$_GET['id'].");");
+            
         }
 ?>
 <html>
@@ -24,7 +29,7 @@
                     <?php
                         $sqlresult = databaseQuery("CALL GetAllNichtAngenommene()");
                         $notacceptedUsers = $sqlresult->fetch_all();
-                        $sqlresult2 = databaseQuery("CALL GetAllAngenommen()");
+                        $sqlresult2 = databaseQuery("CALL GetAllAngenommene()");
                         $acceptedUsers = $sqlresult2->fetch_all();
                         echo "<div id='acceptedList'>";
                         echo "<h2>Liste aller angenommener Sch&uuml;ler</h2>";
