@@ -12,15 +12,15 @@
     {
 
 		echo "<div id=\"nav\">"
-				."<div id=\"nav-item\"> <a href=\"/PraktiDB/php/overview/\">Starseite </a> </div>"
-				."<div id=\"nav-item\"> <a href=\"/PraktiDB/php/profiles/user/?id=".$_SESSION['id']."\">Profil </a> </div>"
-				."<div id=\"nav-item\"> <a href=\"#\">Placeholder2 </a> </div>"
-				."<div id=\"nav-item\"> <a href=\"#\">Placeholder3 </a> </div>";
+				."<a href=\"/PraktiDB/php/overview/\">Starseite </a>"
+				."<a href=\"/PraktiDB/php/profiles/user/?id=".$_SESSION['id']."\">Profil </a>"
+				."<a href=\"#\">Placeholder2 </a>"
+				."<a href=\"#\">Placeholder3 </a>";
                                 if(IsRole('admin')|| IsRole('teacher'))
                                 {
-                                    echo "<div id=\"nav-item\"> <a href=\"/PraktiDB/php/adminTool/\">Kontrollzentrum </a> </div>";
+                                    echo "<a href=\"/PraktiDB/php/adminTool/\">Kontrollzentrum </a>";
                                 }
-				echo "<div id=\"nav-item\"> <a href=\"/PraktiDB/php/login/\">Logout </a> </div>"
+				echo "<a href=\"/PraktiDB/php/login/\">Logout </a>"
                                 
 			."</div>\n";
 

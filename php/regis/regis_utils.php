@@ -7,11 +7,13 @@
             setcookie("type", "company",0);
             $sqlresult = databaseQuery("CALL GetAllOrt()");
             $places = $sqlresult->fetch_all();
-            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>"
-		       	.'<div id = "erros" > <ul>';
-                  foreach($erros as $error){echo '<li>'.$error.'</li> <br />';}
-				  echo '</ul></div>'
-                    ."<div id='name'>"
+            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>";
+		       	if(count($erros) > 1 || $erros[0] != NULL){
+					echo '<div id = "error_box" >';
+					foreach($erros as $error){echo $error.'<br />';}
+					echo '</div>';
+				}
+                    echo "<div id='name'>"
                             ."<label for='name'>Name: </label>"
                             ."<input type='text' name='name' id='name' placeholder='Name' required/><br/>"
                     ."</div>"
@@ -44,7 +46,7 @@
                     ."</div>"
                     ."<div id='branche'>"
                             ."<label for='branche'>Branche: </label>"
-                            ."<input type='text' name='branche' id='branche' placeholder='Branche' required/><br/>"
+                            ."<input type='text' name='branche' id='branche' placeholder='Branche'/><br/>"
                             
                     ."</div>"
 					
@@ -62,11 +64,13 @@
 	        setcookie("type", "student",0);	
 			$sqlresult = databaseQuery("CALL GetAllOrt()");
             $places = $sqlresult->fetch_all();
-			echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>"
-                  .'<div id = "erros" > <ul>';
-                 foreach($erros as $error){echo '<li>'.$error.'</li> <br />';}
-				 echo '</ul></div>'
-				."<div id='vorname'>"
+			echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>";
+                if(count($erros) > 1 || $erros[0] != NULL){
+					echo '<div id = "error_box" >';
+					foreach($erros as $error){echo $error.'<br />';}
+					echo '</div>';
+				}
+                    echo "<div id='vorname'>"
 					."<label for='vorname'>Vorname: </label>"
 					."<input type='text' name='vorname' id='vorname' placeholder='Vorname' required/><br/>"
 				."</div>"
@@ -114,16 +118,19 @@
 				."</div>"
             ."</form>";	  
 	}
+	
 	function generateFormTeacher($erros)
 	{
             setcookie("type", "teacher",0);
             $sqlresult = databaseQuery("CALL GetAllOrt()");
             $places = $sqlresult->fetch_all();
-            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>"
-			    .'<div id = "erros" > <ul>';
-				 	foreach($erros as $error){echo '<li>'.$error.'</li> <br />';}
-				    echo '</ul></div>'
-                    ."<div id='vorname'>"
+            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>";
+			    if(count($erros) > 1 || $erros[0] != NULL){
+					echo '<div id = "error_box" >';
+					foreach($erros as $error){echo $error.'<br />';}
+					echo '</div>';
+				}
+                    echo "<div id='vorname'>"
                             ."<label for='vorname'>Vorname: </label>"
                             ."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
                     ."</div>"
@@ -183,6 +190,8 @@
             ."</form>";
 	}
 	
+	
+	
 	function CheckTheDate($date,&$Data,&$Fehler)
 	{
 		$Check = True;
@@ -199,6 +208,22 @@
 	    if(!$Check){$Fehler[] = "Bitte geben Sie ein richtiges Datum ein"; $Data[] = "Fehler";}
 		return $Check;
 	}
+	
+	function CheckEmail($Email)
+	{
+		$sqlresult = databasePreparedStatement("CALL CheckEmail(?);",[$Email]);
+		$output = $sqlresult->fetch_array();
+		
+		if($output['vaEmail'] == Null){return True;}
+		else{return False;}
+	}
+	
+	function CheckNachZahlen($Wort)
+	{	
+	    if(preg_match('/[0-9]/',$Wort) != 0 ){return false;}
+		else{return True;}	    	
+	}
+	
 	
 	function FindeFehler($Data,&$Fehler,$type)
 	{
@@ -256,9 +281,7 @@
 				    }
 				}
 	}
-	
-							
-	
+		
 	function registerUser($type)
 	{
 		
@@ -275,15 +298,21 @@
                     $Data[] = $datetime->format('Y-m-d');	
 				}
 				$Data[] = $adress;
-				$Data[] = $_POST['email'];
+				if(CheckEmail($_POST['email'])){$Data[] = $_POST['email'];}
+				else{$Data[] = "Fehler"; $Fehler[] = "Die EMail ist schon vorhanden";}
+				
 				$Data[] = $_POST['klasse'];
-				$Data[] = $_POST['nachname'];
+				if(CheckNachZahlen($_POST['nachname'])){$Data[] = $_POST['nachname'];}
+				else{$Data[] = "Fehler"; $Fehler[] = "Ein Nachname hat keine Zalen";}
+				
 				if(empty(trim($_POST['password']))){$Data[] = " ";}
 				else{$Data[] = hash("sha256",$_POST['password']);}
 				$Data[] = $_POST['ort'];
 				$Data[] = $_POST['username'];
 				$Data[] = 'student';
-				$Data[] = $_POST['vorname'];
+				if(CheckNachZahlen($_POST['vorname'])){$Data[] = $_POST['vorname'];;}
+				else{$Data[] = "Fehler"; $Fehler[] = "Ein Vorname hat keine Zalen";}
+				
 				
 			
 				
@@ -302,7 +331,8 @@
                 
 				$Data[] = $adress;
 				$Data[] = $_POST['ort'];
-				$Data[] = $_POST['branche'];
+				if(CheckNachZahlen($_POST['branche'])){$Data[] = $_POST['branche'];}
+				else{$Data[] = "Fehler"; $Fehler[] = "Eine Branche hat keine Zalen";}				
 				$Data[] = $_POST['email'];
 				if(preg_match('/[A-Z]/i',$_POST['telefonnummer']) == 0 ){$Data[] = $_POST['telefonnummer'];}
 				else{$Data[] = " ";}
@@ -373,13 +403,15 @@
 				$Data[] = $adress;
 				$Data[] = $_POST['email'];
 				$Data[] =  Null; //$_POST['klasse'];
-				$Data[] = $_POST['nachname'];
+			    if(CheckNachZahlen($_POST['nachname'])){$Data[] = $_POST['nachname'];}
+				else{$Data[] = "Fehler"; $Fehler[] = "Ein Nachname hat keine Zalen";}
 				if(empty(trim($_POST['password']))){$Data[] = " ";}
 				else{$Data[] = hash("sha256",$_POST['password']);}
 				$Data[] = $_POST['ort'];
 				$Data[] = $_POST['username'];
 				$Data[] = 'deactivated teacher';
-				$Data[] = $_POST['vorname'];
+				if(CheckNachZahlen($_POST['vorname'])){$Data[] = $_POST['vorname'];}
+				else{$Data[] = "Fehler"; $Fehler[] = "Ein Vorname hat keine Zalen";}			
 				
 				FindeFehler($Data,$Fehler,$type);
 				

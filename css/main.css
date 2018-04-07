@@ -24,44 +24,43 @@ body{
 #nav{
 	
 	display: flex;
+	display: -webkit-flex;
 	width: 890px;
+	height: 55px;
 	background-color: #595963;
 	margin: 0 auto;
-	padding: 17px 0 17px 0;
 	justify-content: space-between;
+	align-items: stretch;
 	border-radius: 7px 7px 0px 0px;
 }
 
 
-#nav-item{
-
-	
-}
-
-#nav-item a{
+#nav a{
 	
 	text-decoration: none;
-	padding: 17px 45px 17px 45px;
+	flex: 1;
+	text-align: center;
+    padding-top: 16px;
 	
 }
 
-#nav #nav-item:first-child a{
+#nav a:first-child{
 	
 	border-radius: 7px 0px 0px 0px;
 }
 
-#nav #nav-item:last-child a{
+#nav a:last-child{
 	
 	border-radius: 0px 7px 0px 0px;
 }
 
-#nav-item a:hover{
+#nav a:hover{
 	
 	background-color: #50505A;
 	
 }
 
-#nav-item a:active{
+#nav a:active{
 	
 	background-color: #CFCFCF;
 	
@@ -78,6 +77,8 @@ body{
 	text-align: center;
 	margin: auto;
 	padding: 7px;
+	display: block;
+	color: #717171;
 
 }
 
@@ -92,7 +93,8 @@ body{
 	text-align: center;
 	margin: auto;
 	padding: 7px;
-
+	display: block;
+	color: #717171;
 }
 
 input:not([type="button"]):not([type="submit"]), select{
@@ -111,7 +113,7 @@ input:not([type="button"]):not([type="submit"]):focus, select{
 
 input:not([type="button"]):not([type="submit"])::placeholder{
 	
-	color: #8a8a89;;
+	color: #8a8a89;
 	
 }
 
