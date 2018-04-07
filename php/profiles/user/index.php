@@ -46,7 +46,7 @@
 <html>
     <?php            
         echo "</head>";
-		CreateHead("Profil von ".$userdata['vaUsername']."");
+		CreateHead("Profil von ".$userdata['vaVorname']." ".$userdata["vaNachname"]."");
 		echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/profile.css\" />";
 		echo "</head>";
 		
@@ -59,7 +59,7 @@
             {
              $alter = date_diff(date_create(date("Y-m-d")),date_create($userdata['dGeburtsjahr']));
 			 echo "<div id='main'>"
-			. "<h1>Profil von ".$userdata['vaUsername']."</h1>"
+			. "<h1>Profil von ".$userdata['vaVorname']." ".$userdata["vaNachname"]."</h1>"
 			. "<div id='profile'>"
 				."<form method=\"POST\" enctype=\"multipart/form-data\">";				
 				if(isset($_POST['submit']) & !isset($_GET['uploaded'])) {
