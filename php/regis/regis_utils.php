@@ -44,9 +44,16 @@
                     ."</div>"
                     ."<div id='branche'>"
                             ."<label for='branche'>Branche: </label>"
-                            ."<input type='text' name='branche' id='branche' placeholder='Branche'required/><br/>"
-                            ."<input id='submit' name='submit' type='submit' value='Registrieren/>"
+                            ."<input type='text' name='branche' id='branche' placeholder='Branche' required/><br/>"
+                            
                     ."</div>"
+					
+					 ."<div id='Text'>"
+                            ."<label for='Text'>Text: </label>"
+                            ."<textarea rows=\"4\" cols=\"50\" name = \"Text\"></textarea><br />"
+                            ."<input id='submit' name='submit' type='submit' value='Registrieren'/>"
+                    ."</div>"
+					
                 ."</form>";
 	}
 	
@@ -300,6 +307,7 @@
 				if(preg_match('/[A-Z]/i',$_POST['telefonnummer']) == 0 ){$Data[] = $_POST['telefonnummer'];}
 				else{$Data[] = " ";}
 				$Data[] = $_POST['webseite'];
+				$Data[] = $_POST['Text'];
 
 				
 					for($i= 0; $i < count($Data);++$i)
@@ -336,7 +344,9 @@
 							  $Fehler[] = "Sie haben keine Webseite eingegeben";
 							  break;
 							  
-							 
+							  case 7:
+							  $Fehler[] = "Sie haben keine Text eingegeben";
+							  break;
 
 							  default: 
 							  break;
@@ -344,11 +354,10 @@
 						  }
 				     }
 				  }
-				
-				
+								
 				if(count($Fehler)!= 0){return $Fehler;}
 				else{
-					$sqlresult = databasePreparedStatement("CALL AddUnternehmen(?,?,?,?,?,?,?);",$Data);
+					$sqlresult = databasePreparedStatement("CALL AddUnternehmen(?,?,?,?,?,?,?,?);",$Data);
 					return Null;
 				}
 				

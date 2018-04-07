@@ -15,8 +15,13 @@
 				."<div id=\"nav-item\"> <a href=\"/PraktiDB/php/overview/\">Starseite </a> </div>"
 				."<div id=\"nav-item\"> <a href=\"/PraktiDB/php/profiles/user/?id=".$_SESSION['id']."\">Profil </a> </div>"
 				."<div id=\"nav-item\"> <a href=\"#\">Placeholder2 </a> </div>"
-				."<div id=\"nav-item\"> <a href=\"#\">Placeholder3 </a> </div>"
-				."<div id=\"nav-item\"> <a href=\"/PraktiDB/php/login/\">Logout </a> </div>"
+				."<div id=\"nav-item\"> <a href=\"#\">Placeholder3 </a> </div>";
+                                if(IsRole('admin')|| IsRole('teacher'))
+                                {
+                                    echo "<div id=\"nav-item\"> <a href=\"/PraktiDB/php/adminTool/\">Kontrollzentrum </a> </div>";
+                                }
+				echo "<div id=\"nav-item\"> <a href=\"/PraktiDB/php/login/\">Logout </a> </div>"
+                                
 			."</div>\n";
 
 
@@ -84,4 +89,4 @@
         echo "<div id='warning_box'>".$msg."</div>";
     }
 
-	?>
+?>

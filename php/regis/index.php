@@ -38,9 +38,9 @@
 							    }
 							}
 						else{
-							 registerUser($_COOKIE['type']);
+							 //registerUser($_COOKIE['type']);
                              unset($_COOKIE['type']);
-                            setcookie('type', null, -1, '/');
+                             setcookie('type', null, -1, '/');
 						}
 						
                     }
