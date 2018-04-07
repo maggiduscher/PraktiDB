@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 06. Apr 2018 um 18:42
+-- Erstellungszeit: 07. Apr 2018 um 17:19
 -- Server-Version: 10.1.21-MariaDB
 -- PHP-Version: 5.6.30
 
@@ -29,6 +29,12 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS `AddAngebot`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `AddAngebot` (IN `UnternehmensID` BIGINT, IN `Anfangsdatum` DATE, IN `Enddatum` DATE, IN `Angebotsart` VARCHAR(50), IN `Gesucht` INT)  BEGIN
 INSERT INTO tbangebote(biUnternehmensID,dAnfangsdatum, dEnddatum,vaAngebots_Art,iGesuchte_Bewerber,iAnzahl_Bewerber,iAngenommene_Bewerber) VALUES(UnternehmensID,Anfangsdatum,Enddatum,Angebotsart,Gesucht,0,0);
+END$$
+
+DROP PROCEDURE IF EXISTS `AddAngenommene`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `AddAngenommene` (IN `UserID` BIGINT, IN `AngebotsID` BIGINT)  NO SQL
+BEGIN
+ INSERT INTO tbangenommene VALUES(UserID,AngebotsID);
 END$$
 
 DROP PROCEDURE IF EXISTS `AddBewerbung`$$
@@ -58,6 +64,13 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `AddUser` (IN `Geburtsjahr` DATE, IN
 INSERT INTO tbuser(dGeburtsjahr,vaAdresse,vaEmail,vaKlasse,vaNachname,vaPasswort,vaPLZ,vaUsername,vaUserRole,vaVorname)VALUES(Geburtsjahr,Adresse, EMail, Klasse, Nachname ,  Passwort ,  PLZ ,  Username ,  UserRole ,  Vorname );
 END$$
 
+DROP PROCEDURE IF EXISTS `CheckEmail`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `CheckEmail` (IN `EMail` VARCHAR(50))  NO SQL
+BEGIN
+ SELECT u.vaEmail FROM tbuser u
+ WHERE u.vaEmail LIKE EMail;
+END$$
+
 DROP PROCEDURE IF EXISTS `CheckUser`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `CheckUser` (IN `Username` VARCHAR(50), IN `Passwort` VARCHAR(256))  BEGIN
    
@@ -74,6 +87,12 @@ DROP PROCEDURE IF EXISTS `DeleteAngebot`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `DeleteAngebot` (IN `ID` BIGINT)  BEGIN
 DELETE FROM tbAngebote
 WHERE  biAngebotsID= ID;
+END$$
+
+DROP PROCEDURE IF EXISTS `DeleteAngenommene`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `DeleteAngenommene` (IN `UserID` BIGINT)  NO SQL
+BEGIN
+ DELETE FROM tbangenommene WHERE biUserID = UserID;
 END$$
 
 DROP PROCEDURE IF EXISTS `DeleteOrt`$$
@@ -110,14 +129,30 @@ BEGIN
 SELECT DISTINCT (vaAngebots_Art) FROM tbangebote;
 END$$
 
-DROP PROCEDURE IF EXISTS `GetAllAngenommende`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllAngenommende` ()  NO SQL
+DROP PROCEDURE IF EXISTS `GetAllAngenommene`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllAngenommene` ()  NO SQL
 BEGIN
- SELECT u.*,an.* FROM tbuser u JOIN tbangenommene a 
- ON(u.biUserID = a.biUserID)
- JOIN tbangebote an 
- ON(an.biAngebotsID = a.biAngebotsID)
- WHERE u.vaUserRole LIKE 'student';
+ SELECT us.vaUsername, un.vaName, us.biUserID 
+ FROM tbuser us JOIN tbangenommene an 
+ ON(us.biUserID = an.biUserID)
+ JOIN tbangebote ang
+ ON(ang.biAngebotsID = an.biAngebotsID)
+ JOIN tbunternehmen un 
+ ON(un.biUnternehmensID = ang.biUnternehmensID)
+ WHERE us.vaUserRole LIKE 'student';
+END$$
+
+DROP PROCEDURE IF EXISTS `GetAllBesuchteStellen`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllBesuchteStellen` ()  NO SQL
+BEGIN
+ SELECT us.vaUsername, un.vaName, us.biUserID
+ FROM tbuser us JOIN tbangenommene an 
+ ON(us.biUserID = an.biUserID)
+ JOIN tbangebote ang
+ ON(ang.biAngebotsID = an.biAngebotsID)
+ JOIN tbunternehmen un 
+ ON(un.biUnternehmensID = ang.biUnternehmensID)
+ WHERE us.vaUserRole NOT LIKE 'student';
 END$$
 
 DROP PROCEDURE IF EXISTS `GetAllDeactivatedUnternehmen`$$
@@ -134,14 +169,56 @@ BEGIN
  WHERE vaUserRole LIKE '%deactivated%';
 END$$
 
+DROP PROCEDURE IF EXISTS `GetAllKlassen`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllKlassen` ()  NO SQL
+SELECT DISTINCT vaKlasse 
+FROM tbuser$$
+
 DROP PROCEDURE IF EXISTS `GetAllNichtAngenommende`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllNichtAngenommende` ()  NO SQL
 BEGIN
- SELECT u.* FROM tbuser u
- WHERE biUserID <>(
+ SELECT u.vaUsername,u.biUserID FROM tbuser u
+ WHERE biUserID NOT IN(
+     SELECT biUserID FROM tbangenommene
+ ) 
+ AND  u.vaUserRole LIKE 'student';
+ END$$
+
+DROP PROCEDURE IF EXISTS `GetAllNichtAngenommene`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllNichtAngenommene` ()  NO SQL
+BEGIN
+ SELECT u.biUserID,u.vaUsername FROM tbuser u
+ WHERE biUserID NOT IN (
      SELECT biUserID FROM tbangenommene
  )
- AND  u.vaUserRole LIKE 'student';
+ AND  u.vaUserRole NOT LIKE 'student';
+END$$
+
+DROP PROCEDURE IF EXISTS `GetAllNichtBesuchteLehrer`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllNichtBesuchteLehrer` ()  NO SQL
+BEGIN
+ SELECT u.biUserID,u.vaUsername FROM tbuser u
+ WHERE biUserID NOT IN (
+     SELECT biUserID FROM tbangenommene
+ )
+ AND  u.vaUserRole NOT LIKE 'student';
+END$$
+
+DROP PROCEDURE IF EXISTS `GetAllNichtBesuchteStellen`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllNichtBesuchteStellen` ()  NO SQL
+BEGIN
+ SELECT u.vaName
+ FROM tbunternehmen u
+ WHERE u.biUnternehmensID NOT IN(
+     SELECT un.biUnternehmensID
+     FROM tbuser us JOIN tbangenommene an 
+     ON(an.biUserID = us.biUserID)
+     JOIN tbangebote ang
+     ON(an.biAngebotsID = ang.biAngebotsID)
+     JOIN tbunternehmen un 
+     ON(ang.biUnternehmensID = un.biUnternehmensID)
+     WHERE us.vaUserRole NOT LIKE 'student'
+ );
 END$$
 
 DROP PROCEDURE IF EXISTS `GetAllOrt`$$
@@ -155,6 +232,14 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllUnternehmen` ()  BEGIN
 SELECT u.*,o.vaStadt FROM tbunternehmen u JOIN tbort o
 ON(u.vaPLZ = o.vaPLZ)
 WHERE u.vaName NOT LIKE '%deactivated%';
+END$$
+
+DROP PROCEDURE IF EXISTS `GetAllUnternehmenMitAngebot`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllUnternehmenMitAngebot` ()  NO SQL
+BEGIN
+SELECT * FROM tbunternehmen
+JOIN tbangebote
+USING (biUnternehmensID);
 END$$
 
 DROP PROCEDURE IF EXISTS `GetAllUser`$$
@@ -4928,7 +5013,7 @@ CREATE TABLE IF NOT EXISTS `tbuser` (
   UNIQUE KEY `vaUsername` (`vaUsername`),
   UNIQUE KEY `vaEmail` (`vaEmail`),
   KEY `vaPLZ` (`vaPLZ`)
-) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
 -- Daten für Tabelle `tbuser`
