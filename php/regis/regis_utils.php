@@ -7,11 +7,13 @@
             setcookie("type", "company",0);
             $sqlresult = databaseQuery("CALL GetAllOrt()");
             $places = $sqlresult->fetch_all();
-            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>"
-		       	.'<div id = "erros" > <ul>';
-                  foreach($erros as $error){echo '<li>'.$error.'</li> <br />';}
-				  echo '</ul></div>'
-                    ."<div id='name'>"
+            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>";
+		       	if(count($erros) > 1 || $erros[0] != NULL){
+					echo '<div id = "error_box" >';
+					foreach($erros as $error){echo $error.'<br />';}
+					echo '</div>';
+				}
+                    echo "<div id='name'>"
                             ."<label for='name'>Name: </label>"
                             ."<input type='text' name='name' id='name' placeholder='Name' required/><br/>"
                     ."</div>"
@@ -62,11 +64,13 @@
 	        setcookie("type", "student",0);	
 			$sqlresult = databaseQuery("CALL GetAllOrt()");
             $places = $sqlresult->fetch_all();
-			echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>"
-                  .'<div id = "erros" > <ul>';
-                 foreach($erros as $error){echo '<li>'.$error.'</li> <br />';}
-				 echo '</ul></div>'
-				."<div id='vorname'>"
+			echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>";
+                if(count($erros) > 1 || $erros[0] != NULL){
+					echo '<div id = "error_box" >';
+					foreach($erros as $error){echo $error.'<br />';}
+					echo '</div>';
+				}
+                    echo "<div id='vorname'>"
 					."<label for='vorname'>Vorname: </label>"
 					."<input type='text' name='vorname' id='vorname' placeholder='Vorname' required/><br/>"
 				."</div>"
@@ -119,11 +123,13 @@
             setcookie("type", "teacher",0);
             $sqlresult = databaseQuery("CALL GetAllOrt()");
             $places = $sqlresult->fetch_all();
-            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>"
-			    .'<div id = "erros" > <ul>';
-				 	foreach($erros as $error){echo '<li>'.$error.'</li> <br />';}
-				    echo '</ul></div>'
-                    ."<div id='vorname'>"
+            echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_teacher_form'>";
+			    if(count($erros) > 1 || $erros[0] != NULL){
+					echo '<div id = "error_box" >';
+					foreach($erros as $error){echo $error.'<br />';}
+					echo '</div>';
+				}
+                    echo "<div id='vorname'>"
                             ."<label for='vorname'>Vorname: </label>"
                             ."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
                     ."</div>"
