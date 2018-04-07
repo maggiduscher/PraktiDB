@@ -1,5 +1,4 @@
 <?php
-//Echt
 	include_once "../utils/database.php";
 	
 	function generateFormCompany($erros)

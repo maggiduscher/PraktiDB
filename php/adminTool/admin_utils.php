@@ -153,6 +153,16 @@
             ."<label for='student'>Leherer/in</label><br/>"
             ."<input type='radio' name='role' id='admin' value='admin'";if($userdata['vaUserRole']=="admin")echo "checked"; echo"/>"
             ."<label for='student'>Admin</label><br/>"
+        ."<label for='angenommen'>Wurde der Schüler angnommen?</label><br/>";
+        if($userdata['bAngenommen'] == 1){
+            $angenommen1 = "checked";
+            $angenommen2 = "";
+        }else{
+            $angenommen1 = "";
+            $angenommen2 = "checked";
+        }
+        echo "<label for='ja'>Ja</label><input type='radio' name='angenommen' id='angenommen' value='1' ".$angenommen1."/><br/>"
+        ."<label for='nein'>Nein</label><input type='radio' name='angenommen' id='angenommen' value='0' ".$angenommen2."/><br/>"
         ."<input id='submitEdit' name='submitEdit' type='submit' value='Speichern'/>"
         ."<input id='userID' name='userID' type='hidden' value='".$_GET['edit']."'/>"
         ."</form>";
@@ -166,6 +176,7 @@
         ."<input type='text' name='vorname' id='vorname' placeholder='Vorname'/><br/>"
         ."<label for='nachname'>Nachname: </label>"
         ."<input type='text' name='nachname' id='nachname' placeholder='Nachname'/><br/>"
+        ."<label for='ort'>Ort: </label>"       
         ."<select name='ort' id='ort'>";
         foreach ($places as $place) 
         {   
@@ -224,6 +235,54 @@
         ."<label for='ort'>Ort: </label>"
         ."<input type='text' name='ort' id='ort' placeholder='Ort' value='".$placedata['vaStadt']."'/><br/>"
         ."<input id='submitEdit' name='submitEdit' type='submit' value='Speichern'/>"
+        ."</form>";
+    }
+    function generateUserAcceptForm()
+    {
+        $sqlresult = databaseQuery("CALL GetAllAngebote()");
+        $offer = $sqlresult->fetch_all(MYSQLI_ASSOC);
+        $sqlresult2 = databaseQuery("CALL GetAllNichtAngenommene()");
+        $user = $sqlresult2->fetch_all(MYSQLI_ASSOC);
+        echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='accept_user_form'>"
+        ."<label for='offer'>Angebot: </label>"       
+        ."<select name='offer' id='offer'>";
+        foreach ($offer as $wag) 
+        {   
+           echo "<option value='".$wag['biAngebotsID']."'>".$wag['vaName']." sucht ".$wag['iGesuchte_Bewerber']." Bewerber für ".$wag['vaAngebots_Art']." vom ".$wag['dAnfangsdatum']." bis zum ".$wag['dEnddatum']."</option>";
+        }
+        echo "</select><br/>"
+        ."<label for='user'>Schüler: </label>"       
+        ."<select name='user' id='user'>";
+        foreach ($user as $wag2) 
+        {   
+           echo "<option value='".$wag2['biUserID']."'>".$wag2['vaUsername']."</option>";
+        }
+        echo "</select><br/>"
+        ."<input id='submitAccept' name='submitAccept' type='submit' value='Speichern'/>"
+        ."</form>";
+    }
+    function generateUserVisitForm()
+    {
+        $sqlresult = databaseQuery("CALL GetAllUnternehmenMitAngebot()");
+        $offer = $sqlresult->fetch_all(MYSQLI_ASSOC);
+        $sqlresult2 = databaseQuery("CALL GetAllNichtBesuchteLehrer()");
+        $user = $sqlresult2->fetch_all(MYSQLI_ASSOC);
+        echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='accept_user_form'>"
+        ."<label for='company'>Firma: </label>"       
+        ."<select name='company' id='company'>";
+        foreach ($offer as $wag) 
+        {   
+           echo "<option value='".$wag['biAngebotsID']."'>".$wag['vaName']."</option>";
+        }
+        echo "</select><br/>"
+        ."<label for='user'>Lehrer: </label>"       
+        ."<select name='user' id='user'>";
+        foreach ($user as $wag2) 
+        {   
+           echo "<option value='".$wag2['biUserID']."'>".$wag2['vaUsername']."</option>";
+        }
+        echo "</select><br/>"
+        ."<input id='submitVisit' name='submitVisit' type='submit' value='Speichern'/>"
         ."</form>";
     }
 

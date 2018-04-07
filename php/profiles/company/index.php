@@ -31,26 +31,35 @@
                     . "Adresse: <br/>".$companydata['vaAdresse']."<br/>".$companydata['vaPLZ']." ".$companydata['vaStadt']."<br/>"
                     . "E-Mail: ".$companydata['vaEmail']."<br/>"
                     . "</div>";
-                if($rating === null)
+                if(IsRole('teacher'))
                 {
-                echo "<form method='POST' action='".$_SERVER['PHP_SELF']."?id=".$_GET['id']."'>"
-                    . "<label for='punkte'> Punkte:</label>"
-                    . "<input type='range' min='0' max='100' step='1' name='punkte' id='punkte'/>"
-                    . "<br/>"
-                    . "<label for='bewertungstext'> Schreiben Sie Ihre Meinung hier:</label>"
-                    . "<textarea name='bewertungstext' id='bewertungstext' placeholder='Bewertung' maxlength='50'></textarea>"
-                    . "<br/>"
-                    . "<input type='submit' name='bewertung' id='bewertung' value='Bewerten!'/>"
-                    . "</form>";
-                        
-                }else
-                {
-                    echo "<span id='h1'>Sie haben dieses Unternehmen bewertet:</span><br/>"
-                        . "<span id='h2'>Punkte: ".$rating['iPunkte']." von 100.</span><br/>"
-                        . $rating['vaText']."<br/>";
+                    if($rating === null)
+                    {
+                        echo "<form method='POST' action='".$_SERVER['PHP_SELF']."?id=".$_GET['id']."'>"
+                            . "<label for='punkte'> Punkte: <span id=punkteAnz>50</span> </label><br/>"
+                            . "<input type='range' min='0' max='100' step='1' name='punkte' id='punkte'/>"
+                            . "<br/>"
+                            . "<label for='bewertungstext'> Schreiben Sie Ihre Meinung hier:</label>"
+                            . "<textarea name='bewertungstext' id='bewertungstext' placeholder='Bewertung' maxlength='50'></textarea>"
+                            . "<br/>"
+                            . "<input type='submit' name='bewertung' id='bewertung' value='Bewerten!'/>"
+                            . "</form>";
+                        echo "<script>"
+                                . "var punkteAnz = document.getElementById('punkteAnz');"
+                                . "var punkte = document.getElementById('punkte');"
+                                . "punkte.addEventListener('input', function (e) {"
+                                    . "punkteAnz.innerHTML = this.value;"
+                                . "});"
+                            . "</script>";
+                    }else
+                    {
+                        echo "<span id='h1'>Sie haben dieses Unternehmen bewertet:</span><br/>"
+                            . "<span id='h2'>Punkte: ".$rating['iPunkte']." von 100.</span><br/>"
+                            . $rating['vaText']."<br/>";
+                    }
                 }
-                GenerateGoogleMap(GetAddressFromUser($_SESSION['id']),str_replace(' ', '+',$companydata['vaAdresse']." ".$companydata['vaPLZ']." ".$companydata['vaStadt']));
                 echo "<a href='rating.php?id=".$_GET['id']."'>Bewertungen zu diesem Unternehmnen ansehen!</a>";
+                GenerateGoogleMap(GetAddressFromUser($_SESSION['id']),str_replace(' ', '+',$companydata['vaAdresse']." ".$companydata['vaPLZ']." ".$companydata['vaStadt']));
                 echo "</div>";
             }
         ?>

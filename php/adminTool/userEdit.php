@@ -6,7 +6,7 @@
     AllowedRolesOnly(array("admin"));
     if(isset($_POST['submitEdit']))
     {
-        $sqlresult = databaseQuery("CALL UpdateUser(STR_TO_DATE('".$_POST['geburtstag']."','%Y-%m-%d'), '".$_POST['desc']."', '".$_POST['address']."', '".$_POST['email']."', '".$_POST['klasse']."', '".$_POST['nachname']."', '".$_POST['ort']."', '".$_POST['username']."', '".$_POST['role']."', '".$_POST['vorname']."', ".$_POST['userID'].");");
+        $sqlresult = databaseQuery("CALL UpdateUser(STR_TO_DATE('".$_POST['geburtstag']."','%Y-%m-%d'), '".$_POST['desc']."', '".$_POST['address']."', '".$_POST['email']."', '".$_POST['klasse']."', '".$_POST['nachname']."', '".$_POST['ort']."', '".$_POST['username']."', '".$_POST['role']."', '".$_POST['vorname']."', ".$_POST['userID'].", ".$_POST['angenommen'].");");
         if($sqlresult != null)
         {
             header("location: ../adminTool/userList.php?succ");
@@ -34,6 +34,26 @@
         {
             header("location: ../adminTool/userList.php?fail");
         }  
+    }else if(isset($_POST['submitAccept']))
+    {
+        $sqlresult = databaseQuery("CALL AddAngenommene(".$_POST['user'].", ".$_POST['offer'].");");
+        if($sqlresult != null)
+        {
+            header("location: ../adminTool?succ");
+        }else
+        {
+            header("location: ../adminTool?fail");
+        }  
+    }else if(isset($_POST['submitVisit']))
+    {
+        $sqlresult = databaseQuery("CALL AddAngenommene(".$_POST['user'].", ".$_POST['company'].");");
+        if($sqlresult != null)
+        {
+            header("location: ../adminTool?succ");
+        }else
+        {
+            header("location: ../adminTool?fail");
+        }  
     }else
     if(isset($_GET['delete']))
     {
@@ -45,7 +65,7 @@
         {
             header("location: ../adminTool/userList.php?fail");
         }        
-    }else 
+    }else
 ?>
 <html>
     <head>
@@ -71,6 +91,12 @@
                 if(isset($_GET['new']))
                 {
                     generateAddFormUser();
+                }else
+                if(isset($_GET['accept'])){
+                    generateUserAcceptForm();
+                }else
+                if(isset($_GET['visit'])){
+                    generateUserVisitForm();
                 }
             ?>
         </div>

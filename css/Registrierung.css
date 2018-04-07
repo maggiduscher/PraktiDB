@@ -7,9 +7,15 @@
 }
 
 
-#main input:not([type="submit"]), #main select{
+#main input:not([type="submit"]){
 	
 	margin: 12px 7px 7px 7px;
+	
+}
+
+select {
+	
+	margin: 12px 7px 0px 7px;
 	
 }
 
@@ -33,6 +39,6 @@ form div *{
 
 form div select {
 	
-	width: 46%;
+	width: 40%;
 	
 }
