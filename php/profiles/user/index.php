@@ -3,43 +3,36 @@
 	include_once "../../utils/site_utils.php";
 	include_once "../../utils/database.php";
 	IsLoggedIn("../");
-        $userdata = array();
+        $userdata = array();	
+        if(isset($_POST['submit']) && isset($_POST['profile_info']))
+        {
+            $SQLQuery = "Call UpdateText(".$_GET['id'].", '".$_POST['profile_info']."');";
+            databaseQuery($SQLQuery);
+        }
+        if(isset($_POST['submit']) && isset($_FILES['upload']) && is_uploaded_file($_FILES['upload']['tmp_name']))
+        {
+            if (file_exists("../../../img/".$_SESSION['id'].".png")) 
+            {
+                unlink("../../../img/".$_SESSION['id'].".png");
+            }
+            $fileExtension =  strtolower(pathinfo($_FILES["upload"]["name"],PATHINFO_EXTENSION));
+            if( $fileExtension != "jpg" && $fileExtension != "png" && $fileExtension != "jpeg")
+            {
+                CreateWarning("Es dürfen nur Bilder mit einer der folgenden Endungen hochgeladen werden: jpg, jpeg, png");
+            }else
+            {
+                if (file_exists("../../../img/".$_SESSION['id'].".png"))
+                {
+                    unlink("../../../img/".$_SESSION['id'].".png");
+                }
+                if(!move_uploaded_file($_FILES["upload"]["tmp_name"], "../../../img/".$_SESSION['id'].".png")) CreateError("Upload fehlgeschlagen");
+                $_GET['uploaded'] = true;
+            } 
+        }else if (isset($_POST['submit']) && isset($_FILES['upload']) && !is_uploaded_file($_FILES['upload']['tmp_name']))
+        {
+            $_GET['uploaded'] = false;
+        }
         $userdata = GetUserData($_GET['id']);
-        //$userort = GetUserOrt($userdata['vaPLZ']);
-		
-		if(isset($_POST['submit']) && isset($_POST['profile_info'])){
-		
-			$SQLQuery = "Call UpdateText(".$_GET['id'].", '".$_POST['profile_info']."');";
-			databaseQuery($SQLQuery);
-		
-		}
-		
-		if(isset($_POST['submit']) && isset($_FILES['upload']) && is_uploaded_file($_FILES['upload']['tmp_name'])){
-		
-			if (file_exists("../../../img/".$_SESSION['id'].".png")) {
-					unlink("../../../img/".$_SESSION['id'].".png");
-				}
-				
-			$fileExtension =  strtolower(pathinfo($_FILES["upload"]["name"],PATHINFO_EXTENSION));
-				
-			if( $fileExtension != "jpg" && $fileExtension != "png" && $fileExtension != "jpeg"){
-				
-				CreateWarning("Es dürfen nur Bilder mit einer der folgenden Endungen hochgeladen werden: jpg, jpeg, png");
-				
-			}else{
-				
-				if (file_exists("../../../img/".$_SESSION['id'].".png")) {
-					unlink("../../../img/".$_SESSION['id'].".png");
-				}
-				
-				if(!move_uploaded_file($_FILES["upload"]["tmp_name"], "../../../img/".$_SESSION['id'].".png")) CreateError("Upload fehlgeschlagen");
-				$_GET['uploaded'] = true;
-			} 
-			
-		}else if (isset($_POST['submit']) && isset($_FILES['upload']) && !is_uploaded_file($_FILES['upload']['tmp_name'])){
-			$_GET['uploaded'] = false;
-		}
-		
         $letzteBewerbung = GetLastApplication($_GET['id']);
 	
 ?>
@@ -97,12 +90,30 @@
 					$_GET['edited'] = true;
 				}else{
 					echo "<div id='profile_row'>"
-					. "<div id='profile_data'> &Uuml;ber mich: </div><div id='profile_data'>".$userdata['tText']."</div> <br/>"
+					. "<div id='profile_data'> &Uuml;ber mich: </div><div id='profile_data'>";
+                                        if($userdata['tText']!= null)
+                                        {
+                                            echo $userdata['tText'];
+                                        }
+                                        else
+                                        {
+                                            echo "Dieser Nutzer hat noch keine Informationen über sich hinzugefügt.";
+                                        }
+                                        echo "</div> <br/>"
 				. "</div>";
 				}
-				if(isRole("teacher")){ 
+				if((isRole("teacher")|| IsRole("admin"))&&$userdata['vaUserRole']=='student'){ 
 					echo "<div id='profile_row'>"
-						. "<div id='profile_data'> Letzte Bewerbung: </div><div id='profile_data'>".$letzteBewerbung->format('d.m.y')." </div> <br/>"
+						. "<div id='profile_data'> Letzte Bewerbung: </div><div id='profile_data'>";
+                                                    if($letzteBewerbung != null)
+                                                    {
+                                                        echo $letzteBewerbung->format('d.m.y');
+                                                    }
+                                                    else 
+                                                    {
+                                                        echo "Dieser Sch&uuml;ler hat sich noch nie bei einem Unternehmen beworben.";
+                                                    }
+                                                echo " </div> <br/>"
 					. "</div>";
 				}
 				

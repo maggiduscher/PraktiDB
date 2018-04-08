@@ -26,6 +26,7 @@
 
     function generateAddFormOffer()
     {
+        echo "<h1>Admin/Lehrer Kontrollraum - Angbot hinzufügen</h1>";
         $sqlresult = databaseQuery("CALL GetAllUnternehmen()");
         $companies = $sqlresult->fetch_all();
         echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>"
@@ -49,6 +50,7 @@
     }
     function generateEdit1FormOffer()
     {
+        echo "<h1>Admin/Lehrer Kontrollraum - Anzahl angenommener Schüler bearbeiten</h1>";
         echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>"
         ."<label for='branche'>Anzahl Angenommene Bewerber: </label>"
         ."<input type='number' name='anz' id='anz'/><br/>"
@@ -58,6 +60,7 @@
     }
     function generateEdit2FormOffer()
     {
+        echo "<h1>Admin/Lehrer Kontrollraum - Anzahl Bewerber bearbeiten</h1>";
         echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>"
         ."<label for='branche'>Anzahl Bewerber: </label>"
         ."<input type='number' name='anz' id='anz'/><br/>"
@@ -68,6 +71,7 @@
     //Company
     function generateEditFormCompany()
     {
+        echo "<h1>Admin/Lehrer Kontrollraum - Unternehmen bearbeiten</h1>";
         $companydata = GetCompanyData($_GET['edit']);
         $sqlresult = databaseQuery("CALL GetAllOrt()");
         $places = $sqlresult->fetch_all();
@@ -95,6 +99,7 @@
     }
     function generateAddFormCompany()
     {
+        echo "<h1>Admin/Lehrer Kontrollraum - Unternehmen hinzufügen</h1>";
         $sqlresult = databaseQuery("CALL GetAllOrt()");
         $places = $sqlresult->fetch_all();
         echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_company_form'>"
@@ -119,6 +124,7 @@
     //User
     function generateEditFormUser()
     {
+        echo "<h1>Admin Kontrollraum - Benutzer bearbeiten</h1>";
         $userdata = GetUserData($_GET['edit']);
         $sqlresult = databaseQuery("CALL GetAllOrt()");
         $places = $sqlresult->fetch_all();
@@ -159,6 +165,7 @@
     }
     function generateAddFormUser()
     {
+        echo "<h1>Admin Kontrollraum - Benutzer hinzufügen</h1>";
         $sqlresult = databaseQuery("CALL GetAllOrt()");
         $places = $sqlresult->fetch_all();
         echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"
@@ -198,6 +205,7 @@
     function generateEditFormPassword()
     {
         $userdata = GetUserData($_GET['editPassword']);
+        echo "<h1>Admin Kontrollraum - Password von ".$userdata['vaUsername']." bearbeiten</h1>";
         echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"
         ."<label for='password'>Neues Passwort: </label>"
         ."<input type='text' name='password' id='password' placeholder='Neues Passwort'/><br/>"      
@@ -208,6 +216,7 @@
     //Place
     function generateAddFormPlace()
     {
+        echo "<h1>Admin Kontrollraum - Ort hinzufügen</h1>";
         echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='edit_place_form'>"
         ."<label for='plz'>PLZ: </label>"
         ."<input type='text' name='plz' id='plz' placeholder='PLZ'/><br/>"
@@ -218,6 +227,7 @@
     }
     function generateEditFormPlace()
     {
+        echo "<h1>Admin Kontrollraum - Ort bearbeiten</h1>";
         $placedata = GetPlaceData($_GET['edit']);
         echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='edit_place_form'>"
         ."<label for='plz'>PLZ: </label>"
@@ -229,6 +239,7 @@
     }
     function generateUserAcceptForm()
     {
+        echo "<h1>Admin/Lehrer Kontrollraum - Benutzer als angenommen markieren</h1>";
         $sqlresult = databaseQuery("CALL GetAllAngebote()");
         $offer = $sqlresult->fetch_all(MYSQLI_ASSOC);
         $sqlresult2 = databaseQuery("CALL GetAllNichtAngenommene()");
@@ -253,6 +264,7 @@
     }
     function generateUserVisitForm()
     {
+        echo "<h1>Admin/Lehrer Kontrollraum - Praktikumsstelle als besucht markieren</h1>";
         $sqlresult = databaseQuery("CALL GetAllUnternehmenMitAngebot()");
         $offer = $sqlresult->fetch_all(MYSQLI_ASSOC);
         $sqlresult2 = databaseQuery("CALL GetAllNichtBesuchteLehrer()");

@@ -10,15 +10,15 @@
 <html>
 	<head>
 		<?php
-			CreateHead("Liste aller besuchten bzw. aller nicht besuchten Praktikumsstellen");
+			CreateHead("Admin/Lehrer Kontrollraum - Liste aller besuchten bzw. aller nicht besuchten Praktikumsstellen");
 		?>
 	</head>
 	<body>
 		<?php
 			CreateNav();
 		?>
-            <h1>Liste aller besuchten bzw. aller nicht besuchten Praktikumsstellen</h1>
-		<div id="content">
+		<div id="main">
+                    <h1>Admin/Lehrer Kontrollraum - Liste aller besuchten bzw. aller nicht besuchten Praktikumsstellen</h1>
                     <a href="#visitedList">besuchte Praktikumsstellen</a>
                     <a href="#notVisitedList">Nicht besuchte Praktikumsstellen</a>
                     <?php
@@ -30,7 +30,7 @@
                         echo "<h2>Liste aller besuchten Praktikumsstellen</h2>";
                         if($acceptedUsers != null){
                             foreach ($acceptedUsers as $acceptedUser) {
-                                echo "<div id=row>".$acceptedUser[0]." hat ".$acceptedUser[1]." besucht. <a href='?id=".$acceptedUser[2]."'><img src='../../img/icons/delete.png' alt='delete' /></div>";
+                                echo "<div id=row>".$acceptedUser[0]." hat ".$acceptedUser[1]." besucht. <a href='?id=".$acceptedUser[2]."'><img src='../../img/icons/delete.png' alt='delete' /></a></div>";
                             }
                         }else {
                             echo "<div id=row>Es wurden noch keine Praktikumsstellen besucht.</div>";

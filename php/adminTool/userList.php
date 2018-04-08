@@ -8,7 +8,7 @@
 <html>
     <head>
         <?php
-            CreateHead("AdminTools - Benutzer Liste");
+            CreateHead("Admin Kontrollraum - Benutzer Liste");
         ?>
     </head>
     <body>
@@ -22,8 +22,8 @@
             }
             CreateNav();
         ?>
-        <h1>Admin Kontrollraum</h1>
-        <div id="content">
+        <div id="main">
+            <h1>Admin Kontrollraum - Benutzer Liste</h1>
             <a href="userEdit.php?new"><img src="../../img/icons/add.png" alt="edit"/>Neuen Benutzer erstellen</a>
             <div id="user_list">
                 <?php

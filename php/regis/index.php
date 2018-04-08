@@ -17,7 +17,6 @@
                     if($_COOKIE['type'] == "student" || $_COOKIE['type'] == "teacher" || $_COOKIE['type'] == "company")
                     {
 						$Fehler = registerUser($_COOKIE['type']);				
-						
 						if(count($Fehler)!= 0){
 							   Switch($_COOKIE['type'])
 							   {

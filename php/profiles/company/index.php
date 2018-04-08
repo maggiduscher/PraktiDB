@@ -24,15 +24,19 @@
             CreateNav();
             if(isset($_GET['id']))
             {
-                echo "<h1>Profil von ".$companydata['vaName']."</h1>"
-                    . "<div id='content'>"
+                echo "<div id='main'>"
+                    . "<h1>Profil von ".$companydata['vaName']."</h1>"
                     . "<div id='profile_data'>"
                     . "<div id='profile_pic'><img src='../img/pics/company/".$companydata['biUnternehmensID'].".png' alt='Profilbild'/></div>"
                     . "Adresse: <br/>".$companydata['vaAdresse']."<br/>".$companydata['vaPLZ']." ".$companydata['vaStadt']."<br/>"
                     . "E-Mail: ".$companydata['vaEmail']."<br/>"
+                    . "Tel.: ".$companydata['vaTelefonnummer']."<br/>"
+                    . "Website: <a href='//".$companydata['vaWeblinke']."'>".$companydata['vaWeblinke']."</a><br/>"
+                    . "<a href='rating.php?id=".$_GET['id']."'>Bewertungen zu diesem Unternehmnen ansehen!</a>"
                     . "</div>";
-                if(IsRole('teacher'))
+                if(IsRole('teacher') || IsRole('admin'))
                 {
+                    echo "<div id='rating'>";
                     if($rating === null)
                     {
                         echo "<form method='POST' action='".$_SERVER['PHP_SELF']."?id=".$_GET['id']."'>"
@@ -57,8 +61,9 @@
                             . "<span id='h2'>Punkte: ".$rating['iPunkte']." von 100.</span><br/>"
                             . $rating['vaText']."<br/>";
                     }
+                    echo "</div>";
                 }
-                echo "<a href='rating.php?id=".$_GET['id']."'>Bewertungen zu diesem Unternehmnen ansehen!</a>";
+                
                 GenerateGoogleMap(GetAddressFromUser($_SESSION['id']),str_replace(' ', '+',$companydata['vaAdresse']." ".$companydata['vaPLZ']." ".$companydata['vaStadt']));
                 echo "</div>";
             }

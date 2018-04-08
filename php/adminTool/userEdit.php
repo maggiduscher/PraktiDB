@@ -71,15 +71,14 @@
 <html>
     <head>
         <?php
-            CreateHead("AdminTools - Benutzer Liste");
+            CreateHead("Admin Kontrollraum - Benutzer verwalten");
         ?>
     </head>
     <body>
         <?php
                 CreateNav();
         ?>
-        <h1>Admin Kontrollraum</h1>
-        <div id="content">
+        <div id="main">
             <?php
                 if(isset($_GET['edit']))
                 {

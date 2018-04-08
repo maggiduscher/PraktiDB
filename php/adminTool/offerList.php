@@ -3,12 +3,12 @@
     include_once "admin_utils.php";
     include_once "../utils/database.php";
     IsLoggedIn();
-    AllowedRolesOnly(array("admin"));
+    AllowedRolesOnly(array("admin","teacher"));
 ?>
 <html>
     <head>
         <?php
-            CreateHead("AdminTools - Unternehmens Liste");
+            CreateHead("Admin/Lehrer Kontrollraum - Angebots Liste");
         ?>
     </head>
     <body>
@@ -22,8 +22,8 @@
             }
             CreateNav();    
         ?>
-    <h1>Admin Kontrollraum</h1>
-        <div id="content">
+        <div id="main">  
+            <h1>Admin/Lehrer Kontrollraum - Angebots Liste</h1>
             <a href="offerEdit.php?new"><img src="../../img/icons/add.png" alt="edit"/>Neues Angebot hinzufügen</a>
             <div id="company_list">
                 <?php

@@ -9,7 +9,7 @@
 <html>
     <head>
         <?php
-            CreateHead("AdminTools - Unternehmens Liste");
+            CreateHead("Admin/Lehrer Kontrollraum - Liste aller Unternehmen");
         ?>
     </head>
     <body>
@@ -23,8 +23,8 @@
             }
             CreateNav();    
         ?>
-    <h1>Admin Kontrollraum</h1>
-        <div id="content">
+        <div id="main">
+            <h1>Admin/Lehrer Kontrollraum - Liste aller Unternehmen</h1>
             <a href="companyEdit.php?new"><img src="../../img/icons/add.png" alt="edit"/>Neue Frima hinzufügen</a>
             <div id="company_list">
                 <?php

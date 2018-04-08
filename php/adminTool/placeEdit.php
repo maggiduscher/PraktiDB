@@ -42,15 +42,15 @@
 <html>
     <head>
         <?php
-            CreateHead("AdminTools - Benutzer Liste");
+            CreateHead("Admin Kontrollraum - Orte verwalten");
         ?>
     </head>
     <body>
         <?php
                 CreateNav();
         ?>
-        <h1>Admin Kontrollraum</h1>
-        <div id="content">
+        <div id="main">
+            <h1>Admin Kontrollraum - Orte verwalten</h1>
             <?php
             if(isset($_GET['edit']))
             {

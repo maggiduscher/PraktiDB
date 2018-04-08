@@ -8,7 +8,7 @@
 <html>
     <head>
         <?php
-            CreateHead("AdminTools - Ort Liste");
+            CreateHead("Admin Kontrollraum - Ort Liste");
         ?>
     </head>
     <body>
@@ -22,8 +22,8 @@
             }
             CreateNav();     
         ?>
-        <h1>AdminTools - Ort Liste</h1>
-        <div id="content">
+        <div id="main">
+            <h1>Admin Kontrollraum - Ort Liste</h1>
             <a href="placeEdit.php?new"><img src="../../img/icons/add.png" alt="edit"/>Neuen Ort erstellen</a>
             <div id="user_list">
                 <?php

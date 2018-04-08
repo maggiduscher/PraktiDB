@@ -41,15 +41,15 @@
 <html>
     <head>
         <?php
-            CreateHead("AdminTools - Firmen Liste");
+            CreateHead("Admin/Lehrer Kontrollraum - Unternehmen verwalten");
         ?>
     </head>
     <body>
         <?php
                 CreateNav();
         ?>
-        <h1>Admin Kontrollraum</h1>
-        <div id="content">
+        <div id="main">
+            
             <?php
                 if(isset($_GET['edit']))
                 {
@@ -62,7 +62,7 @@
             ?>
         </div>
         <?php
-                CreateFooter();
+            CreateFooter();
         ?>
     </body>
 </html>

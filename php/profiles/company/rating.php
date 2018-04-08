@@ -19,8 +19,8 @@
             CreateNav();
             if(isset($_GET['id']))
             {
-                echo "<h1>Bewertugnen zu <a href='../company/?id=".$_GET['id']."'>".$ratings[0]['vaName']."</a></h1>"
-                    . "<div id='content'>"
+                echo "<div id='main'>"
+                    . "<h1>Bewertugnen zu <a href='../company/?id=".$_GET['id']."'>".$ratings[0]['vaName']."</a></h1>"
                     . "<div id='ratings'>";
                     foreach($ratings as $rating)
                     echo "<div id='rating'>"

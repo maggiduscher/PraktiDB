@@ -69,14 +69,18 @@
     function GetLastApplication($userid)
     {
         $sqlresult = databaseQuery("CALL GetLetzteBewerbung(".$userid.")");
-        if ($sqlresult === null)
+        if ($sqlresult === false)
         {
             return null;
         }else
         {
             $array = $sqlresult->fetch_array();
-            $output = date_create($array['dBewerbung']);
-            return $output;
+            if($array != null && $array['Last'] != null)
+            {
+                $output = date_create($array['Last']);
+                return $output;
+            }else 
+                return null;
         }
             
     }
