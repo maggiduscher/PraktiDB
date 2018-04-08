@@ -20,7 +20,7 @@
             }else
             {
                 logout();
-                session_start();
+                session_start(['gc_maxlifetime'=>0]);
                 $output = $sqlresult->fetch_array();
                 $_SESSION['id']=$output['biUserID'];
                 $_SESSION['role']=$output['vaUserRole'];

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>PraktiDB Handbuch</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="handbook.css" />
+    </head>
+    <body>
+        <h1>PraktiDB Handbuch</h1>
+        <div id="content">
+            TODO write content
+        </div>
+        <div id="login">
+            <h2>Login</h2>
+            <p>Für den Login in die PraktiDB Webseite wird der Benutzername oder die Email-Adresse und das Passwort des PraktiDB Kontos benötigt. Die Login Seite dient als Startseite für alle nicht abgemeldeten Benutzer. Der Link unter dem Login Bereich bringt Sie zur Registrierung. Wenn sie sich erfolgreich eingeloggt haben werden sie zur <a href="#overview">Übersicht</a> weitergeleitet.</p>
+        </div>
+        <div id="singup">
+            <h2>Registrieren</h2>
+            <p>Es gibt drei Möglichkeiten sich zu für PraktiDB zu registrieren:  Als Schüler/in , als Firma und als Lehrer/in. Der Schüler/die Schülerin muss einfach nur das entsprechende Formular ausfüllen und kann sich dann einloggen. Die Firma muss erst von Lehrer oder Admin freigeschaltet werden (mehr dazu unter <a href="#activate_users">Freischalten</a>). Der Lehrer/die Lehrerin muss von einem Admin freigeschaltet werden. Aus Sicherheitsgründen ist nicht möglich sich als Admin zu registrieren. Um Admin zu werden sollten Sie sich zu erst als Schüler/in registrieren und dann manuell in der Datenbank die Spalte „vaUserRole“ ihres Kontos von „student“ zu „admin“ ändern.</p>
+        </div>
+        <div id="nav">
+            <h2>Navigationsleiste</h2>
+            <div>Die Navigationsleiste enthält folgende Eintrage:
+                <ul>
+                    <li>Startseite bzw. Übersicht</li>
+                    <li>Profil: das Profil des angemeldeten Benutzers</li>
+                    <li>Kontrollzentrum (nur für Lehrer und Admins)</li>
+                    <li>Logout: meldet den Benutzer ab und sendet ihn zur Login Seite.</li>
+                </ul>
+            </div>
+        </div>
+        <div id="overview">
+            <h2>Übersicht (Overview)</h2>
+            <div>Die Übersicht listet alle aktuellen Angebote. Diese Seite dient als Startseite aller angemeldeten Benutzer. Pro Angebot wird jeweils aufgelistet:
+                <ul>
+                    <li>das Unternehmen, das das Angebot anbietet,</li>
+                    <li>die Branche, in der das Angebot statt findet,</li> 
+                    <li>ein Zeitraum, in der das Angebot gültig ist,</li> 
+                    <li>die Anzahl aller noch freien Plätze,</li> 
+                    <li>die Entfernung, vom Benutzer zum Unternehmen (berechnet durch die <a href="#google_api">Google Maps API „Distance Matrix“</a>),</li> 
+                    <li>die Durchschnittlich Bewertung des Unternehmens und</li>
+                    <li>ein Link über den sich der Benutzer für das Angebot <a href="#bewerben">bewerben</a> kann.</li>
+                </ul>
+            Das Unternehmen ist direkt zum dem Profil des Unternehmens verlinkt.
+            </div>
+            <div id="bewerben">
+                <h2>Bewerben</h2>
+                <p>Bei dem Klick auf den Bewerben-Link in der Übersicht wird Nutzer zu einem „mailto“-Link weitergeleitet. Er hat nun selber die Entscheidung was er schreiben und anhängen möchte und ob er abschicken möchte. Der Nutzer wird schon als Bewerber markiert wenn er nur den Link zum Bewerben anklickt, da es leider nicht möglich ist, genauer zu überprüfen ob er sich wirklich beworben hat.</p>
+            </div>
+        </div>
+        <div id="profiles">
+            <h2>Profile</h2>
+            <div id="user_profile">
+                <h2>Benutzer</h2>
+                <p>Das Benutzer Profil gibt einige Information zu dem Benutzer Preis. Dafür wird über die GET Methode die Benutzer-ID übergeben. Ist das Profil, das Profil des gerade angemeldeten Benutzers, dann hat dieser die Möglichkeit einen Text über sich und ein Profilbild hinzuzufügen im dem unten auf Ändern klickt. Ist der grade angemeldete Benutzer ein Lehrer oder Admin und das offene Profil, das eines Schülers, so wird auch ausgegeben wann der Schüler sich das letzte mal irgendwo beworben hat.</p>
+            </div>
+            <div id="company_profile">
+                <h2>Unternehmen</h2>
+                <p>Das Unternehmen Profil gibt einige Information zum Unternehmen Preis. Außerdem wird ein Route vom aktuell angemeldeten Benutzer zum Unternehmenssitz per <a href="#google_api">Google Maps API</a> angezeigt. Ist ein Lehrer oder Admin angemeldet hat er auch die Möglichkeit das zu bewerten. Die Bewertungen sind von jedem einsehbar über einen Link auf dieser Seite.</p>
+            </div>
+            <div id="profile_list">
+                <h2>Profilliste</h2>
+                <p>Es gibt keine öffentlich Profilliste. Die einzige Möglichkeit einige Profile aufzulisten ist die Klassenlist in dem <a href="#admin_tools">Admin bzw. Lehrer Kontrollzentrum</a>.</p>
+            </div>
+        </div>
+        <div id="admin_tools">
+            <h2>Kontrollzentrum</h2>
+            <div>
+                Auf das Kontrollzentrum haben nur Admins und Lehrer Zugriff, wobei der Admin hier mehr Optionen hat. Der Lehrer darf:
+                <ul>
+                    <li>sich eine Klassenlist ausgeben lassen,</li>
+                    <li>Praktikumsangebote verwalten und erstellen,</li>
+                    <li>Unternehmen verwalten und erstellen,</li>
+                    <li>deaktivierte Unternehmen <a href="#activate_users">freischalten</a>,</li>
+                    <li>sich eine Liste mit allen angenommen bzw. nicht angenommen Schülern ausgeben lassen,</li>
+                    <li>sich eine Liste mit allen besuchten bzw. nicht besuchten Praktikumsstellen ausgeben lassen,</li>
+                    <li>einen Schüler als angenommen markieren und</li>
+                    <li>eine Praktikumsstelle als besucht markieren.</li>
+                </ul>
+                Der Admin darf:
+                <ul>
+                    <li>alles was der Lehrer darf,</li>
+                    <li>deaktivierte Benutzer <a href="#activate_users">freischalten</a>,</li>
+                    <li>Benutzer verwalten und erstellen und</li>
+                    <li>Orte verwalten und erstellen.</li>
+                </ul>
+            </div>
+            <div id="activate_users">
+                <h2>Deaktivierte Benutzer/Unternehmen freischalten</h2>
+                <p>Benutzer und Unternehmen die erst noch freigeschaltet werden müssen werden in der Datenbank als deaktiviert markiert. Diese können von dem Kontrollzentrum aus unter „Deaktiverte Benutzer verwalten“ freigeschaltet oder gelöscht werden.</p>
+            </div>
+        </div>
+        <div id="google_api">
+            <h2>Google API</h2>
+            <p>Es werden drei Google Maps APIs verwendet: „Google Maps Distance Matrix API“, „Google Maps Directions API“ und „Google Maps JavaScript API“. Um diese zu verwenden wird ein API Schlüssel benötigt. In der Datei „APIkey.txt“ ist so ein Schlüssel beigelegt, sollte dieser jedoch nicht mehr funktionieren so müssen sie einen neuen generieren. Gehen Sie dazu auf <a href="https://console.developers.google.com/apis">das Google Developer API Dashborad</a> und erstellen sie ein neues Projekt. Fügen Sie dann unter dem Dashboard die drei oben genannten APIs hinzu. Erstellen sie dann unter Zugangsdaten einen API-Schlüssel und schränken Sie ihn auf die drei APIs ein. Ersetzen Sie dann den Schlüssel in der „APIkey.txt“ Datei mit dem eben generierten Schlüssel.</p>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,24 @@
+/* 
+    Created on : 08.04.2018, 16:36:11
+    Author     : Niklas
+*/
+body{
+    font-family: "Calibri","Arial";
+    font-size: 15px;
+    width: 50%;
+    position: relative;
+    left: 25%;
+}
+
+h1{
+    font-size: 30px;
+}
+
+h2{
+    text-decoration: underline;
+}
+
+p{
+    
+}
+

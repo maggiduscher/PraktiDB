@@ -15,7 +15,7 @@
 <?php
     include_once '../utils/database.php';
     include_once '../utils/site_utils.php';
-    session_start();
+    IsLoggedIn();
     
 
     if(isset($_GET['id']))

@@ -2,7 +2,7 @@
 	include_once "login_utils.php";
 	include_once "../utils/site_utils.php";
         
-	session_start();
+	session_start(['gc_maxlifetime'=>0]);
         logout();
 
 ?>

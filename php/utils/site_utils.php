@@ -36,7 +36,7 @@
 
     function IsLoggedIn($path = "")
     {
-        session_start();
+        session_start(['gc_maxlifetime'=>0]);
         if(!isset($_COOKIE["PHPSESSID"])){
 
             Header("Location: ".$path."../login/index.php?nosession");

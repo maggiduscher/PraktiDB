@@ -19,10 +19,10 @@
                 <?php
                     if(isset($_POST['class'])){
                         $sqlresult = databaseQuery("CALL GetKlasse('".$_POST['class']."')");
-                        $users = $sqlresult->fetch_all();
+                        $users = $sqlresult->fetch_all(MYSQLI_ASSOC);
                         foreach ($users as $user) {
                             echo "<div id='name'>"
-                                ."<a href='../profiles/user/?id=".$user[0]."'>".$user[1]."</a>"
+                                ."<a href='../profiles/user/?id=".$user['biUserID']."'>".$user['vaVorname']." ".$user['vaNachname']."</a>"
                             ."</div>";
                         }
 
