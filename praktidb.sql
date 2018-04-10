@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 07. Apr 2018 um 17:19
+-- Erstellungszeit: 10. Apr 2018 um 08:10
 -- Server-Version: 10.1.21-MariaDB
 -- PHP-Version: 5.6.30
 
@@ -81,6 +81,14 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `CheckUser` (IN `Username` VARCHAR(5
           u.vaEMail = Username)
           AND u.vaPasswort = Passwort;
 
+END$$
+
+DROP PROCEDURE IF EXISTS `DecrementAngebotsAngenommene`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `DecrementAngebotsAngenommene` (IN `AngebotsID` BIGINT)  NO SQL
+BEGIN
+    UPDATE tbangebote
+    SET iAngenommene_Bewerber = (iAngenommene_Bewerber-1)
+    WHERE biAngebotsID = AngebotsID;
 END$$
 
 DROP PROCEDURE IF EXISTS `DeleteAngebot`$$
@@ -260,6 +268,13 @@ SELECT * FROM tbangebote
 WHERE vaAngebots_Art =Art;
 END$$
 
+DROP PROCEDURE IF EXISTS `GetAngebotFromAngenommene`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAngebotFromAngenommene` (IN `UserID` BIGINT)  NO SQL
+BEGIN
+SELECT biAngebotsID FROM tbangenommene
+WHERE biUserID = UserID;
+END$$
+
 DROP PROCEDURE IF EXISTS `GetBewertung`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetBewertung` (IN `UserID` BIGINT, IN `UnternehmensID` INT)  NO SQL
 BEGIN
@@ -284,6 +299,15 @@ BEGIN
  JOIN tbUser u
  ON(u.biUserID = b.biUserID)
  WHERE biUnternehmensID = ID;
+END$$
+
+DROP PROCEDURE IF EXISTS `GetEmailFromAngebot`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetEmailFromAngebot` (IN `AngebotsID` BIGINT)  NO SQL
+BEGIN
+SELECT vaEmail FROM tbunternehmen 
+JOIN tbangebote 
+USING (biUnternehmensID)
+WHERE biAngebotsID = AngebotsID;
 END$$
 
 DROP PROCEDURE IF EXISTS `GetKlasse`$$
@@ -339,6 +363,22 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `GetUser` (IN `UserID` BIGINT(50))  
 SELECT u.*, o.vaStadt FROM tbuser u JOIN tbort o
 ON(u.vaPLZ = o.vaPLZ)
 WHERE biUserID = UserID;
+END$$
+
+DROP PROCEDURE IF EXISTS `IncrementAngebotsAngenommene`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `IncrementAngebotsAngenommene` (IN `AngebotsID` BIGINT)  NO SQL
+BEGIN
+    UPDATE tbangebote
+    SET iAngenommene_Bewerber = (iAngenommene_Bewerber+1)
+    WHERE biAngebotsID = AngebotsID;
+END$$
+
+DROP PROCEDURE IF EXISTS `IncrementAngebotsBewerber`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `IncrementAngebotsBewerber` (IN `AngebotsID` BIGINT)  NO SQL
+BEGIN
+    UPDATE tbangebote
+    SET iAnzahl_Bewerber = (iAnzahl_Bewerber+1)
+    WHERE biAngebotsID = AngebotsID;
 END$$
 
 DROP PROCEDURE IF EXISTS `UpdateAngebotsAngenommende`$$
@@ -433,13 +473,7 @@ CREATE TABLE IF NOT EXISTS `tbangebote` (
   `iAngenommene_Bewerber` int(11) DEFAULT NULL,
   PRIMARY KEY (`biAngebotsID`),
   KEY `biUnternehmensID` (`biUnternehmensID`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
-
---
--- Daten für Tabelle `tbangebote`
---
-
-INSERT INTO `tbangebote` (`biAngebotsID`, `biUnternehmensID`, `vaAngebots_Art`, `dAnfangsdatum`, `dEnddatum`, `iGesuchte_Bewerber`, `iAnzahl_Bewerber`, `iAngenommene_Bewerber`) VALUES(2, 1, 'IT', '2018-02-23', '2018-02-23', 5, 2, 2);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 -- --------------------------------------------------------
 
@@ -5013,7 +5047,7 @@ CREATE TABLE IF NOT EXISTS `tbuser` (
   UNIQUE KEY `vaUsername` (`vaUsername`),
   UNIQUE KEY `vaEmail` (`vaEmail`),
   KEY `vaPLZ` (`vaPLZ`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_croatian_ci;
 
 --
 -- Daten für Tabelle `tbuser`
@@ -5021,6 +5055,7 @@ CREATE TABLE IF NOT EXISTS `tbuser` (
 
 INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(1, '0', '0', 'Tom', 'Tom', 'Tom', 'TIM', 'Tom', 'Tom', '2018-02-28', 'TIM', 'Tom');
 INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(7, 'maggiduscher', 'student', 'maggiduscher@maggiduscher.com', 'maggiduscher', 'maggiduscher', 'maggiduscher 12', '0', 'ITA51', '0000-00-00', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', '');
+INSERT INTO `tbuser` (`biUserID`, `vaUsername`, `vaUserRole`, `vaEmail`, `vaVorname`, `vaNachname`, `vaAdresse`, `vaPLZ`, `vaKlasse`, `dGeburtsjahr`, `vaPasswort`, `tText`) VALUES(8, 'TheChesterist', 'student', 'sebastian.hauscheid@arcor.de', 'Sebastian', 'Hauscheid', 'Karnaper StraÃŸe, 6 6', '01067', 'ITA52', '1998-04-15', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', '');
 
 -- --------------------------------------------------------
 
