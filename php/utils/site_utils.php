@@ -6,7 +6,8 @@
         echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/main.css\" />";
         echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/print.css\" media=\"print\"/>";
 		echo "<link href=\"https://fonts.googleapis.com/css?family=Lato\" rel=\"stylesheet\" />"; 
-		if(strpos($name, "Profil") === false)echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/".$name.".css\" />"; 
+		if(strpos($name, "Profil") === false && strpos($name, "Admin") === false)echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/".$name.".css\" />";
+		if(strpos($name, "Admin") !== true) echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/Admin.css\" />"; 		
     }
 
     function CreateNav()
