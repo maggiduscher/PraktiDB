@@ -4,6 +4,7 @@
     {
         echo "<title> PraktiDB - ".$name." </title>";
         echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/main.css\" />";
+        echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/print.css\" media=\"print\"/>";
 		echo "<link href=\"https://fonts.googleapis.com/css?family=Lato\" rel=\"stylesheet\" />"; 
 		if(strpos($name, "Profil") === false)echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/".$name.".css\" />"; 
     }

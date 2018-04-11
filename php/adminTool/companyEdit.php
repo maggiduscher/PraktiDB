@@ -7,6 +7,7 @@
 
     if(isset($_POST['submitEdit']))
     {
+        //TODO: update UpdateUnternehmen with tel,web and desc
         $sqlresult = databaseQuery("CALL UpdateUnternehmen(".$_POST['userID'].",'".$_POST['desc']."','".$_POST['address']."','".$_POST['branche']."','".$_POST['email']."','".$_POST['ort']."','".$_POST['name']."');");
         if($sqlresult != null)
         {
@@ -17,7 +18,7 @@
         }       
     }else if(isset($_POST['submitAdd']))
     {
-        $sqlresult = databaseQuery("CALL AddUnternehmen('".$_POST['name']."','".$_POST['address']."','".$_POST['ort']."','".$_POST['branche']."','".$_POST['email']."');");
+        $sqlresult = databaseQuery("CALL AddUnternehmen('".$_POST['name']."','".$_POST['address']."','".$_POST['ort']."','".$_POST['branche']."','".$_POST['email']."','".$_POST['tel']."','".$_POST['web']."','".$_POST['desc']."');");
         if($sqlresult != null)
         {
             header("location: ../adminTool/companyList.php?succ");

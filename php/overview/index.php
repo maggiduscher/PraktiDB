@@ -26,7 +26,7 @@
                 . $sqlextention
                 . "GROUP BY biAngebotsID"
                 . $sqlextention2
-                .";");
+                .";",true);
         $counter = 0;
         $counter2 = 0;
         foreach ($sqlresult2 as $value) 
@@ -34,7 +34,7 @@
             $start = new DateTime($value['dAnfangsdatum']);
             $end = new DateTime($value['dEnddatum']);
             $heute = new DateTime("now");
-            if($end > $heute && $start <= $heute && ($value['iGesuchte_Bewerber']-$value['iAngenommene_Bewerber']) > 0){
+            if($end >= $heute && $start <= $heute && ($value['iGesuchte_Bewerber']-$value['iAngenommene_Bewerber']) > 0){
                 $data[$counter]['id'] = $value['biUnternehmensID'];
                 $data[$counter]['angebot'] = $value['biAngebotsID'];
                 $data[$counter]['name'] = $value['vaName'];
@@ -45,7 +45,7 @@
                 $data[$counter]['entfernung'] = (GetDistanceFromGoogleAPI(GetAddressFromUser($_SESSION['id']),$value['vaAdresse']." ".$value['vaPLZ']." ".$value['vaStadt']));
                 $data[$counter]['punkte'] = round($value['Punkte']);
                 $counter = $counter+1;
-            }else if($end <= $heute){
+            }else if($end < $heute || ($value['iGesuchte_Bewerber']-$value['iAngenommene_Bewerber']) <= 0){
                 $remove[$counter2]['id'] = $value['biAngebotsID'];
                 $counter2 = $counter2+1;
             }
@@ -54,12 +54,12 @@
         {
             foreach ($remove as $value)
             {
-               $sqlresultremove = databaseQuery("CALL DeleteAngebot(".$value['id'].")");
+               $sqlresultremove = databaseQuery("CALL DeleteAngebot(".$value['id'].")",true);
             }
         }
         if(isset($_POST['ok']))
         {
-	    if(isset($_POST['sortby']) && $_POST['sortby'] == "entfernung")
+	    if(isset($_POST['sortby']) && $_POST['sortby'] == "entfernung" && !empty($data))
             {
                 foreach($data as $value)
                 {

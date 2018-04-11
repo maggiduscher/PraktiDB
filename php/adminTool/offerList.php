@@ -32,10 +32,10 @@
                     {
                         foreach ($sqlresult as $wag)
                         {
-                            echo "<div id='entry'><div id='entry_name'>".$wag['vaName']." sucht ".$wag['iGesuchte_Bewerber']." Bewerber für ".$wag['vaAngebots_Art']." vom ".$wag['dAnfangsdatum']." bis zum ".$wag['dEnddatum'].".</div></div>"
-                                    . "<div id='entry_delete'><a href='offerEdit.php?delete=".$wag['biAngebotsID']."'><img src='../../img/icons/delete.png' alt='delete'/>löschen</a></div>"
-                                    . "<div id='entry_edit_1'><a href='offerEdit.php?edit1=".$wag['biAngebotsID']."'><img src='../../img/icons/edit.png' alt='edit'/>Anzahl angenommener Bewerber ändern</a></div></div>"
-                                    . "<div id='entry_edit_2'><a href='offerEdit.php?edit2=".$wag['biAngebotsID']."'><img src='../../img/icons/edit.png' alt='edit'/>Anzahl möglicher Bewerber ändern</a></div></div>";
+                            echo "<div id='entry'><div id='entry_name'>".$wag['vaName']." sucht ".$wag['iGesuchte_Bewerber']." Bewerber für ".$wag['vaAngebots_Art']." vom ".$wag['dAnfangsdatum']." bis zum ".$wag['dEnddatum'].".</div>"
+                                    . "<div id='entry_delete'><a href='offerEdit.php?delete=".$wag['biAngebotsID']."'><img src='../../img/icons/delete.png' alt='delete'/>l&ouml;schen</a></div>"
+                                    . "<div id='entry_edit_1'><a href='offerEdit.php?edit1=".$wag['biAngebotsID']."'><img src='../../img/icons/edit.png' alt='edit'/>Anzahl angenommener Bewerber &Auml;ndern</a></div>"
+                                    . "<div id='entry_edit_2'><a href='offerEdit.php?edit2=".$wag['biAngebotsID']."'><img src='../../img/icons/edit.png' alt='edit'/>Anzahl m&ouml;glicher Bewerber &Auml;ndern</a></div></div>";
                         }
                     }
                 ?>

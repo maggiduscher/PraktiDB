@@ -118,6 +118,12 @@
         ."<input type='text' name='branche' id='branche' placeholder='Branche'/><br/>"
         ."<label for='email'>E-Mail: </label>"
         ."<input type='email' name='email' id='email' placeholder='E-Mail'/><br/>"
+        ."<label for='tel'>Telefonnummer: </label>"
+        ."<input type='text' name='tel' id='tel' placeholder='Telefonnummer'/><br/>"
+        ."<label for='web'>Webpräsenz: </label>"
+        ."<input type='text' name='web' id='web' placeholder='Webpräsenz'/><br/>"
+        ."<label for='desc'>Beschreibung: </label>"
+        ."<textarea rows='4' cols='50' name = 'desc' id= 'desc'></textarea><br />"
         ."<input id='submitAdd' name='submitAdd' type='submit' value='Speichern'/>"
         ."</form>";
     }

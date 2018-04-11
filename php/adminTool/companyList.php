@@ -36,8 +36,8 @@
                     {
                         foreach ($sqlresult as $wag)
                         {
-                            echo "<div id='entry'><div id='entry_name'>".$wag['vaName']."</div></div>"
-                                    . "<div id='entry_delete'><a href='companyEdit.php?delete=".$wag['biUnternehmensID']."'><img src='../../img/icons/delete.png' alt='delete'/>löschen</a></div>"
+                            echo "<div id='entry'><div id='entry_name'>".$wag['vaName']."</div>"
+                                    . "<div id='entry_delete'><a href='companyEdit.php?delete=".$wag['biUnternehmensID']."'><img src='../../img/icons/delete.png' alt='delete'/>l&ouml;schen</a></div>"
                                     . "<div id='entry_edit'><a href='companyEdit.php?edit=".$wag['biUnternehmensID']."'><img src='../../img/icons/edit.png' alt='edit'/>bearbeiten</a></div></div>";
                         }
                     }

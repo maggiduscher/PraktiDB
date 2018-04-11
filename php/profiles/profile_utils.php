@@ -75,9 +75,9 @@
         }else
         {
             $array = $sqlresult->fetch_array();
-            if($array != null && $array['Last'] != null)
+            if($array != null && $array['MAX(dBewerbung)'] != null)
             {
-                $output = date_create($array['Last']);
+                $output = date_create($array['MAX(dBewerbung)']);
                 return $output;
             }else 
                 return null;

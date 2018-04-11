@@ -1,0 +1,29 @@
+/* 
+    Created on : 11.04.2018, 16:22:10
+    Author     : Niklas
+*/
+@media print{
+    #nav {
+        display:none;
+    }
+    
+    #rating{
+        display:none;
+    }
+    
+    div#map{
+        margin: 10px;
+        margin-top: 20px;
+    }
+    
+    img.gm-fullscreen-control{
+        display:none;
+    }
+    
+    #profile_data a#rating{
+        display: none;
+    }
+    input#print{
+        display: none;
+    }
+}
