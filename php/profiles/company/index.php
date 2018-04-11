@@ -31,7 +31,7 @@
                     . "Adresse: <br/>".$companydata['vaAdresse']."<br/>".$companydata['vaPLZ']." ".$companydata['vaStadt']."<br/>"
                     . "E-Mail: ".$companydata['vaEmail']."<br/>"
                     . "Tel.: ".$companydata['vaTelefonnummer']."<br/>"
-                    . "Website: <a href='//".$companydata['vaWeblinke']."'>".$companydata['vaWeblinke']."</a><br/>"
+                    . "Website: <a href='//".$companydata['vaWeblink']."'>".$companydata['vaWeblink']."</a><br/>"
                     . "<input type='button' value='Profil ausdrucken'onClick='window.print();' id='print' /><br/><br/>"
                     . "<a href='rating.php?id=".$_GET['id']."' id='rating'>Bewertungen zu diesem Unternehmnen ansehen!</a>"
                     . "</div>";

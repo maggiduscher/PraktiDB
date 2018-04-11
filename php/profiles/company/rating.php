@@ -12,7 +12,7 @@
 ?>
 <html>
     <?php            
-        CreateHead("Bewertugnen zu ".$ratings[0]['vaName']);
+        CreateHead("Bewertungen zu ".$ratings[0]['vaName']);
     ?>
     <body>
         <?php
@@ -20,7 +20,7 @@
             if(isset($_GET['id']))
             {
                 echo "<div id='main'>"
-                    . "<h1>Bewertugnen zu <a href='../company/?id=".$_GET['id']."'>".$ratings[0]['vaName']."</a></h1>"
+                    . "<h1>Bewertungen zu <a href='../company/?id=".$_GET['id']."'>".$ratings[0]['vaName']."</a></h1>"
                     . "<div id='ratings'>";
                     foreach($ratings as $rating)
                     echo "<div id='rating'>"
