@@ -12,8 +12,8 @@
 			$Data = array();
 			$Data[] = $username;
 			$Data[] = hash("sha256",$password);
-			if(preg_match('/[<>]/',$Data[0]) != 0){echo "Fehler bein Login";}
-			else if(preg_match('/[<>]/',$Data[0]) != 0){echo "Fehler bein Login";}
+			if(preg_match('/[<>]/',$Data[0]) != 0){CreateError( "Fehler bein Login");}
+			else if(preg_match('/[<>]/',$Data[0]) != 0){CreateError( "Fehler bein Login");}
 			else
 			{
 				$sqlresult = databasePreparedStatement('Call CheckUser(?,?)',$Data);
