@@ -17,7 +17,8 @@
             <div id="main">
                 <h1>Admin/Lehrer Kontrollraum - Klassenliste </h1>
                 <?php
-                    if(isset($_POST['class'])){
+                    //Klasse wurde ausgewählt:
+                    if(isset($_POST['class'])){ 
                         $sqlresult = databaseQuery("CALL GetKlasse('".$_POST['class']."')");
                         $users = $sqlresult->fetch_all(MYSQLI_ASSOC);
                         foreach ($users as $user) {
@@ -25,8 +26,7 @@
                                 ."<a href='../profiles/user/?id=".$user['biUserID']."'>".$user['vaVorname']." ".$user['vaNachname']."</a>"
                             ."</div>";
                         }
-
-                    }else{
+                    }else{ //Klasse wurde nicht ausgewählt:
                         $sqlresult = databaseQuery("CALL GetAllKlassen()");
                         $classes = $sqlresult->fetch_all();
                         echo "<form method='POST' action=".$_SERVER['PHP_SELF']." id='regis_student_form'>"

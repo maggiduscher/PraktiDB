@@ -50,7 +50,6 @@
                 CreateNav();
         ?>
         <div id="main">
-            <h1>Admin Kontrollraum - Orte verwalten</h1>
             <?php
             if(isset($_GET['edit']))
             {

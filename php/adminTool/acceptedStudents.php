@@ -3,7 +3,7 @@
 	include_once "admin_utils.php";
         IsLoggedIn();
         AllowedRolesOnly(array("teacher","admin"));
-        if(isset($_GET['id']))
+        if(isset($_GET['id'])) //angenommen Schüler entfernen
         {
             $sqlresult2 = databaseQuery("CALL GetAngebotFromAngenommene(".$_GET['id'].")");
             $id = $sqlresult2->fetch_array()['biAngebotsID'];

@@ -1,6 +1,7 @@
 /* 
     Created on : 11.04.2018, 16:22:10
     Author     : Niklas
+    CSS für das Drucken von Unternehmensprofilen
 */
 @media print{
     div, h1, a{

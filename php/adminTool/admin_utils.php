@@ -1,8 +1,10 @@
 <?php
 
     include_once '../utils/database.php';
-    
-    function GetPlaceData($plz)
+    /*
+        Funktionen um präperierte Information von der Datenbank abzufragen
+    */
+    function GetPlaceData($plz) 
     {
         $sqlresult = databaseQuery("CALL GetStadt('".$plz."')");
         $output = $sqlresult->fetch_array();
@@ -22,8 +24,9 @@
         $output = $sqlresult->fetch_array();
         return $output;
     }
-    //Offer
-
+    /*
+        Funktionen zur Generierung von Formularen für das Kontrollzentrum
+    */
     function generateAddFormOffer()
     {
         echo "<h1>Admin/Lehrer Kontrollraum - Angbot hinzufügen</h1>";
@@ -115,6 +118,14 @@
 		."<label for='email'>E-Mail: </label>"
         ."<input type='email' name='email' id='email' placeholder='E-Mail' value='".$companydata['vaEmail']."'/><br/>"
         ."</div>"
+                ."<div id='row'>"
+                ."<label for='tel'>Telefonnummer: </label>"
+        ."<input type='text' name='tel' id='tel' placeholder='Telefonnummer'/><br/>"
+        ."</div>"
+		."<div id='row'>"
+                ."<label for='web'>Webpr&auml;senz: </label>"
+        ."<input type='text' name='web' id='web' placeholder='Webpr&auml;senz'/><br/>"
+        ."</div>"
 		."<div id='row'>"
 		."<label for='desc'>Beschreibung: </label>"
         ."<input type='textarea' name='desc' id='desc' placeholder='Beschreibung' value='".$companydata['tText']."'/><br/>"
@@ -159,8 +170,8 @@
         ."<input type='text' name='tel' id='tel' placeholder='Telefonnummer'/><br/>"
 		."</div>"
 		."<div id='row'>"
-        ."<label for='web'>Webpr�senz: </label>"
-        ."<input type='text' name='web' id='web' placeholder='Webpr�senz'/><br/>"
+        ."<label for='web'>Webpr&auml;senz: </label>"
+        ."<input type='text' name='web' id='web' placeholder='Webpr&auml;senz'/><br/>"
 		."</div>"
 		."<div id='row'>"
         ."<label for='desc'>Beschreibung: </label>"

@@ -22,12 +22,16 @@
                 echo "<div id='main'>"
                     . "<h1>Bewertungen zu <a href='../company/?id=".$_GET['id']."'>".$ratings[0]['vaName']."</a></h1>"
                     . "<div id='ratings'>";
-                    foreach($ratings as $rating)
-                    echo "<div id='rating'>"
-                        . "<span id='h1'><a href='../user/?id=".$rating['biUserID']."'>".$rating['vaUsername']."</a> hat dieses Unternehmen bewertet:</span><br/>"
-                        . "<span id='h2'>Punkte: ".$rating['iPunkte']." von 100.</span><br/>"
-                        . $rating['vaText']."<br/>"
-                        . "</div>";
+                    if($ratings != null){
+                        foreach($ratings as $rating)
+                        echo "<div id='rating'>"
+                            . "<span id='h1'><a href='../user/?id=".$rating['biUserID']."'>".$rating['vaUsername']."</a> hat dieses Unternehmen bewertet:</span><br/>"
+                            . "<span id='h2'>Punkte: ".$rating['iPunkte']." von 100.</span><br/>"
+                            . $rating['vaText']."<br/>"
+                            . "</div>";
+                    }else{
+                        echo "Es gibt keine Bewertung für diese Firma.";
+                    }
                     echo "</div>";
                     
             }

@@ -10,19 +10,14 @@
         {
             $companydata = array();
             $companydata = GetCompanyData($_GET['id']);
-            $rating = GetRatingFromUser($_SESSION['id'],$_GET['id']);
-            
+            $rating = GetRatingFromUser($_SESSION['id'],$_GET['id']);   
         }
-        
-	
 ?>
 <html>
     <?php            
-        echo "</head>";
-                if(isset($_GET['id'])){CreateHead("Profil von ".$companydata['vaName']);}
-                else {CreateHead("Leeres Profil");}
-		echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/profile.css\" />";
-		echo "</head>";
+        if(isset($_GET['id'])){CreateHead("Profil von ".$companydata['vaName']);}
+        else {CreateHead("Leeres Profil");}
+        echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/profile.css\" />";
     ?>
     <body>
         <?php
@@ -33,7 +28,6 @@
                 
                 echo "<div id='main'>"
                     . "<h1>Profil von ".$companydata['vaName']."</h1>"
-                    //. "<div id='profile_pic'><img src='../img/pics/company/".$companydata['biUnternehmensID'].".png' alt='Profilbild'/></div>"
                     . "<div id='profile'>"
                     . "<div id='profile_row'>"
 					. "<div id='profile_data'> Adresse: </div> <div id='profile_data'>".$companydata['vaAdresse']."<br/>".$companydata['vaPLZ']." ".$companydata['vaStadt']."</div>"

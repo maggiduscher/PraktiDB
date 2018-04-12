@@ -8,11 +8,11 @@
         $sqlextention2 = "";
 	if(isset($_POST['ok']))
         {
-	    if(isset($_POST['branche']) && $_POST['branche'] != "default")
+	    if(isset($_POST['branche']) && $_POST['branche'] != "default") //Filter nach Branche
             {
                 $sqlextention .= " WHERE vaAngebots_Art = '".$_POST['branche']."'";
             }
-            if(isset($_POST['sortby']) && $_POST['sortby'] == "bewertung")
+            if(isset($_POST['sortby']) && $_POST['sortby'] == "bewertung") //Sortierung nach Bewerbung
             {
                 $sqlextention2 .= " ORDER BY AVG(iPunkte) DESC ";
             }
@@ -57,7 +57,7 @@
                $sqlresultremove = databaseQuery("CALL DeleteAngebot(".$value['id'].")",true);
             }
         }
-        if(isset($_POST['ok']))
+        if(isset($_POST['ok'])) //Sortierung nach Entfernung
         {
 	    if(isset($_POST['sortby']) && $_POST['sortby'] == "entfernung" && !empty($data))
             {
@@ -134,7 +134,7 @@
                         $output=preg_replace('/\./','',$output);
                         $output=preg_replace('/m/','',$output);
                         $output=preg_replace('/\s+/','',$output);
-                        if(!((!isset($_POST['ok']))||($_POST['entfernung']=="default")||(isset($_POST['ok'])&&($_POST['entfernung']!="default")&&$output<=$_POST['entfernung'])))
+                        if(!((!isset($_POST['ok']))||($_POST['entfernung']=="default")||(isset($_POST['ok'])&&($_POST['entfernung']!="default")&&$output<=$_POST['entfernung']))) //Filter nach Entfernung
                         {
                             unset($data[array_search($value, $data)]);
                             $counter = $counter-1;

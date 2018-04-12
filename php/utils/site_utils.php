@@ -36,7 +36,7 @@
 
     }
 
-    function IsLoggedIn($path = "")
+    function IsLoggedIn($path = "") //Überprüfen ob der Benutzer einggeloggt. Wenn nicht sende ihn zurück zum Login.
     {
         session_start(['gc_maxlifetime'=>0]);
         if(!isset($_COOKIE["PHPSESSID"])){
@@ -51,7 +51,7 @@
 
     }
     
-    function AllowedRolesOnly($roles)
+    function AllowedRolesOnly($roles) //Überprüfe ob der Benutzer eine der erlaubten Rollen hat. Wenn nicht verweigere Zugriff.
     {
         $allowed = false;
         foreach ($roles as $role)
@@ -69,7 +69,7 @@
         }
     }
     
-    function IsRole($role)
+    function IsRole($role) //Überprüfe ob der Benutzer die angegeben Rolle hat.
     {
         if($_SESSION['role']== $role)
         {

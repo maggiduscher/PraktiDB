@@ -15,7 +15,7 @@
         {
             header("location: ../adminTool/offerList.php?fail");
         }  
-    }else if(isset($_POST['submitEdit1']))
+    }else if(isset($_POST['submitEdit1'])) // Anzahl der angenommen Schüler ändern
     {
         $sqlresult = databaseQuery("CALL UpdataAngebotsAngenommene(".$_POST['offerID'].", ".$_POST['anz'].");");
         if($sqlresult != null)
@@ -25,7 +25,7 @@
         {
             header("location: ../adminTool/offerList.php?fail");
         }  
-    }else if(isset($_POST['submitEdit2']))
+    }else if(isset($_POST['submitEdit2'])) // Anzahl der möglichen Bewerber änderen
     {
         $sqlresult = databaseQuery("CALL UpdateAngebotsBewerber(".$_POST['offerID'].", ".$_POST['anz'].");");
         if($sqlresult != null)

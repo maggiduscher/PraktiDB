@@ -3,7 +3,7 @@
 	include_once "admin_utils.php";
         IsLoggedIn();
         AllowedRolesOnly(array("teacher","admin"));
-        if(isset($_GET['id'])){
+        if(isset($_GET['id'])){ //Praktikumsstelle als nicht (mehr) besucht markieren
             $sqlresult = databaseQuery("CALL DeleteAngenommene(".$_GET['id'].");");
         }
 ?>

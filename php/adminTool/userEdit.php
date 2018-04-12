@@ -34,7 +34,7 @@
         {
             header("location: ../adminTool/userList.php?fail");
         }  
-    }else if(isset($_POST['submitAccept']))
+    }else if(isset($_POST['submitAccept'])) //Schüler als angenommen markieren
     {
         $sqlresult = databaseQuery("CALL AddAngenommene(".$_POST['user'].", ".$_POST['offer'].");");
         $angenommen = databaseQuery("CALL IncrementAngebotsAngenommene(".$_POST['offer'].")");
@@ -45,7 +45,7 @@
         {
             header("location: ../adminTool?fail");
         }  
-    }else if(isset($_POST['submitVisit']))
+    }else if(isset($_POST['submitVisit'])) //Praktikumsstelle als besucht markieren
     {
         $sqlresult = databaseQuery("CALL AddAngenommene(".$_POST['user'].", ".$_POST['company'].");");
         if($sqlresult != null)

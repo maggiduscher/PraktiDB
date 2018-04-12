@@ -8,9 +8,7 @@
 ?>
 <html>
     <?php            
-        	echo "</head>";
-			CreateHead("Login"); 
-			echo "</head>";
+            CreateHead("Login"); 
     ?>
     <body>
         <?php
