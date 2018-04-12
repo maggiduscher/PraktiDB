@@ -6,8 +6,12 @@
         $userdata = array();	
         if(isset($_POST['submit']) && isset($_POST['profile_info']))
         {
-            $SQLQuery = "Call UpdateText(".$_GET['id'].", '".$_POST['profile_info']."');";
-            databaseQuery($SQLQuery);
+           if(preg_match('/[<>]/',$_POST['profile_info']) != 0){echo "Bitte Gülltigen Text eingeben";}
+           else
+           {
+              $SQLQuery = "Call UpdateText(".$_GET['id'].", '".$_POST['profile_info']."');";
+              databaseQuery($SQLQuery);
+           } 
         }
         if(isset($_POST['submit']) && isset($_FILES['upload']) && is_uploaded_file($_FILES['upload']['tmp_name']))
         {
