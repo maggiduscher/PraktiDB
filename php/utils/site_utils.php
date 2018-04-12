@@ -6,6 +6,7 @@
         echo "<title> PraktiDB - ".$name." </title>";
         echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/main.css\" />";
         echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/print.css\" media=\"print\"/>";
+        echo "<link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"/PraktiDB/favicon.ico\">";
 		echo "<link href=\"https://fonts.googleapis.com/css?family=Lato\" rel=\"stylesheet\" />"; 
 		if(strpos($name, "Profil") === false && strpos($name, "Admin") === false)echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/".$name.".css\" />";
 		if(strpos($name, "Admin") !== false && strpos($name, "Profil") === false) echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/Admin.css\" />"; 		

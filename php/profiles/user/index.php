@@ -3,55 +3,57 @@
 	include_once "../../utils/site_utils.php";
 	include_once "../../utils/database.php";
 	IsLoggedIn("../");
-        $userdata = array();	
-        if(isset($_POST['submit']) && isset($_POST['profile_info']))
-        {
-           if(preg_match('/[<>]/',$_POST['profile_info']) != 0){echo "Bitte Gülltigen Text eingeben";}
-           else
-           {
-              $SQLQuery = "Call UpdateText(".$_GET['id'].", '".$_POST['profile_info']."');";
-              databaseQuery($SQLQuery);
-           } 
-        }
-        if(isset($_POST['submit']) && isset($_FILES['upload']) && is_uploaded_file($_FILES['upload']['tmp_name']))
-        {
-            if (file_exists("../../../img/".$_SESSION['id'].".png")) 
+        $userdata = array();
+        if(isset($_GET['id'])){
+            if(isset($_POST['submit']) && isset($_POST['profile_info']))
             {
-                unlink("../../../img/".$_SESSION['id'].".png");
+               if(preg_match('/[<>]/',$_POST['profile_info']) != 0){echo "Bitte Gülltigen Text eingeben";}
+               else
+               {
+                  $SQLQuery = "Call UpdateText(".$_GET['id'].", '".$_POST['profile_info']."');";
+                  databaseQuery($SQLQuery);
+               } 
             }
-            $fileExtension =  strtolower(pathinfo($_FILES["upload"]["name"],PATHINFO_EXTENSION));
-            if( $fileExtension != "jpg" && $fileExtension != "png" && $fileExtension != "jpeg")
+            if(isset($_POST['submit']) && isset($_FILES['upload']) && is_uploaded_file($_FILES['upload']['tmp_name']))
             {
-                CreateWarning("Es dürfen nur Bilder mit einer der folgenden Endungen hochgeladen werden: jpg, jpeg, png");
-            }else
-            {
-                if (file_exists("../../../img/".$_SESSION['id'].".png"))
+                if (file_exists("../../../img/".$_SESSION['id'].".png")) 
                 {
                     unlink("../../../img/".$_SESSION['id'].".png");
                 }
-                if(!move_uploaded_file($_FILES["upload"]["tmp_name"], "../../../img/".$_SESSION['id'].".png")) CreateError("Upload fehlgeschlagen");
-                $_GET['uploaded'] = true;
-            } 
-        }else if (isset($_POST['submit']) && isset($_FILES['upload']) && !is_uploaded_file($_FILES['upload']['tmp_name']))
-        {
-            $_GET['uploaded'] = false;
+                $fileExtension =  strtolower(pathinfo($_FILES["upload"]["name"],PATHINFO_EXTENSION));
+                if( $fileExtension != "jpg" && $fileExtension != "png" && $fileExtension != "jpeg")
+                {
+                    CreateWarning("Es dürfen nur Bilder mit einer der folgenden Endungen hochgeladen werden: jpg, jpeg, png");
+                }else
+                {
+                    if (file_exists("../../../img/".$_SESSION['id'].".png"))
+                    {
+                        unlink("../../../img/".$_SESSION['id'].".png");
+                    }
+                    if(!move_uploaded_file($_FILES["upload"]["tmp_name"], "../../../img/".$_SESSION['id'].".png")) CreateError("Upload fehlgeschlagen");
+                    $_GET['uploaded'] = true;
+                } 
+            }else if (isset($_POST['submit']) && isset($_FILES['upload']) && !is_uploaded_file($_FILES['upload']['tmp_name']))
+            {
+                $_GET['uploaded'] = false;
+            }
+            $userdata = GetUserData($_GET['id']);
+            $letzteBewerbung = GetLastApplication($_GET['id']);
         }
-        $userdata = GetUserData($_GET['id']);
-        $letzteBewerbung = GetLastApplication($_GET['id']);
 	
 ?>
 <html>
     <?php            
         echo "</head>";
-		CreateHead("Profil von ".$userdata['vaVorname']." ".$userdata["vaNachname"]."");
+                if(isset($_GET['id'])){CreateHead("Profil von ".$userdata['vaVorname']." ".$userdata["vaNachname"]."");}
+                else {CreateHead("Leeres Profil");}
 		echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/profile.css\" />";
-		echo "</head>";
-		
-		
+		echo "</head>";	
     ?>
     <body>
         <?php
-		CreateNav();
+            CreateNav();
+            if(!isset($_GET['id']) || $userdata == null ){ echo "<div id='main'>Dieses Profil existiert nicht!</div>";die;}
             if(isset($_GET['id']))
             {
              $alter = date_diff(date_create(date("Y-m-d")),date_create($userdata['dGeburtsjahr']));

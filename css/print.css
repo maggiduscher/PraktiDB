@@ -3,6 +3,10 @@
     Author     : Niklas
 */
 @media print{
+    div, h1, a{
+        color: black;
+    }
+    
     #nav {
         display:none;
     }
