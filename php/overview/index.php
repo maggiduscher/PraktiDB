@@ -86,7 +86,9 @@
         <?php CreateNav(); ?>
         <div id="main" >
             <a href="#" id="Filter" onclick="Filter();" style=" Cursor: pointer; text-decoration:none">Filter</a>
-            <form id="Filters" method="POST"> 
+            <form id="Filters" method="POST">
+                <div id="branche">
+                <label id="branche" for="branche">Branche: </label>
                 <select id="branche" name="branche">
                     <option value="default" selected>---</option>
                     <?php
@@ -100,6 +102,9 @@
                     }
                     ?>			
                 </select>
+                </div>
+                <div id="entfernung">
+                <label id="entfernung" for="entfernung">Entfernung: </label>
                 <select id="entfernung" name="entfernung">
                         <option value="default" selected>---</option>
                         <option value="100">100m</option>
@@ -109,11 +114,15 @@
                         <option value="10000">10km</option>
                         <option value="50000">50km</option>
                 </select>
+                </div>
+                <div id="sortby">
+                <label id="sortby" for="sortby">Sortieren nach: </label>
                 <select id="sortby" name="sortby">
                         <option value="default" selected>---</option>
                         <option value="entfernung">Entfernung</option>
                         <option value="bewertung">Bewertung</option>
                 </select>
+                </div>
                 <input id="ok" name="ok" type="submit" value="OK" />			
             </form>
             <?php

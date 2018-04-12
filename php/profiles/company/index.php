@@ -32,6 +32,7 @@
                     . "E-Mail: ".$companydata['vaEmail']."<br/>"
                     . "Tel.: ".$companydata['vaTelefonnummer']."<br/>"
                     . "Website: <a href='//".$companydata['vaWeblinke']."'>".$companydata['vaWeblinke']."</a><br/>"
+                    . "Beschreibung: ".$companydata['tText']."<br/>"    
                     . "<input type='button' value='Profil ausdrucken'onClick='window.print();' id='print' /><br/><br/>"
                     . "<a href='rating.php?id=".$_GET['id']."' id='rating'>Bewertungen zu diesem Unternehmnen ansehen!</a>"
                     . "</div>";

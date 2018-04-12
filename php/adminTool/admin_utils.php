@@ -88,7 +88,7 @@
         ."<label for='address'>Adresse: </label>"
         ."<input type='text' name='address' id='address' placeholder='Adresse' value='".$companydata['vaAdresse']."'/><br/>"
         ."<label for='branche'>Branche: </label>"
-        ."<input type='text' name='branche' id='branche' placeholder='Branche' value='".$companydata['vaBrache']."'/><br/>"
+        ."<input type='text' name='branche' id='branche' placeholder='Branche' value='".$companydata['vaBranche']."'/><br/>"
         ."<label for='email'>E-Mail: </label>"
         ."<input type='email' name='email' id='email' placeholder='E-Mail' value='".$companydata['vaEmail']."'/><br/>"
         ."<label for='desc'>Beschreibung: </label>"

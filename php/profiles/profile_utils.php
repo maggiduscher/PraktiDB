@@ -89,7 +89,7 @@
         echo "<div id='map'></div>"
                 ."<script>"  
                   ."function initMap() {"
-                    // Create a map object and specify the DOM element for display.
+                    // Map Objekt erstllen
                     ."var map = new google.maps.Map(document.getElementById('map'), {"
                         ."zoom: 7"
                     ."});"
@@ -98,18 +98,18 @@
                         ."map: map"
                     ."});"
 
-                      // Set destination, origin and travel mode.
+                      // Start, Ziel und Reiseart setzen
                     ."var request = {"
                         ."destination: '".$dest."',"
                         ."origin: '".$origin."',"
                         ."travelMode: 'DRIVING'"
                     ."};"
 
-                      // Pass the directions request to the directions service.
+                      // Anfrage an die directionsService senden
                     ."var directionsService = new google.maps.DirectionsService();"
                     ."directionsService.route(request, function(response, status) {"
                         ."if (status == 'OK') {"
-                            // Display the route on the map.
+                            // Die Route auf der Map anzeigen
                             ."directionsDisplay.setDirections(response);"
                         ."}"
                     ."});"
