@@ -15,7 +15,8 @@
         }
         if(isset($_POST['submit']) && isset($_FILES['upload']) && is_uploaded_file($_FILES['upload']['tmp_name']))
         {
-            if (file_exists("../../../img/".$_SESSION['id'].".png")) 
+            if (file_exists("../../../img/".$_SESSION['id'].".png"))
+            {
                 {
                     unlink("../../../img/".$_SESSION['id'].".png");
                 }
