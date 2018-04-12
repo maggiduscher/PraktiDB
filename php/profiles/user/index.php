@@ -6,7 +6,7 @@
         $userdata = array();	
         if(isset($_POST['submit']) && isset($_POST['profile_info']))
         {
-           if(preg_match('/[<>]/',$_POST['profile_info']) != 0){echo "Bitte Gülltigen Text eingeben";}
+           if(preg_match('/[<>]/',$_POST['profile_info']) != 0){CreateError( "Bitte Gültigen Text eingeben");}
            else
            {
               $SQLQuery = "Call UpdateText(".$_GET['id'].", '".$_POST['profile_info']."');";
