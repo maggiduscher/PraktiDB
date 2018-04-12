@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 	include_once "../profile_utils.php";
 	include_once "../../utils/site_utils.php";
 	include_once "../../utils/database.php";
@@ -79,7 +79,7 @@
 					. "<div id='profile_data'> Alter: </div><div id='profile_data'>".$alter->format('%y')." </div> <br/>"
 				. "</div>"
 				. "<div id='profile_row'>"
-					. "<div id='profile_data'> Adresse: </div><div id='profile_data'>".ucwords($userdata['vaAdresse'])."<br/>".$userdata['vaPLZ']." ".$userdata['vaStadt']."</div> <br/>"
+					. "<div id='profile_data'> Adresse: </div><div id='profile_data'>".ucwords($userdata['vaAdresse'])."<br/>".$userdata['vaPLZ']." ".utf8_decode($userdata['vaStadt'])."</div> <br/>"
 				. "</div>"
 				. "<div id='profile_row'>"
 					. "<div id='profile_data'> E-Mail: </div><div id='profile_data'>".$userdata['vaEmail']."</div> <br/>"

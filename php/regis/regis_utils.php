@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 //Echt
 	include_once "../utils/database.php";
 	
@@ -89,7 +89,7 @@
                                         ."<label for='klasse'>Klasse: </label>"
                                         ."<input type='text' name='klasse' id='klasse' placeholder='Klasse' required/><br/>"
                                 ."</div>"
-				."<div id='branche'>"
+				."<div id='geburtstag'>"
 					."<label for='branche'>Geburtstag: </label>"
 					."<input type='text' name='geburtstag' id='geburtstag' placeholder='Geburtstag' required/><br/>"
 				."</div>"

@@ -32,7 +32,7 @@
                     . "<div id='profile_pic'><img src='../img/pics/company/".$companydata['biUnternehmensID'].".png' alt='Profilbild'/></div>"
                     . "<div id='profile'>"
                     . "<div id='profile_row'>"
-					. "<div id='profile_data'> Adresse: </div> <div id='profile_data'>".$companydata['vaAdresse']."<br/>".$companydata['vaPLZ']." ".$companydata['vaStadt']."</div>"
+					. "<div id='profile_data'> Adresse: </div> <div id='profile_data'>".$companydata['vaAdresse']."<br/>".$companydata['vaPLZ']." ".utf8_decode($companydata['vaStadt'])."</div>"
                     . "</div>"
 					. "<div id='profile_row'>"
 					. "<div id='profile_data'>E-Mail: </div> <div id='profile_data'>".$companydata['vaEmail']."</div>"
@@ -79,7 +79,7 @@
                     echo "</div>";
                 }
                 
-                GenerateGoogleMap(GetAddressFromUser($_SESSION['id']),str_replace(' ', '+',$companydata['vaAdresse']." ".$companydata['vaPLZ']." ".$companydata['vaStadt']));
+                GenerateGoogleMap(GetAddressFromUser($_SESSION['id']),str_replace(' ', '+',$companydata['vaAdresse']." ".$companydata['vaPLZ']." ".utf8_decode($companydata['vaStadt'])));
                 echo "</div>";
             }
         ?>
