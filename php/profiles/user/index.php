@@ -37,9 +37,10 @@
             {
                 $_GET['uploaded'] = false;
             }
+		}
             $userdata = GetUserData($_GET['id']);
             $letzteBewerbung = GetLastApplication($_GET['id']);
-        }
+        
 	
 ?>
 <html>
