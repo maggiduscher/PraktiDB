@@ -160,7 +160,7 @@ background-color: #454552;
 
 div#map{
     width: 80%;
-    height: 800px;
+    height: 600px;
 }
 
 form#Filters, form#Filters input#ok{

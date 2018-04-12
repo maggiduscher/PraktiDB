@@ -11,6 +11,7 @@
             $companydata = array();
             $companydata = GetCompanyData($_GET['id']);
             $rating = GetRatingFromUser($_SESSION['id'],$_GET['id']);
+            
         }
         
 	
@@ -18,18 +19,21 @@
 <html>
     <?php            
         echo "</head>";
-		CreateHead("Profil von ".$companydata['vaName']);
+                if(isset($_GET['id'])){CreateHead("Profil von ".$companydata['vaName']);}
+                else {CreateHead("Leeres Profil");}
 		echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/profile.css\" />";
 		echo "</head>";
     ?>
     <body>
         <?php
             CreateNav();
+            if(!isset($_GET['id']) || $companydata == null ){ echo "<div id='main'>Dieses Profil existiert nicht!</div>";die;}
             if(isset($_GET['id']))
             {
+                
                 echo "<div id='main'>"
                     . "<h1>Profil von ".$companydata['vaName']."</h1>"
-                    . "<div id='profile_pic'><img src='../img/pics/company/".$companydata['biUnternehmensID'].".png' alt='Profilbild'/></div>"
+                    //. "<div id='profile_pic'><img src='../img/pics/company/".$companydata['biUnternehmensID'].".png' alt='Profilbild'/></div>"
                     . "<div id='profile'>"
                     . "<div id='profile_row'>"
 					. "<div id='profile_data'> Adresse: </div> <div id='profile_data'>".$companydata['vaAdresse']."<br/>".$companydata['vaPLZ']." ".utf8_decode($companydata['vaStadt'])."</div>"

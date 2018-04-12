@@ -11,14 +11,26 @@ body{
 }
 
 h1{
-    font-size: 30px;
+    font-size: 50px;
 }
 
 h2{
     text-decoration: underline;
+    font-size: 25px;
 }
 
-p{
-    
+h3{
+    text-decoration: underline;
+    font-size: 20px;
+}
+
+#indent2{
+    margin-left:20px;
+}
+
+img{
+    float: right;
+    width: 64px;
+    height: 64px;
 }
 
