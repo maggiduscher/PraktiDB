@@ -1,4 +1,4 @@
-<?php
+﻿<?php
     include_once "regis_utils.php";
     include_once "../utils/site_utils.php";
 ?>

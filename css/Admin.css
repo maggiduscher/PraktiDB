@@ -59,6 +59,12 @@ img{
 	
 }
 
+#main input[type="submit"]{
+	
+	margin-top: 7px;;
+	
+}
+
 select {
 	
 	margin: 12px 7px 0px 7px;
@@ -69,6 +75,10 @@ form{
 	
 	display: table;
 	
+}
+
+label[for="desc"] {
+    vertical-align: top;
 }
 
 form #row, #row_radio{
@@ -85,6 +95,6 @@ form #row *, #row_radio #cell{
 
 form div select {
 	
-	width: 40%;
+	width: 120px;
 	
 }
