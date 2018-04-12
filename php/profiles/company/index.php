@@ -29,7 +29,7 @@
             {
                 echo "<div id='main'>"
                     . "<h1>Profil von ".$companydata['vaName']."</h1>"
-					. "<div id='profile_pic'><img src='../img/pics/company/".$companydata['biUnternehmensID'].".png' alt='Profilbild'/></div>"
+                    . "<div id='profile_pic'><img src='../img/pics/company/".$companydata['biUnternehmensID'].".png' alt='Profilbild'/></div>"
                     . "<div id='profile'>"
                     . "<div id='profile_row'>"
 					. "<div id='profile_data'> Adresse: </div> <div id='profile_data'>".$companydata['vaAdresse']."<br/>".$companydata['vaPLZ']." ".$companydata['vaStadt']."</div>"
@@ -43,10 +43,12 @@
 					. "<div id='profile_row'>"
 					. "<div id='profile_data'>Website: </div> <div id='profile_data'><a href='//".$companydata['vaWeblink']."'>".$companydata['vaWeblink']."</a></div>"
                     . "</div>"
+                                        . "<div id='profile_row'>"
+					. "<div id='profile_data'>Beschreibung: </div> <div id='profile_data'>".$companydata['tText']."</a></div>"
+                    . "</div>"
 					. "</div>"
 					. "<input type='button' value='Profil ausdrucken'onClick='window.print();' id='print' /><br/><br/>"
                     . "<a href='rating.php?id=".$_GET['id']."' id='rating'>Bewertungen zu diesem Unternehmnen ansehen!</a>";
-                    
                 if(IsRole('teacher') || IsRole('admin'))
                 {
                     echo "<div id='rating'>";

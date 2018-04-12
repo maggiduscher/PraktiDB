@@ -16,11 +16,6 @@
         $origin = str_replace(' ', '+', $origin);
         $dest = str_replace(' ', '+', $dest);
         $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=".$origin."&destinations=".$dest."&key=".$key;
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $json = curl_exec($ch);
-        curl_close($ch);
         $arrContextOptions=array(
                 "ssl"=>array(
                     "verify_peer"=>false,

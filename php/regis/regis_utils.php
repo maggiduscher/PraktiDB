@@ -331,7 +331,7 @@
 				
 					for($i= 0; $i < count($Data);++$i)
 				   {
-					 if(empty(trim($Data[$i])) || preg_match('/[<>]/',$Data[$i])
+					 if(empty(trim($Data[$i])) || preg_match('/[<>]/',$Data[$i]))
 				     {
 					      switch($i)
 						  {

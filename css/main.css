@@ -163,3 +163,13 @@ div#map{
     height: 800px;
 }
 
+form#Filters, form#Filters input#ok{
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+div#branche,div#entfernung,div#sortby{
+    display: flex;
+    flex-direction: column;
+}
+

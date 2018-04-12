@@ -11,6 +11,7 @@
     function ShowUser()
     {
         $sqlresult = databaseQuery("CALL GetAllDeactivatedUser();");
+        
         if($sqlresult != null && $sqlresult->num_rows != 0)
         {
             echo '<form action="" method = "post">';
@@ -38,13 +39,12 @@
         if(isset($_POST['LoeschenCompanie'])){$sqlresult = databaseQuery("CALL DeleteUnternehmen(".$_POST['LoeschenCompanie'].");");}	
 
         $sqlresult = databaseQuery("CALL GetAllDeactivatedUnternehmen();");
-
         if($sqlresult != null && $sqlresult->num_rows != 0)
         {
             echo '<form action="" method = "post">';
             echo '<table border = "1">';
             foreach ($sqlresult as $item)
-            {							
+            {					
                 $_POST['CompanieName'] = substr($item['vaName'],12);					
                 echo '<tr>
                 <td>'.substr($item['vaName'],12).'</td>
