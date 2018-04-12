@@ -34,8 +34,8 @@
                         {
                             echo "<div id='entry'><div id='entry_name'>".$wag['vaUsername']."</div>"
                                 . "<div id='entry_delete'><a href='userEdit.php?delete=".$wag['biUserID']."'><img src='../../img/icons/delete.png' alt='delete'/>löschen</a></div>"
-                                . "<div id='entry_edit'><a href='userEdit.php?edit=".$wag['biUserID']."'><img src='../../img/icons/edit.png' alt='edit'/>bearbeiten</a></div></div>"
-                                . "<div id='entry_edit'><a href='userEdit.php?editPassword=".$wag['biUserID']."'><img src='../../img/icons/edit.png'alt='editPassword'/>Passwort beartbeiten</a></div></div>";
+                                . "<div id='entry_edit'><a href='userEdit.php?edit=".$wag['biUserID']."'><img src='../../img/icons/edit.png' alt='edit'/>bearbeiten</a></div>"
+                                . "<div id='entry_edit'><a href='userEdit.php?editPassword=".$wag['biUserID']."'><img src='../../img/icons/edit.png'alt='editPassword'/>Passwort bearbeiten</a></div></div>";
                         }
                     }
                 ?>

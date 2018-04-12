@@ -17,7 +17,10 @@
 ?>
 <html>
     <?php            
-        CreateHead("Profil von ".$companydata['vaName']);
+        echo "</head>";
+		CreateHead("Profil von ".$companydata['vaName']);
+		echo "<link rel=\"stylesheet\" href=\"/PraktiDB/css/profile.css\" />";
+		echo "</head>";
     ?>
     <body>
         <?php
@@ -26,16 +29,26 @@
             {
                 echo "<div id='main'>"
                     . "<h1>Profil von ".$companydata['vaName']."</h1>"
-                    . "<div id='profile_data'>"
                     . "<div id='profile_pic'><img src='../img/pics/company/".$companydata['biUnternehmensID'].".png' alt='Profilbild'/></div>"
-                    . "Adresse: <br/>".$companydata['vaAdresse']."<br/>".$companydata['vaPLZ']." ".$companydata['vaStadt']."<br/>"
-                    . "E-Mail: ".$companydata['vaEmail']."<br/>"
-                    . "Tel.: ".$companydata['vaTelefonnummer']."<br/>"
-                    . "Website: <a href='//".$companydata['vaWeblinke']."'>".$companydata['vaWeblinke']."</a><br/>"
-                    . "Beschreibung: ".$companydata['tText']."<br/>"    
-                    . "<input type='button' value='Profil ausdrucken'onClick='window.print();' id='print' /><br/><br/>"
-                    . "<a href='rating.php?id=".$_GET['id']."' id='rating'>Bewertungen zu diesem Unternehmnen ansehen!</a>"
-                    . "</div>";
+                    . "<div id='profile'>"
+                    . "<div id='profile_row'>"
+					. "<div id='profile_data'> Adresse: </div> <div id='profile_data'>".$companydata['vaAdresse']."<br/>".$companydata['vaPLZ']." ".$companydata['vaStadt']."</div>"
+                    . "</div>"
+					. "<div id='profile_row'>"
+					. "<div id='profile_data'>E-Mail: </div> <div id='profile_data'>".$companydata['vaEmail']."</div>"
+                    . "</div>"
+					. "<div id='profile_row'>"
+					. "<div id='profile_data'>Tel.:</div> <div id='profile_data'>".$companydata['vaTelefonnummer']."</div>"
+                    . "</div>"
+					. "<div id='profile_row'>"
+					. "<div id='profile_data'>Website: </div> <div id='profile_data'><a href='//".$companydata['vaWeblink']."'>".$companydata['vaWeblink']."</a></div>"
+                    . "</div>"
+                                        . "<div id='profile_row'>"
+					. "<div id='profile_data'>Beschreibung: </div> <div id='profile_data'>".$companydata['tText']."</a></div>"
+                    . "</div>"
+					. "</div>"
+					. "<input type='button' value='Profil ausdrucken'onClick='window.print();' id='print' /><br/><br/>"
+                    . "<a href='rating.php?id=".$_GET['id']."' id='rating'>Bewertungen zu diesem Unternehmnen ansehen!</a>";
                 if(IsRole('teacher') || IsRole('admin'))
                 {
                     echo "<div id='rating'>";

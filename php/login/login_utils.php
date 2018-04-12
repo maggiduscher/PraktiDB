@@ -12,19 +12,26 @@
 			$Data = array();
 			$Data[] = $username;
 			$Data[] = hash("sha256",$password);
-			
-            $sqlresult = databasePreparedStatement('Call CheckUser(?,?)',$Data);
-            if($sqlresult == null || $sqlresult->num_rows == 0)
-            {
-                CreateError("Dein Benutzername/Email oder Passwort ist falsch. Bitte versuche es erneut.");
-            }else
-            {
+			if(preg_match('/[<>]/',$Data[0]) != 0){echo "Fehler bein Login";}
+			else if(preg_match('/[<>]/',$Data[0]) != 0){echo "Fehler bein Login";}
+			else
+			{
+				$sqlresult = databasePreparedStatement('Call CheckUser(?,?)',$Data);
+                if($sqlresult == null || $sqlresult->num_rows == 0)
+                {
+                  CreateError("Dein Benutzername/Email oder Passwort ist falsch. Bitte versuche es erneut.");
+                }else
+                {
                 logout();
                 session_start(['gc_maxlifetime'=>0]);
                 $output = $sqlresult->fetch_array();
                 $_SESSION['id']=$output['biUserID'];
                 $_SESSION['role']=$output['vaUserRole'];
-            }
+                }
+			}
+				
+			
+            
         }
     }
 

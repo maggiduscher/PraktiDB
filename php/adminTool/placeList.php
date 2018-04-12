@@ -34,7 +34,7 @@
                         {
                             echo "<div id='entry'><div id='entry_name'>".$wag['vaPLZ']." ".$wag['vaStadt']."</div>"
                                 . "<div id='entry_delete'><a href='placeEdit.php?delete=".$wag['vaPLZ']."'><img src='../../img/icons/delete.png' alt='delete'/>löschen</a></div>"
-                                . "<div id='entry_edit'><a href='placeEdit.php?edit=".$wag['vaPLZ']."'><img src='../../img/icons/edit.png' alt='edit'/>beartbeiten</a></div></div>";
+                                . "<div id='entry_edit'><a href='placeEdit.php?edit=".$wag['vaPLZ']."'><img src='../../img/icons/edit.png' alt='edit'/>bearbeiten</a></div></div>";
                         }
                     }
                 ?>

@@ -186,7 +186,7 @@
 		if(empty(trim($date))){$Data[] = " "; return false;}
 		else{
 			 
-			 $dummy = split('\.',$date);
+			 $dummy = explode('.',$date);
 			 if(count($dummy) != 3){$Check = false;}
 			 else{
 			     if(preg_match('/[A-Z]/i',$date) != 0 ){$Check = false;}
@@ -217,7 +217,7 @@
 	{
 		for($i= 0; $i < count($Data);++$i)
 				{
-					if(empty(trim($Data[$i])))
+					if(empty(trim($Data[$i])) || preg_match('/[<>]/',$Data[$i]) != 0)
 				    {
 					      switch($i)
 						  {
@@ -234,7 +234,8 @@
 							  break;
 							  
 							  case 3:
-							  if($type == "student"){$Fehler[] = "Sie haben keine Klasse eingegeben";}
+							  if($type == "student" || preg_match('/[<>]/',$Data[$i]) != 0){$Fehler[] = "Sie haben keine Klasse eingegeben";}
+							
 							  //Ein Lehrer muss keine Klasse angeben
 							  break;
 							  
@@ -330,7 +331,7 @@
 				
 					for($i= 0; $i < count($Data);++$i)
 				   {
-					 if(empty(trim($Data[$i])))
+					 if(empty(trim($Data[$i])) || preg_match('/[<>]/',$Data[$i]))
 				     {
 					      switch($i)
 						  {
