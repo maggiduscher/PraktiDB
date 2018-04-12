@@ -186,7 +186,7 @@
 		if(empty(trim($date))){$Data[] = " "; return false;}
 		else{
 			 
-			 $dummy = split('\.',$date);
+			 $dummy = explode('.',$date);
 			 if(count($dummy) != 3){$Check = false;}
 			 else{
 			     if(preg_match('/[A-Z]/i',$date) != 0 ){$Check = false;}

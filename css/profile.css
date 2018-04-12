@@ -6,7 +6,8 @@
 
 #profile_pic{
 	
-	float: right;
+	position: absolute;
+	left: 49%;
 	width: 130px;
 	height: 167px;
 	
