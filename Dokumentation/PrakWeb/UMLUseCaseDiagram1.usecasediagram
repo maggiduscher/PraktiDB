@@ -1,0 +1,321 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<useCaseModelRoot xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/ModelStore" xmlns:dm9="http://schemas.microsoft.com/dsltools/SimpleShapesModel" dslVersion="1.0.0.0" Id="242a3a50-8fe7-4b23-a0ad-fa3732743fa2" name="UMLUseCaseDiagram1" linkedPackageId="d113fbea-0c69-4709-8a0b-f1348b7900d6" xmlns="http://schemas.microsoft.com/dsltools/UseCaseModel">
+  <packagedElements>
+    <useCaseModelRootHasTypes>
+      <subsystem Id="b47e4f08-70ff-44d9-a0ac-8a4f937a50f5" name="Website" isAbstract="false" isLeaf="false" isActiveClass="false">
+        <elementDefinition Id="6a5b6096-32fb-4096-b655-e68151f89295" />
+      </subsystem>
+    </useCaseModelRootHasTypes>
+    <useCaseModelRootHasTypes>
+      <actor Id="c508047c-cea2-42f5-9bb8-3eb62289510f" name="Schüler" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="0ae06857-5cc4-4b6f-968d-27f640e74ab8" />
+        <targetEnds>
+          <association Id="1cc4335b-0ccb-4563-b441-55702bcce6c0" isDerived="false" sourceEndRoleName="Schüler" targetEndRoleName="Unternehmen Anschauen" isLeaf="false" isAbstract="false">
+            <useCaseMoniker Id="467bbf24-1337-4ca6-b133-b9b1b840cd3f" LastKnownName="Unternehmen Anschauen" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="469d61ca-d4d0-4522-a663-f09f25209bf8" name="Schüler" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="7f70747d-2795-4a39-bd8f-b6b1bd5d9eb2" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="b06cee3a-a39c-43e6-9ddf-597a8945e55f" name="Unternehmen Anschauen" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="6de93753-2874-4635-a0a4-2a21bbd50053" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="5df6d047-5f9f-4f54-8382-9b80a97293f7" />
+          </association>
+          <association Id="fffc04ea-1fc3-496b-a10f-f03d95826247" isDerived="false" sourceEndRoleName="Schüler" targetEndRoleName="Bewertung Schreiben" isLeaf="false" isAbstract="false">
+            <useCaseMoniker Id="5ea291af-8dec-4ba0-8332-029511e63f1c" LastKnownName="Bewertung Schreiben" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="e93a7584-1698-40ac-bf8f-4929a02f66de" name="Schüler" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="5c9aeb2f-2b5e-492c-b4eb-ac754250f3f0" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="dd07ec55-392b-4b27-99c3-94049da2f53c" name="Bewertung Schreiben" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="94f9ca43-eb5f-4a5b-8d88-1af145fa0198" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="2e643a20-0ca3-4bd5-8040-15c055cf7d1e" />
+          </association>
+        </targetEnds>
+      </actor>
+    </useCaseModelRootHasTypes>
+    <useCaseModelRootHasTypes>
+      <actor Id="063c7796-380d-4b01-a039-b80828cb4790" name="Lehrer" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="5577fe20-67d7-4515-87fc-952e80851229" />
+        <targetEnds>
+          <association Id="f2f8559a-941b-4cf0-bf31-cc7d9bbd6d72" isDerived="false" sourceEndRoleName="Lehrer" targetEndRoleName="Bewertung Schreiben" isLeaf="false" isAbstract="false">
+            <useCaseMoniker Id="5ea291af-8dec-4ba0-8332-029511e63f1c" LastKnownName="Bewertung Schreiben" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="1b98cc94-346b-4978-9c5d-0e5b034d3353" name="Lehrer" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="301bf40d-fb30-4e39-94a9-cf239d2a6c89" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="2c27b5ef-67c1-41ef-8ad6-f3d01650c794" name="Bewertung Schreiben" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="bc4c3ed3-d7e3-4206-8406-d996933a0959" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="f15c11ef-6419-4fce-8751-516ee18e9734" />
+          </association>
+          <association Id="5737ae36-b9e0-4bd2-b1e2-8e27fe49e7f6" isDerived="false" sourceEndRoleName="Lehrer" targetEndRoleName="Sieht wer sich wo und wann beworben hat" isLeaf="false" isAbstract="false">
+            <useCaseMoniker Id="03a5e4f6-da15-43a8-9b7b-81c601eb4255" LastKnownName="Sieht wer sich wo und wann beworben hat" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="b25c5ba5-3355-4e62-ab09-ee3001c15ddd" name="Lehrer" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="815e84d6-e105-4b37-b2c3-4428abacc189" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="260f70e0-c549-40d8-9aa4-fc66ec89469b" name="Sieht wer sich wo und wann beworben hat" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="22f111b5-78ec-4cbc-a912-24a0bb1c1b5d" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="9348e3df-f171-4ed4-998e-59cba389c577" />
+          </association>
+        </targetEnds>
+      </actor>
+    </useCaseModelRootHasTypes>
+    <useCaseModelRootHasTypes>
+      <actor Id="8feabf5b-9119-481a-95f8-d1a78c15400c" name="Unternehmen" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="ceb53c27-fabf-4fd2-bdb9-14d7ea0efc52" />
+        <targetEnds>
+          <association Id="eaeeee43-967a-4610-8596-2a28ade3579d" isDerived="false" sourceEndRoleName="Unternehmen" targetEndRoleName="Anzeigen Erstellen" isLeaf="false" isAbstract="false">
+            <useCaseMoniker Id="265a2240-52d9-4437-9487-df83accefbf9" LastKnownName="Anzeigen Erstellen" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="9e0eddd0-3d92-4126-a5b8-51339e2ff317" name="Unternehmen" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="064c4c7a-b300-403e-948d-5afa640a78e0" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="9e9d8e71-ab29-4a5e-ba08-6f85ae1e83e7" name="Anzeigen Erstellen" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="4a2cb8a9-95a2-46bc-b103-ae57655c9e30" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="0b1aa8ad-9ce7-4165-9192-378c501a8e55" />
+          </association>
+        </targetEnds>
+      </actor>
+    </useCaseModelRootHasTypes>
+    <packageHasNamedElement>
+      <useCase Id="467bbf24-1337-4ca6-b133-b9b1b840cd3f" name="Unternehmen Anschauen" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="dc4783f8-b5d3-4a21-9110-96ee52e6a28d" />
+        <subjects>
+          <subsystemMoniker Id="b47e4f08-70ff-44d9-a0ac-8a4f937a50f5" LastKnownName="Website" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase Id="0a6f339e-6fea-455e-8954-b1aec3a60bf7" name="Bewerben" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="c1672dd0-d408-47bc-af69-9a83ed2c718a" />
+        <targetEnds>
+          <association Id="6a361401-9360-465e-8899-a0a846378b93" isDerived="false" sourceEndRoleName="Bewerben" targetEndRoleName="Schüler" isLeaf="false" isAbstract="false">
+            <actorMoniker Id="c508047c-cea2-42f5-9bb8-3eb62289510f" LastKnownName="Schüler" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="a293f04a-2ee2-4e7c-85f5-273fee307700" name="Bewerben" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="a82a39ed-8a67-40b7-90e0-28b5b4aa453d" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="caf9afe9-92d9-4d43-9d9e-fa660e15ad59" name="Schüler" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="7b1739b7-6d19-49a0-8262-b95f718c39dc" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="cdfa40ac-c573-4a3e-bdc0-e9ffe1d2c19b" />
+          </association>
+          <association Id="cb481ca7-25b8-4b4a-8dc7-efc86d562db2" isDerived="false" sourceEndRoleName="Bewerben" targetEndRoleName="Unternehmen" isLeaf="false" isAbstract="false">
+            <actorMoniker Id="8feabf5b-9119-481a-95f8-d1a78c15400c" LastKnownName="Unternehmen" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="5e8d562a-3354-4ee7-8e73-16ce7bc9bdb3" name="Bewerben" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="f27c5b50-5043-4e33-a27e-2d7dc0b179d6" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="2039714d-e498-4cf7-bf43-c0cb89c6a34d" name="Unternehmen" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="e684a06c-054c-4727-8dc9-77bfdff7bfcc" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="5045bdbd-59e2-4be5-b89d-732cc385942d" />
+          </association>
+        </targetEnds>
+        <additions>
+          <include Id="c644d1b8-364c-45ab-8749-3506cda1bded">
+            <useCaseMoniker Id="0274d210-efe9-40c0-b656-638ea11321bf" LastKnownName="Eintrag in DB" />
+            <elementDefinition Id="cfbf91cb-5f9b-4faa-af0c-4dfe29d568f8" />
+          </include>
+        </additions>
+        <subjects>
+          <subsystemMoniker Id="b47e4f08-70ff-44d9-a0ac-8a4f937a50f5" LastKnownName="Website" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase Id="0274d210-efe9-40c0-b656-638ea11321bf" name="Eintrag in DB" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="ea140b04-6ba5-465c-9b0f-a51b149c21bc" />
+        <subjects>
+          <subsystemMoniker Id="b47e4f08-70ff-44d9-a0ac-8a4f937a50f5" LastKnownName="Website" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase Id="5ea291af-8dec-4ba0-8332-029511e63f1c" name="Bewertung Schreiben" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="115035bb-d219-46f6-b420-c2688699e1ad" />
+        <subjects>
+          <subsystemMoniker Id="b47e4f08-70ff-44d9-a0ac-8a4f937a50f5" LastKnownName="Website" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase Id="265a2240-52d9-4437-9487-df83accefbf9" name="Anzeigen Erstellen" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="cd88b16a-6059-44f8-a653-38182839b1d0" />
+        <subjects>
+          <subsystemMoniker Id="b47e4f08-70ff-44d9-a0ac-8a4f937a50f5" LastKnownName="Website" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase Id="0b220b35-13ba-4f55-b153-9c3d351ba4b6" name="Unternehmen Eintragen" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="218d9b9e-aeb2-4b1b-9c3c-7714b3d1b654" />
+        <targetEnds>
+          <association Id="7c7c152d-409d-4a21-b5ab-a27b95c5bdf7" isDerived="false" sourceEndRoleName="Unternehmen Eintragen" targetEndRoleName="Lehrer" isLeaf="false" isAbstract="false">
+            <actorMoniker Id="063c7796-380d-4b01-a039-b80828cb4790" LastKnownName="Lehrer" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="30ec189f-cc0f-4382-a98f-e1e54e2737a2" name="Unternehmen Eintragen" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="6a806a79-2288-4b8e-8482-5b3d556c6376" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="b43e8aa7-72e9-4675-937a-c2e01448c169" name="Lehrer" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="65e4a648-7f0a-475d-a170-5f2fe4685cde" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="145f8990-14a3-4e4d-a417-0c6f445e8529" />
+          </association>
+        </targetEnds>
+        <subjects>
+          <subsystemMoniker Id="b47e4f08-70ff-44d9-a0ac-8a4f937a50f5" LastKnownName="Website" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase Id="22bb01fa-e3fd-4992-86f2-72d488afebf7" name="Unternehmen Bearbeiten" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="165a6b0c-2122-413c-8666-1577ea0be4b3" />
+        <targetEnds>
+          <association Id="d769a8fb-0b44-4b90-ac82-e59ddc4864ef" isDerived="false" sourceEndRoleName="Unternehmen Bearbeiten" targetEndRoleName="Unternehmen" isLeaf="false" isAbstract="false">
+            <actorMoniker Id="8feabf5b-9119-481a-95f8-d1a78c15400c" LastKnownName="Unternehmen" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="c2b68f74-ed34-4f0d-9bdd-1634860cfca7" name="Unternehmen Bearbeiten" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="ea910fb9-b11a-47c6-b231-a020c50ba23f" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="69af1b99-8744-4bd1-893b-9adbd9584b36" name="Unternehmen" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="64b8ab23-c752-4997-a7ed-87c0a9015d4b" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="ccdf9011-061d-4ebe-b427-1cd9a878b38f" />
+          </association>
+          <association Id="4711d32f-7491-42c4-9757-e3ebee224645" isDerived="false" sourceEndRoleName="Unternehmen Bearbeiten" targetEndRoleName="Lehrer" isLeaf="false" isAbstract="false">
+            <actorMoniker Id="063c7796-380d-4b01-a039-b80828cb4790" LastKnownName="Lehrer" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="e351b4d0-0b2c-4b72-b457-a39be7bbbde0" name="Unternehmen Bearbeiten" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="fcfb03c2-05dd-4d7c-adff-1267a865954f" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="edc2fe3d-ebce-4df4-9ac4-846d85e5a58a" name="Lehrer" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="670e671e-8d0f-42f6-b005-ac423fa7c522" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="f39c6b56-9354-41a2-9b71-90e0c8b305a2" />
+          </association>
+        </targetEnds>
+        <subjects>
+          <subsystemMoniker Id="b47e4f08-70ff-44d9-a0ac-8a4f937a50f5" LastKnownName="Website" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <useCaseModelRootHasTypes>
+      <actor Id="43490934-34d3-4d1a-b0e7-12c96541e2ab" name="Admin" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="409bc079-b2fc-4446-907b-4fd035338fd0" />
+        <generalsInternal>
+          <generalization Id="11c5689a-f608-40ef-bedf-eb0a366211f7" isSubstitutable="false">
+            <actorMoniker Id="063c7796-380d-4b01-a039-b80828cb4790" LastKnownName="Lehrer" />
+            <elementDefinition Id="a7f62a04-8f56-4523-98ba-d55c3039da16" />
+          </generalization>
+        </generalsInternal>
+        <targetEnds>
+          <association Id="4304c765-1046-4c84-a68d-77fd08ccd025" isDerived="false" sourceEndRoleName="Admin" targetEndRoleName="Schüler/Lehere/Unternehmen Freischalten" isLeaf="false" isAbstract="false">
+            <useCaseMoniker Id="977e4380-f7c5-4dfc-b770-451170930e15" LastKnownName="Schüler&amp;Lehere&amp;Unternehmen Freischalten/ Löschen" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="7dff2887-105a-4c61-b904-0873786abd71" name="Admin" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="67aa04f6-48f3-487f-be63-87d89cf3039d" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="cfa0d6e2-a886-4aa8-9b97-fe3ec0d32260" name="Schüler/Lehere/Unternehmen Freischalten" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="018e9fc4-4955-4360-ab1d-5e3ffb834199" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="46752915-5530-4aec-8300-efda485abb17" />
+          </association>
+        </targetEnds>
+      </actor>
+    </useCaseModelRootHasTypes>
+    <packageHasNamedElement>
+      <useCase Id="977e4380-f7c5-4dfc-b770-451170930e15" name="Schüler&amp;Lehere&amp;Unternehmen Freischalten/ Löschen" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="9967f6df-6750-4d38-a156-3b18884cf350" />
+        <subjects>
+          <subsystemMoniker Id="b47e4f08-70ff-44d9-a0ac-8a4f937a50f5" LastKnownName="Website" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <useCase Id="03a5e4f6-da15-43a8-9b7b-81c601eb4255" name="Sieht wer sich wo und wann beworben hat" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="c831d8a5-4b23-4c42-a39d-af9e316ae55b" />
+        <subjects>
+          <subsystemMoniker Id="b47e4f08-70ff-44d9-a0ac-8a4f937a50f5" LastKnownName="Website" />
+        </subjects>
+      </useCase>
+    </packageHasNamedElement>
+  </packagedElements>
+  <package Id="d113fbea-0c69-4709-8a0b-f1348b7900d6" name="ParkWeb">
+    <elementDefinition Id="8caa0ff5-a529-461b-a4e8-2d9a60b4d194" />
+    <profileInstances>
+      <packageHasProfileInstances Id="d19127ea-1e75-42e3-89c5-bf07a61b28fd">
+        <profileInstance Id="22d5d6ba-cc29-42c8-ae20-889b90916c6c" name="StandardProfileL2">
+          <elementDefinition Id="e34d544e-0fea-4ed6-ac5e-1b74119ac791" />
+        </profileInstance>
+        <elementDefinition Id="0caec977-1f8c-4ba3-a7db-8cc9ad9cc73b" />
+      </packageHasProfileInstances>
+      <packageHasProfileInstances Id="58d67a05-2895-4ccf-a821-8aa043f1f731">
+        <profileInstance Id="40556d49-b057-4962-b203-ecbfad045f03" name="StandardProfileL3">
+          <elementDefinition Id="532ea607-fb19-44b8-8502-3351b05452be" />
+        </profileInstance>
+        <elementDefinition Id="29349502-908c-4fda-9054-c48619c59ed0" />
+      </packageHasProfileInstances>
+    </profileInstances>
+  </package>
+</useCaseModelRoot>

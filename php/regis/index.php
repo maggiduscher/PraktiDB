@@ -56,8 +56,6 @@
                     if($type == "student"){ generateFormStudent(array(Null));}
 					else if($type == "company"){generateFormCompany(array(Null));}
 					else if($type == "teacher"){generateFormTeacher(array(Null));}
-					
-					else{ echo "Man! Hast du toll gemacht!";}
                 }
 				else{if(!(count($Fehler)!= 0)){generateFormSelect();}}
             ?>

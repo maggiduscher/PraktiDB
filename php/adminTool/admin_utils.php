@@ -281,7 +281,7 @@
 		."</div>"
 		."<div id='row'>"
         ."<label for='username'>Username: </label>"
-        ."<input type='text' name='username' id='username' placeholder='Username'/><br/>"
+        ."<input type='text' name='username' id='username' placeholder='Benutzername'/><br/>"
 		."</div>"
 		."<div id='row'>"
         ."<label for='email'>Email:</label>"
