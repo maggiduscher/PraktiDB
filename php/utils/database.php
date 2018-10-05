@@ -34,7 +34,7 @@
         $databasename = "PraktiDB";
 		
         $connection = @mysqli_connect($severname,$username,$password,$databasename)
-		Or die("Nope ".mysql_error());
+		Or die("MySQL error: ".mysql_error());
 
 		$stmt = mysqli_stmt_init($connection);
 	

@@ -18,8 +18,8 @@
         $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=".$origin."&destinations=".$dest."&key=".$key;
         $arrContextOptions=array(
                 "ssl"=>array(
-                    "verify_peer"=>false,
-                    "verify_peer_name"=>false,
+                "verify_peer"=>false,
+                "verify_peer_name"=>false,
                 ),
             ); 
         $json = file_get_contents($url, false, stream_context_create($arrContextOptions));
